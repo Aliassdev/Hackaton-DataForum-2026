@@ -69,20 +69,60 @@ El subtítulo del reto es «Un acercamiento en las aulas»: Aprende está pensad
 
 Los menores apenas tienen herramientas para entender y ejercer sus derechos ante la justicia, aunque la ley ya exige que la información se les dé de forma comprensible y adaptada. TuTurno convierte esas obligaciones en una herramienta.
 
-| Norma | Qué dice (resumen) | Dónde lo cumple TuTurno |
+> **Comprobado el 21/10/2026** contra los textos consolidados del BOE (la CDN, con el texto oficial de UNICEF). Las 87 citas literales, ordenadas por caso y con una explicación para 11 años, están en [docs/MARCO_LEGAL.md](MARCO_LEGAL.md). Las tarjetas de conocimiento deben citar el artículo exacto.
+
+### 2.1 Marco general
+| Norma | Qué dice | Dónde lo cumple TuTurno |
 |---|---|---|
-| Convención sobre los Derechos del Niño (CDN), art. 12 | Derecho a ser escuchado en los procedimientos que le afectan | Pregunta, Mi situación |
+| Convención sobre los Derechos del Niño (CDN), art. 12.2 | Oportunidad de ser escuchado en todo procedimiento judicial o administrativo que le afecte | Pregunta, Mi situación |
 | CDN, art. 42 | Los Estados deben dar a conocer la Convención también a los niños | Aprende |
-| LO 1/1996 de Protección Jurídica del Menor (LOPJM), art. 9 | Información en lenguaje comprensible y formatos accesibles; madurez presumida a los 12 años | Todo el contenido y la voz |
-| LOPJM, art. 10.2 | El menor puede avisar al Ministerio Fiscal y quejarse al Defensor del Pueblo | Aprende (unidad 1), Ayuda |
-| LO 8/2021 (LOPIVI), arts. 17 y 18 | Canales para que los menores comuniquen la violencia; información en formatos accesibles | Botón de Ayuda, contenido |
-| LOPIVI, art. 14 | Asistencia jurídica gratuita con designación urgente | Aprende, Mi situación (víctima) |
-| Ley 4/2015 (Estatuto de la víctima), arts. 4, 5 y 7 | Derecho a entender y ser entendida; información desde el primer contacto y sobre la causa | Mi situación (víctima) |
-| LECrim, art. 520.2 bis | La información de derechos del detenido se adapta a su edad y madurez | Mi situación (investigado) |
+| LO 1/1996 de Protección Jurídica del Menor, art. 9 | Derecho a ser oído **sin discriminación por edad**, con información comprensible y en formatos accesibles. Con 12 años cumplidos se considera siempre que tiene madurez suficiente; por debajo se valora caso a caso, así que Lucía, con 11, también tiene ese derecho | Todo el contenido y la voz |
+| LO 1/1996, art. 10.2 b) y c) | El menor puede avisar al Ministerio Fiscal y quejarse al Defensor del Pueblo | Aprende (unidad 1), Ayuda |
+| LO 8/2021 (LOPIVI), art. 10.3 | La información a los menores víctimas se da en lenguaje claro y en formatos accesibles | Todo el contenido |
+| LOPIVI, arts. 17 y 18 | Canales seguros y confidenciales para que los menores comuniquen la violencia. Los colegios deben explicarlos cada curso en formatos accesibles | Botón de Ayuda, contenido |
+| LOPIVI, art. 14 | Abogado y procurador gratuitos **en los términos de la Ley 1/1996 de asistencia jurídica gratuita**, y designación urgente de abogado de oficio | Aprende, Mi situación (víctima) |
+| LOPIVI, art. 1.2 | Son violencia, entre otras cosas, el acoso escolar, el ciberacoso, la extorsión sexual, la difusión de datos privados y la violencia en el ámbito familiar | Contenido de los tres casos |
+| Ley 4/2015 (Estatuto de la víctima), arts. 4, 5 y 7 | Derecho a entender y ser entendida; información desde el primer contacto, incluso antes de denunciar, y sobre la causa | Mi situación (víctima) |
+| LECrim, art. 520.2 bis; LO 5/2000, art. 17.1 | La información de derechos del detenido se adapta a su edad y madurez. A un menor detenido se le informa de inmediato y con claridad | Mi situación (investigado) |
 | LO 3/1981 del Defensor del Pueblo, art. 10.1 | Ser menor no impide presentar una queja | Aprende (unidad 1) |
 | Directrices del Consejo de Europa sobre justicia adaptada a los niños (2010) | Información, participación y trato adaptados | Marco general y feedback |
 
-> Comprobad en el BOE la redacción exacta de cada artículo antes de ponerlo en diapositivas.
+### 2.2 Por caso oficial
+| Caso | Artículos clave | Qué puede explicar TuTurno |
+|---|---|---|
+| **Lucía** (11) | LECrim, arts. 433, 449 bis, 449 ter y 703 bis; Ley 4/2015, arts. 25 y 26; LOPIVI, art. 11; LO 1/1996, arts. 12.3, 17.1 y 18.2; LEC, art. 770 | Por qué hablan con ella (puede hacerlo un equipo psicosocial); que la entrevista se graba una vez y vale para el juicio; que las preguntas de los abogados pasan por el juez; que no verá cara a cara a la persona investigada; que puede ir acompañada; qué puede pasar con su familia |
+| **Sergio** (13) | LO 5/2000, arts. 1, 3, 4, 6, 7.1 i), 16, 19 y 28; Ley 4/2015, arts. 19 y 20; LOPIVI, arts. 20, 34, 35 y 50.2 d); Código Penal, arts. 172 ter y 173 | Que la Fiscalía de Menores decide si sigue el caso y dirige la investigación; que puede declarar a distancia; que se evita que se cruce con los agresores; que se pueden pedir medidas para que no se le acerquen ni le escriban; que solo hay conciliación si aceptan las disculpas; que el colegio tiene un protocolo y un coordinador de bienestar |
+| **Sara** (casi 16) | Código Penal, arts. 197.7 y 189; LO 1/1982, arts. 2, 3 y 7.5; LO 1/1996, art. 4; RGPD, art. 17; LOPDGDD, arts. 84.2 y 94.3; LOPIVI, arts. 50.2 e) y 52 | Que difundir y reenviar es delito; que puede pedir que se retire el contenido; que puede denunciar ella misma sin un adulto; que tiene derecho a que se borren sus datos; dónde pedir ayuda confidencial (017, Canal Joven de la AEPD, ANAR) |
+
+### 2.3 Mensajes que hay que cuidar en el contenido
+- **Abogado gratis:**
+  - No hay que prometer «siempre gratis».
+  - Sin mirar ingresos, solo en delitos sexuales y otros casos tasados (Ley 1/1996, art. 2.h, redacción de 2025).
+  - En el resto depende de los ingresos de la familia (por ejemplo, en el caso de Sergio).
+- **017 (INCIBE):**
+  - Horario: todos los días de 8:00 a 23:00, no 24 horas.
+  - Fuera de ese horario: ANAR o 112.
+  - También por WhatsApp (900 116 117) y Telegram (@INCIBE017).
+- **Canal prioritario de la AEPD:**
+  - Sirve para contenido publicado en internet (redes sociales, webs). No sirve para WhatsApp, Telegram ni correo; en esos casos, policía o Fiscalía.
+  - Lo puede usar la víctima o cualquier persona.
+  - Desde los 14 años se puede usar sin un adulto. Con menos de 14, que lo haga un adulto de confianza.
+  - Canal Joven de la AEPD: 900 293 183.
+- **Si quien hace daño tiene de 14 a 17 años:** se aplica la ley de menores, que impone medidas, no penas. No hay que decir «irá a la cárcel». Con menos de 14 años no responde penalmente, y actúa la protección de menores.
+- **Sara:**
+  - La culpa es de quien difunde, y reenviar también es delito.
+  - Si las imágenes son sexuales y ella es menor, puede ser un delito mucho más grave (Código Penal, art. 189).
+  - Lo que no se sabe (cómo se consiguieron las imágenes) no se da por hecho.
+- **Lucía, «¿dejaré de vivir con mi madre?»:**
+  - La regla es seguir con la familia (LO 1/1996, art. 17.1). La separación solo llega con el desamparo (art. 18.2).
+  - Si la madre es la víctima, la ley busca que Lucía se quede con ella (art. 12.3).
+  - Nunca se promete un resultado.
+- **Sala Gesell:**
+  - La entrevista se graba, y puede hacerla un equipo psicosocial.
+  - Las preguntas de las partes pasan por el juez.
+  - Se evita que vea a la persona investigada.
+  - En el juicio, normalmente se pone la grabación y ella no tiene que ir (LECrim, arts. 449 ter y 703 bis).
+- **Edad para consentir el uso de datos:** 14 años (LOPDGDD, art. 7). Un proyecto de ley la subiría a 16: comprobadlo antes del pitch.
 
 ---
 
@@ -134,7 +174,7 @@ Todo el contenido se escribe para 11–17 con lenguaje sencillo. La prueba es: �
 - Mapa de unidades con lecciones en orden. Cada lección son 6 ejercicios.
 - Tipos de ejercicio: elección múltiple, verdadero o falso, ordena los pasos, empareja términos y **Dilo con tus palabras** (texto o voz; la IA dice qué parte de la idea falta).
 - Puntos (XP), racha diaria y barra de dominio por concepto.
-- **Unidad 1 · Tus derechos**: ser oído, avisar a la Fiscalía, quejarte al Defensor del Pueblo, abogado gratis si eres víctima, comunicar la violencia.
+- **Unidad 1 · Tus derechos**: ser oído (tengas la edad que tengas), avisar a la Fiscalía, quejarte al Defensor del Pueblo, abogado de oficio si eres víctima (gratis en los casos que marca la ley; ver 2.3) y comunicar la violencia.
 - **Unidad 2 · Si te toca declarar**: la citación, qué puedes pedir, la sala, la prueba preconstituida, qué pasa después.
 
 ### 4.4 Pregunta (agente de voz)
@@ -146,8 +186,8 @@ Todo el contenido se escribe para 11–17 con lenguaje sencillo. La prueba es: �
 
 ### 4.5 Ayuda y Glosario
 - **Ayuda**:
-  - Teléfonos: ANAR **900 20 20 10** y **116 111** (ANAR también atiende por chat), emergencias **112**, ciberseguridad **017** (INCIBE) y violencia de género **016**.
-  - Web: **Canal prioritario de la AEPD**, para pedir que se retiren fotos o vídeos íntimos difundidos sin permiso (caso de Sara).
+  - Teléfonos: ANAR **900 20 20 10** y **116 111** (ANAR también atiende por chat), emergencias **112**, ciberseguridad **017** (INCIBE, de 8:00 a 23:00 todos los días), violencia de género **016** y **Canal Joven de la AEPD 900 293 183** (privacidad de menores).
+  - Web: **Canal prioritario de la AEPD**, para pedir que se retiren fotos o vídeos sexuales o violentos publicados en internet sin permiso (caso de Sara). No sirve para WhatsApp ni Telegram, y desde los 14 años se puede usar sin un adulto (2.3).
   - Mensaje: «Habla con un adulto de confianza o con el coordinador de bienestar de tu centro».
   - Los botones abren el teclado del teléfono con el número: la persona decide si llama.
 - **Glosario**: 40 términos con definición sencilla, un ejemplo y la fuente.
@@ -952,6 +992,7 @@ tuturno/
 │   └── dev.sh
 ├── docs/
 │   ├── ARQUITECTURA.md
+│   ├── MARCO_LEGAL.md        # citas literales comprobadas en el BOE, por caso
 │   └── pitch/
 ├── .github/workflows/ci.yml
 ├── .env.example
