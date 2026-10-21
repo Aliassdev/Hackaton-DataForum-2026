@@ -4,29 +4,27 @@ En el agente de ElevenLabs se configura la URL del servidor como https://<túnel
 y ElevenLabs llama a /v1/chat/completions con stream=true.
 
 Flujo: guardrail (capa 1) → si no es "normal", plantilla fija sin LLM.
-Si es normal: perfil (dynamic variables) → RAG híbrido con refuerzo por perfil (capa 2).
-Pendiente: LLM (capa 3) y verificación (capa 4); de momento, respuesta fija.
+Si es normal: perfil (dynamic variables) → orquestador: reformulación jurídica + RAG (capa 2)
+→ generación adaptada a la edad (capa 3). Pendiente: verificación frase a frase (capa 4).
 """
 
 import json
 import logging
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
+from app.agent.orquestador import responder
 from app.agent.perfil import extraer_perfil
 from app.agent.safety import get_guardrail, plantilla
 from app.config import settings
-from app.rag.retrieve import get_recuperador
 
 router = APIRouter()
 log = logging.getLogger("tuturno.llm")
-
-RESPUESTA_FIJA = "Hola, soy TuTurno. Te contesto desde el servidor del equipo. La conexión funciona."
 
 
 class ChatMessage(BaseModel):
@@ -83,23 +81,28 @@ def _chunk(chat_id: str, created: int, delta: dict, finish_reason: str | None = 
     return f"data: {json.dumps(cuerpo, ensure_ascii=False)}\n\n"
 
 
-def _stream(texto: str) -> Iterator[str]:
+def _stream_trozos(trozos: Iterable[str]) -> Iterator[str]:
     chat_id = f"chatcmpl-{uuid.uuid4().hex}"
     created = int(time.time())
     yield _chunk(chat_id, created, {"role": "assistant"})
-    for palabra in texto.split(" "):
-        yield _chunk(chat_id, created, {"content": palabra + " "})
+    for trozo in trozos:
+        yield _chunk(chat_id, created, {"content": trozo})
     yield _chunk(chat_id, created, {}, finish_reason="stop")
     yield "data: [DONE]\n\n"
 
 
+def _stream(texto: str) -> Iterator[str]:
+    return _stream_trozos(palabra + " " for palabra in texto.split(" "))
+
+
+def _texto(m: ChatMessage) -> str:
+    if isinstance(m.content, list):  # formato por partes: [{"type": "text", "text": ...}]
+        return " ".join(p.get("text", "") for p in m.content if isinstance(p, dict))
+    return m.content or ""
+
+
 def _ultimo_mensaje_usuario(req: ChatRequest) -> str:
-    for m in reversed(req.messages):
-        if m.role == "user":
-            if isinstance(m.content, list):  # formato por partes: [{"type": "text", "text": ...}]
-                return " ".join(p.get("text", "") for p in m.content if isinstance(p, dict))
-            return m.content or ""
-    return ""
+    return next((_texto(m) for m in reversed(req.messages) if m.role == "user"), "")
 
 
 @router.post("/v1/chat/completions")
@@ -116,8 +119,6 @@ def chat_completions(req: ChatRequest, authorization: str | None = Header(defaul
 
     system = next((m.content for m in req.messages if m.role == "system" and isinstance(m.content, str)), "")
     perfil = extraer_perfil(system)
-    recuperador = get_recuperador()
-    fragmentos = recuperador.buscar(pregunta, perfil) if recuperador else []
-    log.info("RAG: perfil=%s · fuentes=%s", perfil, [f.cita for f in fragmentos])
-
-    return StreamingResponse(_stream(RESPUESTA_FIJA), media_type="text/event-stream")
+    log.info("Perfil: %s", perfil)
+    mensajes = [{"role": m.role, "content": _texto(m)} for m in req.messages]
+    return StreamingResponse(_stream_trozos(responder(mensajes, perfil)), media_type="text/event-stream")

@@ -33,12 +33,32 @@ def main():
     golden = [json.loads(l) for l in args.golden.read_text(encoding="utf-8").splitlines() if l.strip()]
     rec.buscar("calentamiento")
 
+    # Modo con reformulación jurídica por LLM (solo si hay key): la consulta se genera una vez por pregunta
+    from app.agent.orquestador import reformular
+    from app.config import settings
+
+    modos = list(MODOS)
+    consultas = {}
+    if settings.llm_api_key:
+        modos.append("reformulado")
+        for g in golden:
+            consultas[g["pregunta"]] = reformular(g["pregunta"], [{"role": "user", "content": g["pregunta"]}], g["perfil"])
+            time.sleep(2.1)  # el plan gratuito de Groq admite ~30 peticiones por minuto
+        print("Ejemplos de reformulación:")
+        for p in list(consultas)[:4]:
+            print(f"  «{p}» → «{consultas[p]}»")
+    else:
+        print("(Sin LLM_API_KEY/GROQ_API_KEY: se omite el modo 'reformulado')")
+
     resultados = {}
-    for modo in MODOS:
+    for modo in modos:
         aciertos, recalls, rrs, ms, fallos = [], [], [], [], []
         for g in golden:
             t0 = time.perf_counter()
-            top = [f.articulo_id for f in rec.buscar(g["pregunta"], g["perfil"], k=10, modo=modo)]
+            if modo == "reformulado":
+                top = [f.articulo_id for f in rec.buscar(g["pregunta"], g["perfil"], k=10, consulta_juridica=consultas[g["pregunta"]])]
+            else:
+                top = [f.articulo_id for f in rec.buscar(g["pregunta"], g["perfil"], k=10, modo=modo)]
             ms.append((time.perf_counter() - t0) * 1000)
             relevantes = set(g["relevantes"])
             top5 = set(top[:5])
@@ -58,8 +78,9 @@ def main():
         print(f"{modo:<16}{r['acierto@5']:>11.3f}{r['recall@5']:>10.3f}{r['mrr@10']:>9.3f}{r['ms_mediana']:>7.0f}")
 
     if args.detalle:
-        print("\nFallos del modo completo:")
-        for p, rel, top in resultados["completo"]["fallos"]:
+        mejor = "reformulado" if "reformulado" in resultados else "hibrido_perfil"
+        print(f"\nFallos del modo {mejor}:")
+        for p, rel, top in resultados[mejor]["fallos"]:
             print(f"  x {p}\n      esperado {rel} · obtenido {top}")
 
     salida = RAIZ / "artifacts/index/metrics_rag.json"

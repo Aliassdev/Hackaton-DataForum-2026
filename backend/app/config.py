@@ -32,6 +32,11 @@ class Settings:
     guardrail_umbral_crisis: float = float(os.getenv("GUARDRAIL_UMBRAL_CRISIS", "0.30"))
     guardrail_umbral_otros: float = float(os.getenv("GUARDRAIL_UMBRAL_OTROS", "0.50"))
     rag_index_dir: Path = _ruta("RAG_INDEX_DIR", "../artifacts/index")
+    # LLM: cualquier API compatible con OpenAI. Por defecto, Groq (nivel gratuito).
+    llm_base_url: str = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+    llm_api_key: str = os.getenv("LLM_API_KEY") or os.getenv("GROQ_API_KEY", "")
+    llm_modelo: str = os.getenv("LLM_MODELO", "openai/gpt-oss-120b")
+    llm_modelo_reformular: str = os.getenv("LLM_MODELO_REFORMULAR", "openai/gpt-oss-20b")
 
 
 settings = Settings()

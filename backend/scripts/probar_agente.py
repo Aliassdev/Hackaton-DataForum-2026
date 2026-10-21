@@ -51,4 +51,10 @@ async def main(pregunta: str) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(asyncio.wait_for(main(sys.argv[1] if len(sys.argv) > 1 else "¿Qué pasa si me llaman a declarar?"), 60))
+    # Opcional: --perfil "edad=15;procedimiento=ninguno;rol=victima;fase=antes"
+    args = sys.argv[1:]
+    if "--perfil" in args:
+        i = args.index("--perfil")
+        PERFIL.update(dict(p.split("=", 1) for p in args[i + 1].split(";")))
+        del args[i : i + 2]
+    asyncio.run(asyncio.wait_for(main(args[0] if args else "¿Qué pasa si me llaman a declarar?"), 60))

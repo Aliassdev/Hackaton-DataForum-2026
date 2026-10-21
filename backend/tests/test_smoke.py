@@ -12,7 +12,11 @@ def test_health():
     assert client.get("/api/health").json() == {"estado": "ok"}
 
 
-def test_chat_completions_stream_formato_openai():
+def test_chat_completions_stream_formato_openai(monkeypatch):
+    from app.agent import orquestador
+
+    monkeypatch.setattr(orquestador.client, "completar", lambda *a, **k: "citación testigo obligación de comparecer")
+    monkeypatch.setattr(orquestador.client, "stream", lambda *a, **k: iter(["Hola, soy ", "TuTurno. ", "Te explico."]))
     resp = client.post(
         "/v1/chat/completions",
         json={

@@ -86,11 +86,17 @@ class Recuperador:
             peso *= p["rol"].get(perfil.get("rol") or "", {}).get(ley, 1.0)
         return peso
 
-    def buscar(self, pregunta: str, perfil: dict | None = None, k: int = 5, modo: str = "hibrido_perfil") -> list[Fragmento]:
+    def buscar(
+        self, pregunta: str, perfil: dict | None = None, k: int = 5, modo: str = "hibrido_perfil",
+        consulta_juridica: str | None = None,
+    ) -> list[Fragmento]:
+        """consulta_juridica: reformulación de la pregunta en lenguaje de la ley (la genera el LLM).
+        Si llega, se busca con las dos consultas y se fusionan los cuatro rankings."""
         inicio = time.perf_counter()
-        rankings = {"bm25": [self._bm25], "denso": [self._denso]}.get(modo, [self._bm25, self._denso])
+        funciones = {"bm25": [self._bm25], "denso": [self._denso]}.get(modo, [self._bm25, self._denso])
+        consultas = [pregunta] + ([consulta_juridica] if consulta_juridica else [])
         puntos: dict[int, float] = {}
-        for ranking in (f(pregunta) for f in rankings):
+        for ranking in (f(c) for c in consultas for f in funciones):
             for pos, i in enumerate(ranking):
                 puntos[int(i)] = puntos.get(int(i), 0.0) + 1.0 / (K_RRF + pos + 1)
         if modo in ("hibrido_perfil", "completo"):
