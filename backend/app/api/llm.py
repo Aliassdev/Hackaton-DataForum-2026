@@ -4,7 +4,8 @@ En el agente de ElevenLabs se configura la URL del servidor como https://<túnel
 y ElevenLabs llama a /v1/chat/completions con stream=true.
 
 Flujo: guardrail (capa 1) → si no es "normal", plantilla fija sin LLM.
-Pendiente: datos personales → RAG → LLM → verificación (de momento, respuesta fija).
+Si es normal: perfil (dynamic variables) → RAG híbrido con refuerzo por perfil (capa 2).
+Pendiente: LLM (capa 3) y verificación (capa 4); de momento, respuesta fija.
 """
 
 import json
@@ -17,8 +18,10 @@ from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
+from app.agent.perfil import extraer_perfil
 from app.agent.safety import get_guardrail, plantilla
 from app.config import settings
+from app.rag.retrieve import get_recuperador
 
 router = APIRouter()
 log = logging.getLogger("tuturno.llm")
@@ -105,9 +108,16 @@ def chat_completions(req: ChatRequest, authorization: str | None = Header(defaul
     if settings.debug_llm_requests:
         _registrar_estructura(req)
 
-    decision = get_guardrail().evaluar(_ultimo_mensaje_usuario(req))
+    pregunta = _ultimo_mensaje_usuario(req)
+    decision = get_guardrail().evaluar(pregunta)
     log.info("Guardrail: %s (origen=%s, regla=%s, %.0f ms)", decision.categoria, decision.origen, decision.regla, decision.ms)
     if decision.categoria != "normal":
         return StreamingResponse(_stream(plantilla(decision.categoria)), media_type="text/event-stream")
+
+    system = next((m.content for m in req.messages if m.role == "system" and isinstance(m.content, str)), "")
+    perfil = extraer_perfil(system)
+    recuperador = get_recuperador()
+    fragmentos = recuperador.buscar(pregunta, perfil) if recuperador else []
+    log.info("RAG: perfil=%s · fuentes=%s", perfil, [f.cita for f in fragmentos])
 
     return StreamingResponse(_stream(RESPUESTA_FIJA), media_type="text/event-stream")

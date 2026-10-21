@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.agent.safety import get_guardrail
 from app.api import health, llm, session
 from app.config import settings
+from app.rag.retrieve import get_recuperador
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -14,6 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     get_guardrail()  # los modelos se cargan una sola vez, al arrancar
+    get_recuperador()
     yield
 
 

@@ -1,0 +1,14 @@
+{
+  "_nota": "Registro de fuentes legales del RAG. 'corta' es la etiqueta que se cita ([LORPM art. 22]). 'url' admite {art} para enlazar al artículo cuando la fuente lo permite.",
+  "leyes": [
+    {"id": "CDN", "corta": "Convención Derechos del Niño", "nombre": "Convención sobre los Derechos del Niño (ONU, 1989)", "pdf": "crc_SP.pdf", "url": "https://www.ohchr.org/es/instruments-mechanisms/instruments/convention-rights-child"},
+    {"id": "LOPJM", "corta": "LO 1/1996", "nombre": "Ley Orgánica 1/1996, de Protección Jurídica del Menor", "pdf": "BOE-A-1996-1069-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1996-1069#a{art}"},
+    {"id": "LOPIVI", "corta": "LOPIVI", "nombre": "Ley Orgánica 8/2021, de protección integral a la infancia y la adolescencia frente a la violencia", "pdf": "BOE-A-2021-9347-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2021-9347#a{art}"},
+    {"id": "LORPM", "corta": "LORPM", "nombre": "Ley Orgánica 5/2000, reguladora de la responsabilidad penal de los menores", "pdf": "BOE-A-2000-641-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2000-641#a{art}"},
+    {"id": "LECRIM", "corta": "LECrim", "nombre": "Ley de Enjuiciamiento Criminal", "pdf": "BOE-A-1882-6036-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1882-6036#a{art}"},
+    {"id": "LEC", "corta": "LEC", "nombre": "Ley 1/2000, de Enjuiciamiento Civil", "pdf": "BOE-A-2000-323-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2000-323#a{art}"},
+    {"id": "LOHIP", "corta": "LO 1/1982", "nombre": "Ley Orgánica 1/1982, de protección civil del derecho al honor, a la intimidad personal y familiar y a la propia imagen", "pdf": "BOE-A-1982-11196-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1982-11196#a{art}"},
+    {"id": "LOPDGDD", "corta": "LOPDGDD", "nombre": "Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales", "pdf": "BOE-A-2018-16673.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673#a{art}"},
+    {"id": "RGPD", "corta": "RGPD", "nombre": "Reglamento (UE) 2016/679, General de Protección de Datos", "pdf": "L00001-00088.pdf", "url": "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32016R0679"}
+  ]
+}

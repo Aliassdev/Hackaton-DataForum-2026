@@ -31,6 +31,7 @@ class Settings:
     guardrail_modelo_dir: Path = _ruta("GUARDRAIL_MODELO_DIR", "../artifacts/models/guardrail")
     guardrail_umbral_crisis: float = float(os.getenv("GUARDRAIL_UMBRAL_CRISIS", "0.30"))
     guardrail_umbral_otros: float = float(os.getenv("GUARDRAIL_UMBRAL_OTROS", "0.50"))
+    rag_index_dir: Path = _ruta("RAG_INDEX_DIR", "../artifacts/index")
 
 
 settings = Settings()

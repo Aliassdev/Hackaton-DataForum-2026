@@ -64,7 +64,7 @@ def main() -> None:
     if agent_id:
         r = http.patch(
             f"{API}/agents/{agent_id}",
-            json={"conversation_config": {"agent": {"prompt": {"custom_llm": _custom_llm(url_tunel, secret_id)}}}},
+            json={"conversation_config": {"agent": {"prompt": {"llm": "custom-llm", "custom_llm": _custom_llm(url_tunel, secret_id)}}}},
         )
         if r.status_code >= 400:
             sys.exit(f"Error {r.status_code} al actualizar el agente: {r.text}")

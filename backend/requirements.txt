@@ -14,3 +14,8 @@ sentence-transformers
 scikit-learn
 joblib
 numpy
+
+# RAG (capa 2): BM25 con lematizador español e ingesta de PDFs
+bm25s
+PyStemmer
+pymupdf

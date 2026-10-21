@@ -1,0 +1,33 @@
+{"pregunta": "con cuántos años me pueden juzgar si hago algo malo", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-1", "LORPM-3"]}
+{"pregunta": "tengo 13 años y la he liado, me pueden castigar por la ley de menores", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-3"]}
+{"pregunta": "qué me pueden poner de castigo si cometo un delito siendo menor", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-7"]}
+{"pregunta": "si me investigan tengo derecho a un abogado", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-22"]}
+{"pregunta": "si me detiene la policía qué tienen que hacer conmigo y cuánto tiempo me pueden tener", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-17"]}
+{"pregunta": "puedo arreglarlo pidiendo perdón a la víctima en vez de ir a juicio", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-19"]}
+{"pregunta": "qué hace el equipo técnico y por qué tengo que hablar con ellos", "perfil": {"edad": 14, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-27"]}
+{"pregunta": "el juicio de menores es público, puede entrar cualquiera", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-35"]}
+{"pregunta": "qué hace el fiscal en un caso de menores", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "investigado"}, "relevantes": ["LORPM-6"]}
+{"pregunta": "tengo que contar lo que pasó muchas veces o me lo pueden grabar una vez", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LECRIM-449ter", "LECRIM-449bis"]}
+{"pregunta": "qué es eso de la prueba preconstituida", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "testigo"}, "relevantes": ["LECRIM-449bis", "LECRIM-449ter"]}
+{"pregunta": "voy a tener que ver la cara del que me hizo daño cuando declare", "perfil": {"edad": 14, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LECRIM-707", "LECRIM-449ter"]}
+{"pregunta": "si me llaman como testigo estoy obligado a ir", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "testigo"}, "relevantes": ["LECRIM-410", "LECRIM-707"]}
+{"pregunta": "qué pasa si no voy cuando me citan a declarar", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "testigo"}, "relevantes": ["LECRIM-420"]}
+{"pregunta": "tengo que declarar contra mi padre", "perfil": {"edad": 14, "procedimiento": "penal", "rol": "testigo"}, "relevantes": ["LECRIM-416", "LECRIM-707"]}
+{"pregunta": "me van a hacer jurar que digo la verdad", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "testigo"}, "relevantes": ["LECRIM-433"]}
+{"pregunta": "el que me pegó puede acercarse a mí o hay alguna orden para que no lo haga", "perfil": {"edad": 14, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LECRIM-544bis"]}
+{"pregunta": "tengo derecho a un abogado gratis si soy víctima", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LOPIVI-14"]}
+{"pregunta": "qué derechos tengo si soy víctima de un delito y lo hizo otro menor", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LORPM-4"]}
+{"pregunta": "me tienen que explicar las cosas para que las entienda", "perfil": {"edad": 12, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LOPIVI-10", "LOPJM-9"]}
+{"pregunta": "en el divorcio de mis padres el juez me va a escuchar", "perfil": {"edad": 13, "procedimiento": "familia", "rol": "escuchado"}, "relevantes": ["LEC-770", "LEC-777", "LOPJM-9"]}
+{"pregunta": "puedo decir con quién quiero vivir y que lo tengan en cuenta", "perfil": {"edad": 14, "procedimiento": "familia", "rol": "escuchado"}, "relevantes": ["LOPJM-9", "LEC-770", "CDN-12"]}
+{"pregunta": "tienen que tener en cuenta lo que yo opino", "perfil": {"edad": 12, "procedimiento": "familia", "rol": "escuchado"}, "relevantes": ["LOPJM-9", "CDN-12"]}
+{"pregunta": "qué significa eso del interés superior del menor", "perfil": {"edad": 15, "procedimiento": "familia", "rol": "escuchado"}, "relevantes": ["LOPJM-2", "CDN-3"]}
+{"pregunta": "si sé que a un amigo le pegan en casa tengo que contarlo", "perfil": {"edad": 14, "procedimiento": "proteccion", "rol": "testigo"}, "relevantes": ["LOPIVI-15", "LOPJM-13", "LOPIVI-17"]}
+{"pregunta": "cómo puedo contar que me están haciendo daño si no quiero que se entere mi familia", "perfil": {"edad": 13, "procedimiento": "proteccion", "rol": "victima"}, "relevantes": ["LOPIVI-17"]}
+{"pregunta": "qué pasa si mis padres no me cuidan bien", "perfil": {"edad": 12, "procedimiento": "proteccion", "rol": "victima"}, "relevantes": ["LOPJM-17", "LOPJM-18"]}
+{"pregunta": "me acosan en el instituto, qué tiene que hacer el colegio", "perfil": {"edad": 13, "procedimiento": "proteccion", "rol": "victima"}, "relevantes": ["LOPIVI-34", "LOPIVI-35"]}
+{"pregunta": "han pasado fotos mías desnuda por el grupo de clase, eso es ilegal", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOHIP-7", "LOPJM-4"]}
+{"pregunta": "pueden subir fotos mías a internet sin mi permiso", "perfil": {"edad": 14, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPJM-4", "LOHIP-3", "LOHIP-7"]}
+{"pregunta": "puedo pedir que borren una foto mía de una red social", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPDGDD-94", "RGPD-17"]}
+{"pregunta": "a partir de qué edad puedo aceptar yo solo que usen mis datos en una app", "perfil": {"edad": 13, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPDGDD-7", "RGPD-8"]}
+{"pregunta": "mi nombre o mi cara pueden salir en las noticias por el juicio", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LOPJM-4", "LORPM-35"]}
