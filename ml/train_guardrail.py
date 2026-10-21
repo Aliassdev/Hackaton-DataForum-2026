@@ -28,7 +28,7 @@ from app.agent.clasificador import CLASES, decidir  # noqa: E402
 
 SEMILLA = 42
 ENCODER = "intfloat/multilingual-e5-base"
-BASE_FINETUNE = "PlanTL-GOB-ES/roberta-base-bne"
+BASE_FINETUNE = "dccuchile/bert-base-spanish-wwm-cased"  # BETO (RoBERTa-BNE está retirado de Hugging Face)
 
 
 def cargar(ruta: Path) -> tuple[list[str], list[str]]:

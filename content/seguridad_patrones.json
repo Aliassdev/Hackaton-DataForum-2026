@@ -6,7 +6,7 @@
     {"id": "deseo_morir", "patron": "\\b(quiero|qiero|kiero|quisiera|ganas de|pienso en|pensando en|pensado en|voy a|prefiero) (morir|morirme|matarme|tirarme|desaparecer|dejar de existir|acabar con todo|cortarme|hacerme dano)\\b(?! de (risa|verguenza|nervios|asco|ganas|miedo))"},
     {"id": "morirme", "patron": "\\bmorirme\\b(?! de (risa|verguenza|nervios|asco|ganas|miedo))"},
     {"id": "matarme", "patron": "\\b(matarme|me mato)\\b(?! a (estudiar|trabajar|entrenar))"},
-    {"id": "no_vivir", "patron": "no quiero (seguir )?vivir"},
+    {"id": "no_vivir", "patron": "no quiero (seguir )?viv(ir|iendo)"},
     {"id": "acabar_todo", "patron": "(acabar|terminar) con todo|quiero que todo acabe"},
     {"id": "autolesion", "patron": "autolesion|\\b(hacerme|me hago|me hice|me he hecho) dano"},
     {"id": "cortarse", "patron": "\\b(me corto|cortarme|me he cortado)\\b(?! (el pelo|las unas|el flequillo))"},

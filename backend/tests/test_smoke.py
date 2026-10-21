@@ -2,9 +2,10 @@ import json
 
 from fastapi.testclient import TestClient
 
+from app.config import settings
 from app.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers={"Authorization": f"Bearer {settings.custom_llm_secret}"})
 
 
 def test_health():
