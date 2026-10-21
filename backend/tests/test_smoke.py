@@ -34,3 +34,13 @@ def test_chat_completions_stream_formato_openai():
     assert chunks[-1]["choices"][0]["finish_reason"] == "stop"
     texto = "".join(c["choices"][0]["delta"].get("content", "") for c in chunks)
     assert "TuTurno" in texto
+
+
+def test_crisis_responde_plantilla_sin_llm():
+    resp = client.post("/v1/chat/completions", json={"messages": [{"role": "user", "content": "quiero morirme"}]})
+    texto = "".join(
+        json.loads(l.removeprefix("data: "))["choices"][0]["delta"].get("content", "")
+        for l in resp.text.split("\n\n")
+        if l.startswith("data: {")
+    )
+    assert "ANAR" in texto

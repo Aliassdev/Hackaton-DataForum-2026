@@ -1,13 +1,21 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
 
 def _bool(name: str, default: bool = False) -> bool:
     return os.getenv(name, str(default)).strip().lower() in ("1", "true", "yes")
+
+
+def _ruta(name: str, default: str) -> Path:
+    """Rutas relativas a backend/, para que no dependan del directorio desde el que se arranca."""
+    return (BACKEND_DIR / os.getenv(name, default)).resolve()
 
 
 @dataclass(frozen=True)
@@ -19,6 +27,10 @@ class Settings:
         o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",") if o.strip()
     )
     debug_llm_requests: bool = _bool("DEBUG_LLM_REQUESTS")
+    content_dir: Path = _ruta("CONTENT_DIR", "../content")
+    guardrail_modelo_dir: Path = _ruta("GUARDRAIL_MODELO_DIR", "../artifacts/models/guardrail")
+    guardrail_umbral_crisis: float = float(os.getenv("GUARDRAIL_UMBRAL_CRISIS", "0.30"))
+    guardrail_umbral_otros: float = float(os.getenv("GUARDRAIL_UMBRAL_OTROS", "0.50"))
 
 
 settings = Settings()

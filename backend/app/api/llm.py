@@ -3,9 +3,8 @@
 En el agente de ElevenLabs se configura la URL del servidor como https://<túnel>/v1
 y ElevenLabs llama a /v1/chat/completions con stream=true.
 
-De momento devuelve una respuesta fija: sirve para probar la conexión de punta a punta
-y ver qué nos llega (dynamic variables, extra body). Aquí irá el orquestador
-(seguridad → datos personales → RAG → LLM → verificación).
+Flujo: guardrail (capa 1) → si no es "normal", plantilla fija sin LLM.
+Pendiente: datos personales → RAG → LLM → verificación (de momento, respuesta fija).
 """
 
 import json
@@ -18,6 +17,7 @@ from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
+from app.agent.safety import get_guardrail, plantilla
 from app.config import settings
 
 router = APIRouter()
@@ -90,9 +90,24 @@ def _stream(texto: str) -> Iterator[str]:
     yield "data: [DONE]\n\n"
 
 
+def _ultimo_mensaje_usuario(req: ChatRequest) -> str:
+    for m in reversed(req.messages):
+        if m.role == "user":
+            if isinstance(m.content, list):  # formato por partes: [{"type": "text", "text": ...}]
+                return " ".join(p.get("text", "") for p in m.content if isinstance(p, dict))
+            return m.content or ""
+    return ""
+
+
 @router.post("/v1/chat/completions")
 def chat_completions(req: ChatRequest, authorization: str | None = Header(default=None)):
     _comprobar_secreto(authorization)
     if settings.debug_llm_requests:
         _registrar_estructura(req)
+
+    decision = get_guardrail().evaluar(_ultimo_mensaje_usuario(req))
+    log.info("Guardrail: %s (origen=%s, regla=%s, %.0f ms)", decision.categoria, decision.origen, decision.regla, decision.ms)
+    if decision.categoria != "normal":
+        return StreamingResponse(_stream(plantilla(decision.categoria)), media_type="text/event-stream")
+
     return StreamingResponse(_stream(RESPUESTA_FIJA), media_type="text/event-stream")

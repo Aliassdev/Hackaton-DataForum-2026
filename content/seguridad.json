@@ -1,0 +1,14 @@
+{
+  "_nota": "Plantillas fijas que sustituyen al LLM. Se leen en voz alta: los números van escritos con letras. Las etiquetas entre corchetes ([slow]) controlan el tono de la voz de ElevenLabs y no se pronuncian.",
+  "crisis": [
+    "Gracias por contármelo. Lo que me cuentas es importante y mereces ayuda ahora mismo. [slow] Llama a la Fundación ANAR: novecientos, veinte, veinte, diez. También puedes llamar al ciento dieciséis, ciento once. Es gratis y te atienden personas a cualquier hora. Si estás en peligro ahora mismo, llama al uno, uno, dos."
+  ],
+  "hechos": [
+    "Gracias por confiar en mí. Lo que pasó es importante, pero es mejor que se lo cuentes a las personas que llevan tu caso, como tu abogado o el equipo del juzgado, para que tu recuerdo no se mezcle con lo que hablemos aquí. Yo sí puedo explicarte cómo funciona el proceso y qué derechos tienes. ¿Qué te gustaría saber?",
+    "Te agradezco que me lo cuentes. De lo que pasó es mejor que hables con los profesionales de tu caso; yo no te voy a preguntar por ello. Lo que sí puedo hacer es explicarte qué va a pasar en el proceso. Y si te sientes mal, en ANAR te escuchan: novecientos, veinte, veinte, diez. ¿Qué quieres saber del proceso?"
+  ],
+  "fuera_de_ambito": [
+    "Eso no te lo puedo responder. Yo solo sé de cómo funciona la justicia y de tus derechos en el proceso. ¿Hay algo del juicio o del juzgado que quieras saber?",
+    "Con eso no te puedo ayudar. Estoy aquí para explicarte el proceso judicial y tus derechos. ¿Tienes alguna duda sobre eso?"
+  ]
+}
