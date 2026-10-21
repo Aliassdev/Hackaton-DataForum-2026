@@ -48,7 +48,7 @@ El reto pide «una solución tecnológica que acompañe a niños y adolescentes 
 | Explicación adaptada del lenguaje técnico jurídico | Pregunta, Glosario y términos subrayados |
 | Orientación inicial | Pregunta: respuestas con fuentes |
 | Simulación de entrevistas | Vive el caso: la entrevista de Lucía en la Sala Gesell |
-| Adaptación según edad | Lenguaje que entiende alguien de 11 años; el agente explica las opciones cuando la respuesta depende de la edad (3.4) |
+| Adaptación según edad | El formulario de entrada pregunta la edad (opcional) y el agente adapta el lenguaje; todo se escribe para que lo entienda alguien de 11 años (3.4) |
 | Derivación a recursos | Botón de Ayuda: ANAR, 116 111, 112, 017, 016 y Canal prioritario de la AEPD |
 | Canales seguros de comunicación | Sin cuentas ni datos guardados; deriva a canales oficiales y confidenciales |
 | Apoyo a profesionales | Fuera del MVP. Siguiente paso: «Mis preguntas para el profesional» (3.3) y panel agregado (10.9) |
@@ -138,7 +138,7 @@ Los menores apenas tienen herramientas para entender y ejercer sus derechos ante
 - Despliegue web con QR y modo demo.
 
 ### 3.2 No entra (decidido)
-- Pregunta de edad y contenidos específicos para menores de 11.
+- Contenidos específicos para menores de 11. (La edad sí se pregunta, de forma opcional, en el formulario de entrada de Pregunta: 8.6.)
 - Cuentas de usuario, portal para profesionales, conexión con juzgados (el reto pide comunicación con profesionales: ver 3.3, punto 1).
 - Guardar conversaciones, detectar abusos o analizar emociones.
 
@@ -268,7 +268,7 @@ flowchart LR
 |---|---|---|
 | Audio del usuario | Lo procesa el reconocimiento de voz del sistema; TuTurno no lo guarda. No va a ElevenLabs: la sesión lleva el micrófono silenciado y solo se envía texto | Puede salir: el reconocedor de Android y el de Chrome pueden enviarlo a los servidores de Google. En el pitch, decid «no guardamos el audio», no «el audio no sale del móvil» (6.5) |
 | Texto de la pregunta | Va a ElevenLabs y de ahí a nuestro backend (Custom LLM); nuestro backend no lo guarda | Sí, limpio de datos personales en el backend. ElevenLabs guarda transcripciones 2 años por defecto: retención a 0 días (13) |
-| Formulario de entrada (franja de edad, procedimiento, papel, fase) | Dispositivo; viaja como variables de la sesión del agente (8.6) | Sí, pero solo como franjas y categorías; nunca texto libre ni nombre |
+| Formulario de entrada (edad, procedimiento, papel, fase) | Dispositivo; viaja como variables de la sesión del agente (8.6) | Sí, pero solo la edad y categorías; nunca texto libre ni nombre |
 | Progreso, XP, dominio | Dispositivo (`shared_preferences`) | No |
 | Sentencias de la organización | Portátil de B (`data/`) | Solo si los mentores lo autorizan |
 | Contenido validado | Repo (`content/`) y app | Es público |
@@ -327,7 +327,7 @@ app/lib/
 - `progresoProvider`: XP, racha, lecciones completadas y cartas de derecho.
 - `dominioProvider`: probabilidad de dominio por concepto (BKT, sección 10.6).
 - `chatProvider`: mensajes de la sesión (el texto que llega por `onMessage` del agente), solo en memoria.
-- `entradaProvider`: respuestas del formulario de entrada (franja de edad, procedimiento, papel y fase), que se pasan como variables de la sesión y alimentan Mi situación.
+- `entradaProvider`: respuestas del formulario de entrada (edad, procedimiento, papel y fase), que se pasan como variables de la sesión y alimentan Mi situación.
 - `ajustesProvider`: tamaño de texto, velocidad de voz, voz activada o no.
 
 ### 6.5 Voz
@@ -505,21 +505,18 @@ Respuesta:
 {"error": {"codigo": "LLM_NO_DISPONIBLE", "mensaje": "No he podido responder ahora. Prueba otra vez o pulsa Ayuda."}}
 ```
 
-### 8.5 `GET /api/session/token` (fase 1)
-Respuesta:
-```json
-{"token": "<conversation token de ElevenLabs>"}
-```
-- El backend pide el token a ElevenLabs con su API key, que nunca sale del backend.
-- La app inicia la sesión con `startSession(conversationToken: token, dynamicVariables: {...})`.
-- Nota para B: el SDK de Flutter usa WebRTC y necesita este *conversation token*. La *signed URL* es para el SDK de React (WebSocket).
+### 8.5 Sesión con el agente (fase 1)
+- **Lo que hay en el backend de B:** `GET /api/session/signed-url` → `{"signed_url": "..."}`. Sirve para el SDK de React (WebSocket).
+- **Cómo se conecta la app Flutter ahora:** el SDK usa WebRTC. La app inicia la sesión con el `agent_id` (`startSession(agentId: ..., dynamicVariables: {...})`), y el propio SDK pide el token a ElevenLabs. Solo funciona si el agente es **público**, que es como lo crea `backend/scripts/setup_agent.py`.
+- **De dónde saca la app el `agent_id`:** de `app/env/dev.json` (`AGENT_ID`, fuera de git) o de Ajustes, sin recompilar.
+- **Si el agente se hace privado:** hace falta añadir al backend `GET /api/session/token` → `{"token": "<conversation token>"}`. El backend lo pide a `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=...` con su API key, y la app usa `startSession(conversationToken: token, ...)`.
 
 ### 8.6 Variables de la sesión (`dynamicVariables`, fase 1)
-Salen del formulario de entrada de la app. El prompt del agente las usa como `{{franja_edad}}`, `{{procedimiento}}`, etc. Los nombres y los valores se cierran con B.
+Salen del formulario de entrada de la app. Los nombres son los del prompt del agente de B (`backend/scripts/setup_agent.py`): `{{edad}}`, `{{procedimiento}}`, `{{rol}}` y `{{fase}}`. Van siempre las cuatro, porque ElevenLabs exige todas las variables del prompt; lo no respondido va como `"no_lo_se"`. La app manda las mismas en `customLlmExtraBody`, que llega al Custom LLM como `elevenlabs_extra_body`: así el backend puede filtrar el RAG por papel.
 ```json
-{"franja_edad": "11-13", "procedimiento": "penal", "rol": "victima", "fase": "antes"}
+{"edad": "11", "procedimiento": "penal", "rol": "victima", "fase": "antes"}
 ```
-- `franja_edad`: `"11-13"`, `"14-15"` o `"16-17"`. Lucía, el caso oficial, tiene 11 años.
+- `edad`: de `"11"` a `"17"`, o `"no_lo_se"`. Lucía, el caso oficial, tiene 11 años: el prompt del agente debería decir «de 11 a 17».
 - `procedimiento`: `"penal"`, `"familia"`, `"proteccion"` o `"no_lo_se"`.
 - `rol`: `"victima"`, `"testigo"`, `"investigado"` (solo a partir de 14 años y en penal), `"escuchado_familia"` o `"no_lo_se"`.
 - `fase`: `"antes"`, `"durante"` o `"despues"`.
@@ -527,7 +524,8 @@ Salen del formulario de entrada de la app. El prompt del agente las usa como `{{
 ### 8.7 `POST /v1/chat/completions` (Custom LLM, fase 1)
 - Lo llama **ElevenLabs**, no la app.
 - **Formato:** Chat Completions de OpenAI con `stream: true`. La respuesta es `text/event-stream`, en trozos `data: {...}`, y termina con `data: [DONE]`. ElevenLabs exige streaming.
-- **Campo extra:** ElevenLabs añade `elevenlabs_extra_body`, que se ignora.
+- **Campo extra:** `elevenlabs_extra_body` trae las variables de la sesión que manda la app (8.6).
+- **Voz:** el texto se lee en voz alta, así que en la fase 1 no debe llevar los ids de las fuentes (`[A-017]`); el backend los quita antes de enviarlo. En la fase 2 las fuentes van por `mostrar_fuentes` (8.8).
 - **Autenticación:** ElevenLabs envía como secreto la clave configurada en el agente, y el backend la comprueba (`CUSTOM_LLM_API_KEY`).
 - **Dentro va el orquestador de 10.1.** Para verificar antes de hablar, el backend:
   1. genera la respuesta completa;
@@ -786,7 +784,7 @@ def rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
 `backend/app/agent/prompts/system.md`:
 ```
 Eres TuTurno, una inteligencia artificial que ayuda a chicos y chicas de 11 a 17 años a entender sus derechos y cómo funciona la justicia en España.
-Quien te habla tiene {{franja_edad}} años, está en un procedimiento {{procedimiento}} como {{rol}} y en la fase {{fase}}. Adapta el lenguaje a su edad. Si un dato es «no_lo_se», no lo des por hecho.
+Quien te habla tiene {{edad}} años, está en un procedimiento {{procedimiento}} como {{rol}} y en la fase {{fase}}. Adapta el lenguaje a su edad. Si un dato es «no_lo_se», no lo des por hecho.
 
 Normas:
 1. Eres una IA. Si te preguntan quién eres, dilo claramente.
@@ -946,7 +944,7 @@ Notas para la ingesta:
 - **Menores de 14.** Minimizamos datos para reducir obligaciones. En producción habría que definir la base jurídica del tratamiento; si fuera el consentimiento, por debajo de 14 años lo darían los padres (LOPDGDD, art. 7).
 - **No es asesoramiento jurídico.** TuTurno informa y deriva a profesionales.
 - **ElevenLabs (fase 1):**
-  - **Qué recibe:** el texto de las preguntas y las variables de la sesión (franjas y categorías, nunca texto libre); no recibe el audio del menor.
+  - **Qué recibe:** el texto de las preguntas y las variables de la sesión (edad y categorías, nunca texto libre); no recibe el audio del menor.
   - **Retención:** por defecto guarda transcripciones y audio 2 años. Hay que poner la retención del agente a 0 días en Advanced → Data Retention, para transcripciones y audio; el borrado es programado, no inmediato. El modo sin retención total es solo para planes de empresa.
   - **Textos de la app:** con esa configuración se puede decir «lo que hablamos se borra», pero nunca «nadie lo verá jamás».
   - **El dato más sensible:** que alguien es «investigado». Se envía solo como categoría y no se guarda en el backend.
@@ -1296,4 +1294,4 @@ App para chicos y chicas de 11 a 17 años (DATAthon DATAfórum Justicia 2026, re
 | **SSE** | *Server-Sent Events*: el servidor envía la respuesta en trozos por una conexión abierta (streaming) |
 | **WebRTC** | Tecnología para audio en tiempo real; la usa el SDK de Flutter de ElevenLabs |
 | **Client tools** | Funciones de la app que el agente de voz puede llamar, por ejemplo para enseñar las fuentes en pantalla |
-| **Variables de sesión** | Datos que la app pasa al agente al empezar (franja de edad, papel…) y que el prompt usa |
+| **Variables de sesión** | Datos que la app pasa al agente al empezar (edad, papel…) y que el prompt usa |
