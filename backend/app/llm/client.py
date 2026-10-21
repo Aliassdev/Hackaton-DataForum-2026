@@ -50,8 +50,11 @@ def _cuerpo(mensajes: list[dict], modelo: str, max_tokens: int, temperatura: flo
     return cuerpo
 
 
-def completar(mensajes: list[dict], modelo: str, max_tokens: int = 250, temperatura: float = 0.0) -> str:
-    return (_post(_cuerpo(mensajes, modelo, max_tokens, temperatura)).json()["choices"][0]["message"]["content"] or "").strip()
+def completar(mensajes: list[dict], modelo: str, max_tokens: int = 250, temperatura: float = 0.0, json_obj: bool = False) -> str:
+    cuerpo = _cuerpo(mensajes, modelo, max_tokens, temperatura)
+    if json_obj:
+        cuerpo["response_format"] = {"type": "json_object"}
+    return (_post(cuerpo).json()["choices"][0]["message"]["content"] or "").strip()
 
 
 def stream(mensajes: list[dict], modelo: str, max_tokens: int = 600, temperatura: float = 0.3) -> Iterator[str]:

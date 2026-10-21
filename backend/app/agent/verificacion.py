@@ -1,0 +1,105 @@
+"""Capa 4: verificación frase a frase de la respuesta del LLM antes de que llegue a la voz.
+
+El texto se acumula hasta completar una frase; cada frase se revisa:
+1. Patrones prohibidos (límites del agente): preguntar por los hechos, prometer secreto absoluto,
+   predecir el resultado del caso. La frase se elimina y, si procede, se sustituye por una segura.
+2. Formato para voz: sin markdown y con los números escritos con letras.
+3. Longitud máxima.
+"""
+
+import logging
+import re
+from collections.abc import Iterable, Iterator
+
+log = logging.getLogger("tuturno.verificacion")
+
+MAX_PALABRAS = 110
+FIN_FRASE = re.compile(r"(?<=[.!?…])\s+|\n+")
+
+PROHIBIDOS = {
+    "pregunta_hechos": (
+        re.compile(
+            r"(qu[ée]|c[óo]mo) (te )?(pas[óo]|ha pasado|te hizo|te hicieron|ocurri[óo])"
+            r"|cu[ée]ntame (lo que|qu[ée]|c[óo]mo) (pas[óo]|te hizo|ocurri[óo])"
+            r"|(dime|cu[ée]ntame|expl[íi]came) (m[áa]s )?(detalles|lo que pas[óo]|qui[ée]n fue)",
+            re.I,
+        ),
+        None,  # se elimina sin sustituir: nunca se pregunta por los hechos
+    ),
+    "secreto_absoluto": (
+        re.compile(
+            r"nadie (se )?(va a )?(enterar[áa]?|sabr[áa])|(es|ser[áa]) (totalmente |completamente |siempre )?(secreto|confidencial)"
+            r"|no se lo (dir[ée]|contar[ée]) a nadie|quedar[áa] entre (t[úu] y yo|nosotros)|te prometo que nadie",
+            re.I,
+        ),
+        "Lo que hablamos es privado, pero si hay un peligro, los adultos que te protegen tienen que actuar.",
+    ),
+    "prediccion": (
+        re.compile(
+            r"(seguro que|te aseguro que|te garantizo) .*(ganar|perder|condena|c[áa]rcel|absuelv|culpable)"
+            r"|vas a ganar|vas a perder|(le|te) van a condenar|no te va a pasar nada|ir[áa]s? a la c[áa]rcel|saldr[áa]s? absuelt",
+            re.I,
+        ),
+        "Lo que pase en cada caso depende de muchas cosas; tu abogado te lo puede explicar mejor.",
+    ),
+}
+
+UNIDADES = "cero uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince dieciséis diecisiete dieciocho diecinueve veinte veintiuno veintidós veintitrés veinticuatro veinticinco veintiséis veintisiete veintiocho veintinueve".split()
+DECENAS = {3: "treinta", 4: "cuarenta", 5: "cincuenta", 6: "sesenta", 7: "setenta", 8: "ochenta", 9: "noventa"}
+CENTENAS = {1: "ciento", 2: "doscientos", 3: "trescientos", 4: "cuatrocientos", 5: "quinientos", 6: "seiscientos", 7: "setecientos", 8: "ochocientos", 9: "novecientos"}
+
+
+def numero_a_letras(n: int) -> str:
+    if n < 30:
+        return UNIDADES[n]
+    if n < 100:
+        d, u = divmod(n, 10)
+        return DECENAS[d] + (f" y {UNIDADES[u]}" if u else "")
+    if n == 100:
+        return "cien"
+    if n < 1000:
+        c, r = divmod(n, 100)
+        return CENTENAS[c] + (f" {numero_a_letras(r)}" if r else "")
+    if n < 1_000_000:
+        m, r = divmod(n, 1000)
+        return ("mil" if m == 1 else f"{numero_a_letras(m)} mil") + (f" {numero_a_letras(r)}" if r else "")
+    return str(n)
+
+
+def para_voz(frase: str) -> str:
+    frase = re.sub(r"[*_#`>]+|^\s*[-•]\s*", "", frase)  # markdown y viñetas
+    return re.sub(r"\d+", lambda m: numero_a_letras(int(m.group())), frase)
+
+
+def revisar(frase: str) -> tuple[str | None, str | None]:
+    """Devuelve (frase final o None si se elimina, motivo o None)."""
+    for motivo, (patron, sustituta) in PROHIBIDOS.items():
+        if patron.search(frase):
+            return sustituta, motivo
+    return para_voz(frase), None
+
+
+def verificar_stream(trozos: Iterable[str]) -> Iterator[str]:
+    buffer, palabras, sustituidas = "", 0, set()
+
+    def emitir(frase: str) -> Iterator[str]:
+        nonlocal palabras
+        final, motivo = revisar(frase.strip())
+        if motivo:
+            log.warning("Verificación: frase eliminada (%s)", motivo)
+            if final is None or motivo in sustituidas:
+                return
+            sustituidas.add(motivo)
+        if final and palabras < MAX_PALABRAS:
+            palabras += len(final.split())
+            yield final + " "
+
+    for trozo in trozos:
+        buffer += trozo
+        partes = FIN_FRASE.split(buffer)
+        for frase in partes[:-1]:
+            if frase.strip():
+                yield from emitir(frase)
+        buffer = partes[-1]
+    if buffer.strip():
+        yield from emitir(buffer)

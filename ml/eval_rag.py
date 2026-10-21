@@ -72,7 +72,7 @@ def main():
             "mrr@10": statistics.mean(rrs), "ms_mediana": statistics.median(ms), "fallos": fallos,
         }
 
-    print(f"\nRAG sobre {len(golden)} preguntas de referencia · {len(rec.trozos)} fragmentos de 9 normas\n")
+    print(f"\nRAG sobre {len(golden)} preguntas de referencia · {len(rec.trozos)} fragmentos de {len({t['ley'] for t in rec.trozos})} normas\n")
     print(f"{'modo':<16}{'Acierto@5':>11}{'Recall@5':>10}{'MRR@10':>9}{'ms':>7}")
     for modo, r in resultados.items():
         print(f"{modo:<16}{r['acierto@5']:>11.3f}{r['recall@5']:>10.3f}{r['mrr@10']:>9.3f}{r['ms_mediana']:>7.0f}")

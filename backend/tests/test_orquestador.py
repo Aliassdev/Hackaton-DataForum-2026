@@ -30,7 +30,7 @@ def test_responder_no_envia_datos_personales_ni_prompt_de_elevenlabs(monkeypatch
 
     monkeypatch.setattr(orquestador.client, "completar", lambda *a, **k: "obligación de comparecer del testigo")
     monkeypatch.setattr(orquestador.client, "stream", falso_stream)
-    respuesta = "".join(orquestador.responder(MENSAJES, PERFIL))
+    respuesta = "".join(orquestador.responder(MENSAJES, PERFIL)).strip()
 
     assert respuesta == "Sí, tienes que ir."
     contenido = " ".join(m["content"] for m in enviado["mensajes"])

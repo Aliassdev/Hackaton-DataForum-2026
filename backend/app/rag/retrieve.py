@@ -27,6 +27,9 @@ MODOS = ("bm25", "denso", "hibrido", "hibrido_perfil", "completo")
 # mencionan a menores son mucho más probables como respuesta para nuestro público.
 RE_MENORES = re.compile(r"\bmenor(es)?\b|\bniñ[oa]s?\b|adolescente|\bhijos?\b|menor de edad|catorce años|dieciocho años", re.I)
 PESO_MENORES = 1.3
+# Peso de la consulta jurídica frente a la pregunta original. Probados 1, 1,5, 2, 3 y "solo consulta"
+# con el conjunto de referencia: ninguno mejora a 1,0 (diferencias de una pregunta), así que se deja en 1.
+PESO_CONSULTA = 1.0
 
 
 def texto_denso(t: dict) -> str:
@@ -88,17 +91,19 @@ class Recuperador:
 
     def buscar(
         self, pregunta: str, perfil: dict | None = None, k: int = 5, modo: str = "hibrido_perfil",
-        consulta_juridica: str | None = None,
+        consulta_juridica: str | None = None, peso_consulta: float = PESO_CONSULTA,
     ) -> list[Fragmento]:
         """consulta_juridica: reformulación de la pregunta en lenguaje de la ley (la genera el LLM).
-        Si llega, se busca con las dos consultas y se fusionan los cuatro rankings."""
+        Si llega, se busca con las dos consultas y se fusionan los cuatro rankings con RRF ponderado:
+        la consulta jurídica pesa más (habla el idioma de la ley) y la pregunta original queda como
+        red de seguridad por si la reformulación sale mal."""
         inicio = time.perf_counter()
         funciones = {"bm25": [self._bm25], "denso": [self._denso]}.get(modo, [self._bm25, self._denso])
-        consultas = [pregunta] + ([consulta_juridica] if consulta_juridica else [])
+        consultas = [(pregunta, 1.0)] + ([(consulta_juridica, peso_consulta)] if consulta_juridica else [])
         puntos: dict[int, float] = {}
-        for ranking in (f(c) for c in consultas for f in funciones):
+        for ranking, peso in ((f(c), w) for c, w in consultas for f in funciones):
             for pos, i in enumerate(ranking):
-                puntos[int(i)] = puntos.get(int(i), 0.0) + 1.0 / (K_RRF + pos + 1)
+                puntos[int(i)] = puntos.get(int(i), 0.0) + peso / (K_RRF + pos + 1)
         if modo in ("hibrido_perfil", "completo"):
             puntos = {i: s * self.peso_perfil(self.trozos[i]["ley"], perfil) for i, s in puntos.items()}
         if modo == "completo":

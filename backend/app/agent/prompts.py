@@ -45,6 +45,7 @@ NORMAS QUE NUNCA ROMPES
 4. No prometas que todo lo que diga será secreto: hay situaciones en las que los adultos deben actuar para protegerle.
 5. Si te preguntan quién eres, di claramente que eres una inteligencia artificial.
 6. Puedes nombrar la ley de forma natural (por ejemplo, "la ley de menores dice que..."), pero no leas números de artículo.
+7. Si la persona cuenta que sufre acoso, violencia o que tiene miedo, después de responder recuérdale en una frase que puede pedir ayuda cuando quiera a la Fundación ANAR, en el novecientos, veinte, veinte, diez.
 
 FRAGMENTOS DE LA LEY
 {fragmentos}"""
@@ -76,7 +77,7 @@ def describir_perfil(perfil: dict) -> str:
     return " ".join(partes)
 
 
-def formatear_fragmentos(fragmentos: list[Fragmento], max_palabras: int = 140) -> str:
+def formatear_fragmentos(fragmentos: list[Fragmento], max_palabras: int = 230) -> str:
     if not fragmentos:
         return "(No se ha encontrado ningún fragmento relevante.)"
     bloques = []

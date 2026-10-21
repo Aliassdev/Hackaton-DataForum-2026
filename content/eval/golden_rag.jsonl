@@ -26,8 +26,8 @@
 {"pregunta": "cómo puedo contar que me están haciendo daño si no quiero que se entere mi familia", "perfil": {"edad": 13, "procedimiento": "proteccion", "rol": "victima"}, "relevantes": ["LOPIVI-17"]}
 {"pregunta": "qué pasa si mis padres no me cuidan bien", "perfil": {"edad": 12, "procedimiento": "proteccion", "rol": "victima"}, "relevantes": ["LOPJM-17", "LOPJM-18"]}
 {"pregunta": "me acosan en el instituto, qué tiene que hacer el colegio", "perfil": {"edad": 13, "procedimiento": "proteccion", "rol": "victima"}, "relevantes": ["LOPIVI-34", "LOPIVI-35"]}
-{"pregunta": "han pasado fotos mías desnuda por el grupo de clase, eso es ilegal", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOHIP-7", "LOPJM-4"]}
-{"pregunta": "pueden subir fotos mías a internet sin mi permiso", "perfil": {"edad": 14, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPJM-4", "LOHIP-3", "LOHIP-7"]}
+{"pregunta": "han pasado fotos mías desnuda por el grupo de clase, eso es ilegal", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOHIP-7", "LOPJM-4", "CP-197"]}
+{"pregunta": "pueden subir fotos mías a internet sin mi permiso", "perfil": {"edad": 14, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPJM-4", "LOHIP-3", "LOHIP-7", "CP-197"]}
 {"pregunta": "puedo pedir que borren una foto mía de una red social", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPDGDD-94", "RGPD-17"]}
 {"pregunta": "a partir de qué edad puedo aceptar yo solo que usen mis datos en una app", "perfil": {"edad": 13, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPDGDD-7", "RGPD-8"]}
 {"pregunta": "mi nombre o mi cara pueden salir en las noticias por el juicio", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LOPJM-4", "LORPM-35"]}
