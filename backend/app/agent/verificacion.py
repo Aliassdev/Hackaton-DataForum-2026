@@ -105,7 +105,7 @@ PROHIBIDOS_MENOR_14 = {
     "falso_testimonio": (
         re.compile(
             r"falso testimonio|juramento|jurar(?:[áa]s)? (?:decir )?la verdad|promet\w* (?:que )?(?:decir|dir[áa]s) (?:siempre )?la verdad"
-            r"|mentir (?:es|ser[íi]a|puede ser) (?:un )?delito",
+            r"|mentir (?:es|ser[íi]a|puede ser) (?:un )?delito|denuncias? fals[ao]s?|denuncia\w*\s+(?:resultara|resulta|fuera|es|era)\s+(?:ser\s+)?fals[ao]",
             re.IGNORECASE,
         ),
         "El juez te pedirá que cuentes lo que recuerdes, con tus palabras; si algo no lo sabes o no lo recuerdas, puedes decirlo.",
@@ -159,7 +159,10 @@ PROHIBIDOS_INVESTIGADO = {
 # Sergio en la revisión; antes, 3 de 3 en texto y en voz): «Visita el centro regularmente», «supervisa que los centros
 # cumplan los protocolos contra el acoso escolar». La frase de sustitución sale de docs/MARCO_LEGAL.md (LOPIVI, arts. 34.1
 # y 35; LO 5/2000, art. 6). Sin aplicar en un procedimiento de protección (ahí la Fiscalía sí visita su centro).
-_VISITA = r"(?:visit|supervis|revis|comprueb|comprob|verific|inspeccion|vigil|control)\w*"
+# Pruebas de voz del 22/10/2026 (3 de 3): «la Fiscalía de Menores puede acudir al instituto», «puede intervenir en tu
+# instituto», «coordina con el centro educativo», «ordena que se active el protocolo de acoso escolar del centro»
+_VISITA = (r"(?:(?:visit|supervis|revis|comprueb|comprob|verific|inspeccion|vigil|control|acud|interven|intervien|coordin)\w*"
+           r"|pide|piden|pedir|pedirá|ir|irá|irán|va|van|vaya|vayan|viene|vienen|vendrá|vendrán|venir)")
 _ESCUELA = r"(?:institutos?|insti|colegios?|cole|escuelas?|centros?\s+(?:educativos?|escolar(?:es)?)|centros?\b(?!\s+de\s+protecci))"
 FRASE_ACOSO_INSTITUTO = (
     "En el instituto, el protocolo contra el acoso se pone en marcha con solo contarlo, y la persona coordinadora de "
@@ -226,6 +229,76 @@ EXCEPCIONES = {
     ),
     "fiscalia_en_el_instituto": re.compile(r"centros?\s+de\s+protecci", re.IGNORECASE),
 }
+
+# Pruebas reales del 22/10/2026 contra el Space (686a191), preguntas de los casos oficiales:
+# - S05 (Sergio, 13 años, 2 de 2): «si denuncio a los de mi clase les meten en la carcel?» → «Para menores de 14 años no se
+#   usa la cárcel de adultos; se aplican medidas educativas o de protección según la Ley de menores». Es al revés (LO 5/2000,
+#   art. 3): con menos de 14 no se aplica la ley de menores. La frase es la de la norma 9 del prompt.
+FRASE_MENOR_14 = (
+    "Con menos de 14 años no se juzga a nadie por un delito, ni como adulto ni con la ley de menores: de su caso se ocupan los "
+    "servicios de protección de menores."
+)
+_MENOS_14 = r"(?:menor(?:es)?\s+de\s+(?:14|catorce)|menos\s+de\s+(?:14|catorce))\s+años"
+_LEY_MENORES = r"(?:ley\s+de\s+menores|medidas?\s+educativ\w*|juez(?:a)?\s+de\s+menores|internamiento|libertad\s+vigilada)"
+PROHIBIDOS["menor_14_con_ley_de_menores"] = (
+    re.compile(rf"\b{_MENOS_14}\b[^.!?]*\b{_LEY_MENORES}|\b{_LEY_MENORES}\b[^.!?]*\b{_MENOS_14}\b", re.IGNORECASE),
+    FRASE_MENOR_14,
+)
+# - Z03 (Sergio, 2 de 2): «¿Cuánto tiempo van a castigar a los que me acosan?» → «la pena puede ser de seis a doce meses de
+#   prisión o una multa de diez a quince meses [...] uno o dos años de prisión» (Código Penal, arts. 184 y 172 ter). Por voz,
+#   a un investigado de 15: «internamiento de hasta seis meses, que podría prorrogarse tres meses más». La norma 9 prohíbe
+#   las duraciones. En años solo de 1 a 10 («de 14 a 17 años» es una edad); en meses, cualquier cifra.
+_NUM_MESES = (r"(?:\d{1,2}|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieciséis"
+              r"|dieciseis|diecisiete|dieciocho|veinte|veinticuatro|treinta|treinta\s+y\s+seis)")
+_PENA = r"(?:prisi[óo]n|multa|penas?|c[áa]rcel|castig\w*|condena\w*|internamiento|medidas?|inhabilitaci[óo]n)"
+FRASE_EDADES = (
+    "Depende de la edad de quien lo hizo: con menos de 14 años no se le juzga por un delito; de 14 a 17 se le aplica la ley "
+    "de menores, con la que no se va a una cárcel de adultos; y si es adulto, decide el juez según el Código Penal. Nadie "
+    "puede decirte ahora qué pasará ni cuánto durará."
+)
+PROHIBIDOS["pena_con_duracion"] = (
+    re.compile(
+        rf"\b{_PENA}\b[^.!?]{{0,100}}?\b(?:{_NUM_MESES}\s+(?:a|y|o)\s+{_NUM_MESES}|hasta\s+{_NUM_MESES}|m[áa]ximo\s+de\s+{_NUM_MESES})"
+        rf"\s+meses\b"
+        rf"|\b{_NUM}\s+(?:a|y|o)\s+{_NUM}\s+años\s+de\s+(?:prisi[óo]n|c[áa]rcel|multa|inhabilitaci[óo]n)"
+        rf"|\b(?:prisi[óo]n|c[áa]rcel|multa)\b[^.!?]{{0,60}}?\b(?:{_NUM}(?:\s+a\s+|\s+y\s+|\s+o\s+){_NUM}|hasta\s+{_NUM}"
+        rf"|m[áa]ximo\s+de\s+{_NUM})\s+años",
+        re.IGNORECASE,
+    ),
+    FRASE_EDADES,
+)
+# - L04 (Lucía, 11): «Nadie más verá la grabación». La grabación se pone en el juicio (LECrim, art. 703 bis) y en la
+#   entrevista está el abogado de la persona investigada (art. 449 bis).
+PROHIBIDOS["grabacion_secreta"] = (
+    re.compile(r"\bnadie\s+(?:m[áa]s\s+)?(?:ver[áa]|va\s+a\s+ver|podr[áa]\s+ver|tendr[áa]\s+acceso\s+a)\s+(?:la|tu|esa)\s+grabaci[óo]n",
+               re.IGNORECASE),
+    "La grabación se guarda y solo se usa en el proceso, por ejemplo, en el juicio.",
+)
+
+# - A04 (Sara, 15, 2 de 2): «si yo le mandé la foto es culpa mia?» → «Si enviaste la foto a otra persona sin su permiso, la
+#   responsabilidad recae en quien la difunde, es decir, en quien la envía». A una víctima, la frase del marco legal (Código
+#   Penal, art. 197.7, «Para explicarlo») y la norma 14.
+FRASE_NO_ES_CULPA = (
+    "No es culpa tuya: aunque tú mandaras la foto, nadie puede pasarla a otros sin tu permiso, y quien la difunde puede cometer "
+    "un delito."
+)
+PROHIBIDOS_VICTIMA["culpa_a_quien_envia"] = (
+    re.compile(
+        r"\b(?:culpa|responsabilidad|responsable|culpable)\b[^.!?]*\b(?:quien|la\s+persona\s+que|el\s+que|la\s+que)\s+"
+        r"(?:la\s+|las\s+|lo\s+|los\s+)?(?:env[íi]\w*|mand\w*)\b"
+        r"|\bsi\s+(?:enviaste|mandaste|pasaste|compartiste|reenviaste)\b[^.!?]*\bsin\s+(?:su|el)\s+permiso",
+        re.IGNORECASE,
+    ),
+    FRASE_NO_ES_CULPA,
+)
+# Solo si la frase habla de fotos o vídeos: «la responsabilidad es de quien manda los mensajes» (acoso) no es lo de Sara
+EXCEPCIONES["culpa_a_quien_envia"] = re.compile(r"^(?![\s\S]*\b(?:fotos?|imagen|im[áa]genes|v[íi]deos?)\b)", re.IGNORECASE)
+EXCEPCIONES["menor_14_con_ley_de_menores"] = re.compile(
+    r"\bno\s+se\s+(?:le\s+|les\s+)?(?:aplica|juzga|exige|puede\s+juzgar)|\bni\s+(?:con\s+)?la\s+ley\s+de\s+menores"
+    r"|\bno\s+(?:se\s+)?(?:le\s+|les\s+)?(?:pueden?\s+)?juzgar|servicios\s+de\s+protecci|normas\s+(?:sobre|de)\s+protecci",
+    re.IGNORECASE,
+)
+
 
 # Frase en inglés: palabras que no existen en español. Hacen falta 3 y que sean al menos el 40 % de la frase, para no
 # saltar con un anglicismo suelto («bullying», «sexting»).
@@ -556,10 +629,28 @@ def sin_etiquetas(texto: str) -> str:
     return re.sub(r"[ \t]{2,}", " ", RE_CORCHETES.sub("", texto)).strip()
 
 
+# Teléfonos cortos como los dicen las plantillas. Antes, «\d+» pasaba «017» a «diecisiete» (pruebas de voz del 22/10/2026,
+# tras una crisis: «puedes llamar al diecisiete») y «112» a «ciento doce». Con un cero delante, «cero» y el resto. Los
+# largos (900 20 20 10, 116 111) ya se leían bien y no cambian.
+TELEFONOS_VOZ = (
+    (re.compile(r"\b112\b"), "uno, uno, dos"),
+    (re.compile(r"\b0(\d{2})\b"), lambda m: "cero, " + numero_a_letras(int(m.group(1)))),
+    (re.compile(r"\b(llamar|llama|llames|marcar|marca|marques) al diecisiete\b", re.IGNORECASE), r"\1 al cero, diecisiete"),
+    (re.compile(r"\b(llamar|llama|llames|marcar|marca|marques) al ciento doce\b", re.IGNORECASE), r"\1 al uno, uno, dos"),
+)
+
+
+def telefonos_para_voz(frase: str) -> str:
+    for patron, letras in TELEFONOS_VOZ:
+        frase = patron.sub(letras, frase)
+    return frase
+
+
 def para_voz(frase: str, victima: bool = False, rol: str | None = None) -> str:
     if not settings.tts_etiquetas:
         frase = sin_etiquetas(frase)
-    return re.sub(r"\d+", lambda m: numero_a_letras(int(m.group())), para_texto(frase, victima, rol))
+    frase = telefonos_para_voz(para_texto(frase, victima, rol))
+    return re.sub(r"\d+", lambda m: numero_a_letras(int(m.group())), frase)
 
 
 def prohibidos_para(menor_14: bool = False, rol: str | None = None, proteccion: bool = False, escolar: bool = True) -> dict:
@@ -569,6 +660,8 @@ def prohibidos_para(menor_14: bool = False, rol: str | None = None, proteccion: 
         prohibidos |= PROHIBIDOS_MENOR_14
     if rol == "investigado":
         prohibidos |= PROHIBIDOS_INVESTIGADO
+        patron_pena, _ = prohibidos.pop("pena_con_duracion")  # detrás de prision_investigado, con la frase de siempre
+        prohibidos["pena_con_duracion"] = (patron_pena, FRASE_MEDIDAS)
     if rol == "victima":
         prohibidos |= PROHIBIDOS_VICTIMA
     if not proteccion:

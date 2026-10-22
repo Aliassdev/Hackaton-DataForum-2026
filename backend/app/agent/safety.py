@@ -41,6 +41,62 @@ def sin_leet(norm: str) -> str:
     return RE_CIFRA_EN_PALABRA.sub(lambda m: m.group().translate(LEET), norm)
 
 
+# «Hechos» sin clasificador (22/10/2026). El Space va sin modelo, así que nada salía como «hechos»: «El que me insultaba era
+# mi compañero de mesa.» (el momento de seguridad de la demo, plan v2, 2.3) iba al LLM, que contestaba con lo que le iba
+# a pasar al compañero y con una orden de protección (3 de 3 contra el Space). Estas reglas cogen solo frases que
+# CUENTAN lo que pasó y no preguntan nada: con «?», «¿» o una palabra de pregunta («qué», «cómo», «puedo», «tengo
+# que»...) siguen al LLM, salvo si, después de contar un momento concreto, pide que se califique («ayer en el recreo me
+# quitaron la mochila, ¿eso es acoso?»). Van detrás de las de crisis: «mi entrenador me toca» sigue siendo crisis.
+_PASADO_CONTRA_MI = (
+    r"(insulto|insultaron|insultaba|insultaban|pego|pegaron|pegaba|pegaban|empujo|empujaron|empujaba|empujaban|quito|quitaron"
+    r"|quitaba|quitaban|tiro|tiraron|tiraba|tiraban|robo|robaron|grabo|grabaron|amenazo|amenazaron|amenazaba|amenazaban"
+    r"|acoso|acosaron|acosaba|acosaban|toco|tocaron|tocaba|tocaban|rompio|rompieron|escupio|escupieron|encerro|encerraron"
+    r"|mando|mandaron|mandaba|mandaban|paso|pasaron|hizo|hicieron|dijo|dijeron|llamo|llamaron|siguio|siguieron)"
+)
+_PERSONA = (
+    r"(companero|companera|amigo|amiga|vecino|vecina|primo|prima|hermano|hermana|tio|tia|padre|madre|padrastro|madrastra"
+    r"|novio|novia|profe|profesor|profesora|entrenador|entrenadora|monitor|monitora|chico|chica|hombre|senor|senora)"
+)
+_MOMENTO = (
+    r"(ayer|anteayer|antes de ayer|el otro dia|esta manana|esta tarde|anoche|la semana pasada|el lunes pasado"
+    r"|el martes pasado|el miercoles pasado|el jueves pasado|el viernes pasado|el sabado pasado|el domingo pasado"
+    r"|en el recreo)"
+)
+REGLAS_HECHOS = [  # (id, patrón, ¿también si pide calificar lo que cuenta («¿eso es acoso?»)?)
+    ("hechos_momento", re.compile(rf"\b{_MOMENTO}\b.{{0,60}}\b(me|nos) {_PASADO_CONTRA_MI}\b"), True),
+    ("hechos_quien", re.compile(rf"\b(el|la|los|las) que (me|nos) {_PASADO_CONTRA_MI}\b"), False),
+    ("hechos_persona", re.compile(rf"\b(mi|mis|el|la|un|una) {_PERSONA}s? (me|nos|le|les) {_PASADO_CONTRA_MI}\b"), False),
+    ("hechos_testigo", re.compile(r"\b(vi como|vi que|vi la|vi el|vi a|estaba delante|estaba alli|recuerdo que|aquel dia)\b"), False),
+    ("hechos_propios", re.compile(r"\b(le|les) (quite|pegue|empuje|robe|insulte|pase|mande|grabe|amenace|rompi)\b"
+                                  r"|\b(rompimos|robamos|nos colamos|nos peleamos|me pelee)\b"), False),
+    ("hechos_te_cuento", re.compile(r"^(te|os) cuento\b"), False),
+]
+RE_RELATIVO = re.compile(r"\b(el|la|los|las|lo) que\b")
+# Sin «cuando» ni «donde»: al contar algo casi siempre son conjunciones («cuando ella no estaba en casa»)
+RE_PALABRA_PREGUNTA = re.compile(
+    r"\b(que|como|quien|quienes|cual|cuales|cuanto|cuanta|cuantos|cuantas|por que|puedo|puede|pueden|podria"
+    r"|podrian|tengo que|tiene que|debo|deberia|hay que|es delito|es legal|seria|se puede|sabes)\b"
+)
+# Pide que se califique lo que ha contado («Ayer en el recreo me quitaron la mochila, ¿eso es acoso?»): no se contesta
+# «sí, eso es acoso» (norma 2). Una pregunta del proceso detrás del relato («¿puedo ir con alguien a declarar?») sí va al LLM.
+RE_CALIFICAR = re.compile(
+    r"\b(eso|esto|lo que me (hicieron|hizo|paso)) (es|seria|cuenta como|se considera) (acoso|bullying|delito|violencia|abuso"
+    r"|agresion|maltrato|normal|grave)\b|^(es|seria) (acoso|bullying|delito)\b"
+)
+
+
+def es_pregunta(texto: str, norm: str) -> bool:
+    return "?" in texto or "¿" in texto or bool(RE_PALABRA_PREGUNTA.search(RE_RELATIVO.sub(" ", norm)))
+
+
+def regla_hechos(texto: str) -> str | None:
+    norm = normalizar(texto)
+    libre = not es_pregunta(texto, norm)
+    calificar = bool(RE_CALIFICAR.search(norm))
+    return next((rid for rid, patron, si_califica in REGLAS_HECHOS
+                 if (libre or (si_califica and calificar)) and patron.search(norm)), None)
+
+
 @dataclass
 class Decision:
     categoria: str  # crisis | hechos | fuera_de_ambito | normal
@@ -72,6 +128,8 @@ class Guardrail:
         inicio = time.perf_counter()
         if regla := self.regla_crisis(texto):
             decision = Decision("crisis", "regla", regla=regla)
+        elif regla := regla_hechos(texto):
+            decision = Decision("hechos", "regla", regla=regla)
         elif self.modelo is None:
             decision = Decision("normal", "sin_modelo")
         else:
