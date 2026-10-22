@@ -259,7 +259,7 @@ void main() {
       router.pop();
       await tester.pumpAndSettle();
 
-      await pulsar(tester, find.text('Pregunta'));
+      await pulsar(tester, find.text(Modulo.pregunta.tituloEnTarjeta));
       await esperarTransicion(tester);
       expect(find.byType(PreguntaScreen), findsOneWidget);
     });
@@ -267,9 +267,9 @@ void main() {
     testWidgets('los módulos llevan sus iconos propios', (tester) async {
       await arrancarApp(tester);
       for (final modulo in Modulo.values) {
-        final tarjeta = find.widgetWithText(TarjetaModulo, modulo.titulo);
+        final tarjeta = find.widgetWithText(TarjetaModulo, modulo.tituloEnTarjeta);
         final icono = tester.widget<IconoTuTurno>(find.descendant(of: tarjeta, matching: find.byType(IconoTuTurno)));
-        expect(icono.icono, modulo.tuIcono, reason: modulo.titulo);
+        expect(icono.icono, modulo.tuIcono, reason: modulo.tituloEnTarjeta);
       }
     });
 

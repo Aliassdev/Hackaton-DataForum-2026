@@ -18,11 +18,11 @@ void main() {
   group('Tickets de módulo en el inicio', () {
     Future<void> comprobarCarteles(WidgetTester tester, String caso) async {
       for (final modulo in Modulo.values) {
-        final tarjeta = find.widgetWithText(TarjetaModulo, modulo.titulo);
+        final tarjeta = find.widgetWithText(TarjetaModulo, modulo.tituloEnTarjeta);
         await tester.ensureVisible(tarjeta);
         await tester.pumpAndSettle();
         final cartel = find.descendant(of: tarjeta, matching: find.byType(CartelSala));
-        expect(cartel, findsOneWidget, reason: '$caso ${modulo.titulo}');
+        expect(cartel, findsOneWidget, reason: '$caso ${modulo.tituloEnTarjeta}');
         expect(tester.widget<CartelSala>(cartel).texto, modulo.sala, reason: caso);
         expect(
           find.descendant(of: cartel, matching: find.text(modulo.sala!)),
@@ -30,7 +30,7 @@ void main() {
           reason: caso,
         );
         // El cartel va arriba, encima del título, y dentro de la tarjeta.
-        expect(tester.getBottomLeft(cartel).dy, lessThan(tester.getTopLeft(find.text(modulo.titulo)).dy));
+        expect(tester.getBottomLeft(cartel).dy, lessThan(tester.getTopLeft(find.text(modulo.tituloEnTarjeta)).dy));
         final caja = tester.getRect(tarjeta);
         expect(caja.inflate(1).contains(tester.getRect(cartel).topLeft), isTrue, reason: caso);
         expect(caja.inflate(1).contains(tester.getRect(cartel).bottomRight), isTrue, reason: caso);
@@ -38,8 +38,8 @@ void main() {
       expect(tester.takeException(), isNull, reason: caso);
     }
 
-    testWidgets('«SALA 1», «SALA 2» e «INFORMACIÓN», en claro y en oscuro', (tester) async {
-      expect([for (final modulo in Modulo.values) modulo.sala], ['SALA 1', 'SALA 2', 'INFORMACIÓN']);
+    testWidgets('«SALA 1», «SALA 2» y «PARTICIPA», en claro y en oscuro', (tester) async {
+      expect([for (final modulo in Modulo.values) modulo.sala], ['SALA 1', 'SALA 2', 'PARTICIPA']);
       for (final brillo in Brightness.values) {
         tester.platformDispatcher.platformBrightnessTestValue = brillo;
         await arrancarApp(tester);
@@ -63,9 +63,11 @@ void main() {
       final semantica = tester.ensureSemantics();
       await arrancarApp(tester);
       for (final modulo in Modulo.values) {
-        final datos = tester.getSemantics(find.widgetWithText(TarjetaModulo, modulo.titulo)).getSemanticsData();
+        final datos = tester
+            .getSemantics(find.widgetWithText(TarjetaModulo, modulo.tituloEnTarjeta))
+            .getSemanticsData();
         expect(datos.label, contains(modulo.sala!));
-        expect(datos.label, contains(modulo.titulo));
+        expect(datos.label, contains(modulo.tituloEnTarjeta));
       }
       expect(find.byType(CartelSala), findsNWidgets(Modulo.values.length));
       semantica.dispose();

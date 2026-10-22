@@ -323,13 +323,13 @@ void main() {
     test('cada módulo tiene el cartel de su sala; Ayuda no es un módulo: se queda fuera de la metáfora', () {
       expect(
         {for (final modulo in Modulo.values) modulo: modulo.sala},
-        {Modulo.juego: 'SALA 1', Modulo.aprende: 'SALA 2', Modulo.pregunta: 'INFORMACIÓN'},
+        {Modulo.juego: 'SALA 1', Modulo.aprende: 'SALA 2', Modulo.pregunta: 'PARTICIPA'},
       );
       expect(Modulo.values.map((modulo) => modulo.titulo), isNot(contains('Ayuda')));
     });
 
     for (final modulo in Modulo.values) {
-      testWidgets('la tarjeta de ${modulo.titulo} lleva arriba su cartel «${modulo.sala}» y se lee con él', (
+      testWidgets('la tarjeta de ${modulo.tituloEnTarjeta} lleva arriba su cartel «${modulo.sala}» y se lee con él', (
         tester,
       ) async {
         final semantica = tester.ensureSemantics();
@@ -344,13 +344,13 @@ void main() {
         final cartel = find.descendant(of: tarjeta, matching: find.byType(CartelSala));
         expect(cartel, findsOneWidget);
         expect(tester.widget<CartelSala>(cartel).texto, modulo.sala);
-        expect(tester.getBottomLeft(cartel).dy, lessThan(tester.getTopLeft(find.text(modulo.titulo)).dy));
+        expect(tester.getBottomLeft(cartel).dy, lessThan(tester.getTopLeft(find.text(modulo.tituloEnTarjeta)).dy));
         // El cartel no trae icono: el único de la tarjeta sigue siendo el del módulo, en el talón.
         final icono = tester.widget<IconoTuTurno>(find.descendant(of: tarjeta, matching: find.byType(IconoTuTurno)));
         expect(icono.icono, modulo.tuIcono);
         final datos = tester.getSemantics(tarjeta).getSemanticsData();
         expect(datos.label, contains(modulo.sala!));
-        expect(datos.label, contains(modulo.titulo));
+        expect(datos.label, contains(modulo.tituloEnTarjeta));
         expect(datos.flagsCollection.isButton, isTrue);
         semantica.dispose();
       });

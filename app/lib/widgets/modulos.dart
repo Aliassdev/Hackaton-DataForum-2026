@@ -45,6 +45,7 @@ enum Modulo {
   ),
   pregunta(
     titulo: 'Pregunta',
+    tituloTarjeta: 'Te acompaño',
     descripcion: 'Pregunta tus dudas a la IA, con texto o con voz.',
     etiqueta: 'Con voz',
     ruta: '/pregunta',
@@ -52,7 +53,7 @@ enum Modulo {
     insignias: (Icons.chat_bubble_rounded, Icons.auto_awesome_rounded),
     tuIcono: TuIcono.pregunta,
     tuInsignias: (TuIcono.microfono, TuIcono.idea),
-    sala: 'INFORMACIÓN',
+    sala: 'PARTICIPA',
   );
 
   const Modulo({
@@ -65,9 +66,16 @@ enum Modulo {
     required this.tuIcono,
     required this.tuInsignias,
     this.sala,
+    this.tituloTarjeta,
   });
 
   final String titulo;
+
+  /// Título grande de su tarjeta en el inicio, si es distinto del nombre del módulo: Pregunta se presenta como
+  /// «Te acompaño». En el resto de la app (ticket del día, bienvenida, barras) se usa [titulo].
+  final String? tituloTarjeta;
+  String get tituloEnTarjeta => tituloTarjeta ?? titulo;
+
   final String descripcion;
 
   /// Etiqueta corta de la tarjeta («Juego», «Lecciones», «Con voz»).
@@ -83,8 +91,8 @@ enum Modulo {
   final (TuIcono, TuIcono) tuInsignias;
 
   /// Cartel de su puerta en el palacio de justicia de papel ([CartelSala]): «SALA 1» en Vive el caso, «SALA 2» en
-  /// Aprende e «INFORMACIÓN» en Pregunta (el mostrador). Sin cartel (null), la tarjeta no lo pinta: así queda lo que
-  /// está fuera de la metáfora, como Ayuda.
+  /// Aprende y «PARTICIPA» en Pregunta. Sin cartel (null), la tarjeta no lo pinta: así queda lo que está fuera de la
+  /// metáfora, como Ayuda.
   final String? sala;
 
   List<Color> colores(BuildContext context) => switch (this) {
@@ -329,7 +337,7 @@ class TarjetaModulo extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (sala != null) ...[CartelSala(texto: sala), const SizedBox(height: Espacio.s)],
-          Text(modulo.titulo, style: tema.textTheme.headlineSmall?.copyWith(color: Colors.white)),
+          Text(modulo.tituloEnTarjeta, style: tema.textTheme.headlineSmall?.copyWith(color: Colors.white)),
           const SizedBox(height: Espacio.xs / 2),
           Text(modulo.descripcion, style: tema.textTheme.bodyMedium?.copyWith(color: Colors.white, height: 1.35)),
         ],
