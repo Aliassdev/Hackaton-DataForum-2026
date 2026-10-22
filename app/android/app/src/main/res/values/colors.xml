@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores de la marca para el arranque (los de lib/tema.dart). En tema oscuro mandan los de
+         values-night/colors.xml. -->
+    <!-- Fondo de la pantalla de arranque: amarillo TuTurno, con el monograma en azul noche encima. -->
+    <color name="tuturno_marca">#FFFFDE59</color>
+    <!-- Fondo de la ventana mientras Flutter pinta su primer fotograma: el papel del tema claro. -->
+    <color name="tuturno_fondo">#FFFFFBEF</color>
+</resources>

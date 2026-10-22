@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tuturno/core/api/models.dart';
+import 'package:tuturno/features/aprende/aprende_screen.dart';
+import 'package:tuturno/features/juego/juego_screen.dart';
+import 'package:tuturno/features/juego/textos.dart' show casoNoEncontradoTitulo, sinCasosTitulo;
+import 'package:tuturno/features/pregunta/pregunta_screen.dart';
+import 'package:tuturno/features/situacion/roles.dart';
+import 'package:tuturno/features/situacion/situacion_screen.dart';
+
+import 'helpers.dart';
+
+void main() {
+  // En este arnés no hay contenido (ni AssetManifest): Vive el caso y Aprende enseñan sus estados vacíos, que tienen
+  // que explicarlo con calma y dejar seguir.
+  group('Vive el caso y Aprende sin contenido', () {
+    testWidgets('Vive el caso dice que aún no hay casos y lleva a Pregunta', (tester) async {
+      final router = await arrancarApp(tester);
+      await irA(tester, router, '/juego');
+
+      expect(find.byType(JuegoScreen), findsOneWidget);
+      expect(find.text(sinCasosTitulo), findsOneWidget);
+
+      await pulsar(tester, find.text('Ir a Pregunta'));
+      await esperarTransicion(tester);
+      expect(find.byType(PreguntaScreen), findsOneWidget);
+    });
+
+    testWidgets('Aprende dice que las lecciones están en camino y lleva a Pregunta', (tester) async {
+      final router = await arrancarApp(tester);
+      await irA(tester, router, '/aprende');
+
+      expect(find.byType(AprendeScreen), findsOneWidget);
+      expect(find.text('Las lecciones están en camino'), findsOneWidget);
+
+      await pulsar(tester, find.text('Ir a Pregunta'));
+      await esperarTransicion(tester);
+      expect(find.byType(PreguntaScreen), findsOneWidget);
+    });
+
+    testWidgets('un caso o una lección que no existen lo dicen sin romper nada', (tester) async {
+      final router = await arrancarApp(tester);
+      await irA(tester, router, '/juego/caso-testigo');
+      expect(find.byType(CasoScreen), findsOneWidget);
+      expect(find.text(casoNoEncontradoTitulo), findsOneWidget);
+
+      await irA(tester, router, '/aprende/leccion/U1-L1');
+      expect(find.byType(LeccionScreen), findsOneWidget);
+      expect(find.text('No encuentro esta lección'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Mi situación', () {
+    for (final rol in RolProceso.values) {
+      testWidgets('explica el papel ${rol.name} y pregunta con ese papel', (tester) async {
+        final router = await arrancarApp(tester);
+        await irA(tester, router, '/situacion/${rol.name}');
+
+        expect(find.text(rol.nombre), findsOneWidget);
+        expect(find.text(rol.explicacion), findsOneWidget);
+        expect(find.text(rol.tranquilidad), findsOneWidget);
+        expect(find.text(notaNoPreguntamos), findsOneWidget);
+
+        await pulsar(tester, find.text('Pregunta como ${rol.enFrase}'));
+        await esperarTransicion(tester);
+        expect(tester.widget<PreguntaScreen>(find.byType(PreguntaScreen)).situacion, rol);
+      });
+    }
+
+    testWidgets('con un papel que no existe, deja elegirlo', (tester) async {
+      final router = await arrancarApp(tester);
+      await irA(tester, router, '/situacion/otra-cosa');
+
+      expect(find.text('¿Qué papel tienes en el caso?'), findsOneWidget);
+      await tester.tap(find.text('Testigo'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<SituacionScreen>(find.byType(SituacionScreen)).rol, RolProceso.testigo);
+      expect(find.text('Pregunta como testigo'), findsOneWidget);
+    });
+
+    testWidgets('se puede cambiar de papel', (tester) async {
+      final router = await arrancarApp(tester);
+      await irA(tester, router, '/situacion/testigo');
+
+      await pulsar(tester, find.text('Cambiar de papel'));
+      await tester.tap(find.text('Investigado o investigada').last);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SituacionScreen>(find.byType(SituacionScreen)).rol, RolProceso.investigado);
+    });
+
+    testWidgets('cabe con letra grande en un móvil pequeño', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final router = await arrancarApp(
+        tester,
+        preferencias: {'ajustes.tamano_texto': 1.3},
+        tamano: const Size(360, 640),
+      );
+      for (final ruta in ['/situacion/investigado', '/juego', '/aprende', '/glosario', '/ajustes']) {
+        await irA(tester, router, ruta);
+        expect(tester.takeException(), isNull, reason: ruta);
+        final desplazable = find.byType(Scrollable);
+        if (desplazable.evaluate().isNotEmpty) {
+          await tester.drag(desplazable.first, const Offset(0, -6000));
+          await tester.pumpAndSettle();
+        }
+        expect(tester.takeException(), isNull, reason: ruta);
+        router.pop();
+        await tester.pumpAndSettle();
+      }
+    });
+  });
+
+  test('ningún texto de los papeles habla de los hechos ni dice «12 a 18»', () {
+    for (final rol in RolProceso.values) {
+      for (final texto in [rol.nombre, rol.resumen, rol.explicacion, rol.tranquilidad]) {
+        expect(texto.contains('¿Qué pasó'), isFalse);
+        expect(texto.contains('12 a 18'), isFalse);
+      }
+    }
+  });
+}

@@ -1,0 +1,157 @@
+{
+  "rol": "investigado",
+  "pasos": [
+    {
+      "id": "P1",
+      "nombre": "Empieza el caso",
+      "que_pasa": "Si tienes de 14 a 17 años y creen que has podido cometer un delito, se aplica la ley penal de menores. Con menos de 14 años no se te juzga: actúan los servicios de protección de menores, que cuidan de que estés bien. Que te investiguen no quiere decir que ya se haya decidido nada.",
+      "quien_esta": [
+        "La policía o la Fiscalía de Menores, que se ponen en contacto contigo o con tu familia",
+        "Tu familia o quien te represente"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen qué es la Fiscalía de Menores, qué va a pasar y qué derechos tienes",
+        "Que te expliquen las palabras que no entiendas",
+        "Ir con tu familia o con quien te represente"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 1.1",
+        "LO 5/2000, art. 3",
+        "LO 5/2000, art. 16.2",
+        "LO 1/1996, art. 9.1"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P2",
+      "nombre": "Si te detienen: tus derechos",
+      "que_pasa": "Si te detienen, la policía tiene que hacerlo de la forma que menos te perjudique. Enseguida y con palabras claras, te tiene que decir de qué se te acusa, por qué te detiene y qué derechos tienes. Todo te lo tienen que explicar según tu edad y tu madurez.",
+      "quien_esta": [
+        "Si te detienen, los policías, que tienen que explicarte tus derechos",
+        "Tu abogado o abogada, que te defiende y te ayuda a entender cada paso",
+        "Tu familia o quien te represente"
+      ],
+      "que_puedes_pedir": [
+        "Que te repitan tus derechos o te los expliquen de otra forma si no los entiendes",
+        "Que avisen a tu familia",
+        "Que tu abogado o abogada te explique las palabras difíciles"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 17.1",
+        "LECrim, art. 520.2 bis",
+        "LO 1/1996, art. 9.1"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P3",
+      "nombre": "La Fiscalía de Menores investiga",
+      "que_pasa": "La Fiscalía de Menores decide si el caso sigue adelante y dirige la investigación. A la vez, tiene que defender tus derechos y vigilar que todo sea justo. Si es un delito menos grave y sin violencia ni amenazas, puede no abrir el caso y pasárselo a los servicios de protección de menores.",
+      "quien_esta": [
+        "El fiscal o la fiscal de menores, que dirige la investigación y también vigila que se respeten tus derechos",
+        "Tu abogado o abogada, que te defiende",
+        "Tu familia o quien te represente"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen en qué punto está el caso",
+        "Que te expliquen cualquier papel antes de firmarlo",
+        "Que te expliquen palabras como «medida cautelar» o «conciliación»"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 6",
+        "LO 5/2000, art. 16.2",
+        "LO 5/2000, art. 18"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P4",
+      "nombre": "Mientras dura el caso",
+      "que_pasa": "Mientras se decide, el juez de menores puede poner medidas cautelares. Por ejemplo, para proteger a la víctima: que no te acerques a ella ni te comuniques con ella, tampoco por el móvil o las redes. En el juzgado y en la Fiscalía se organiza todo para que no os crucéis.",
+      "quien_esta": [
+        "El juez o la jueza de menores, que decide si hacen falta estas medidas",
+        "El fiscal o la fiscal, que puede pedirlas en cualquier momento",
+        "Tu abogado o abogada, que te explica qué significan"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen exactamente qué puedes hacer y qué no mientras dura la medida",
+        "Que te digan cuánto tiempo dura",
+        "Hablar con tu abogado o abogada si tienes dudas sobre cómo cumplirla"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 28.1",
+        "LO 5/2000, art. 7.1 i)",
+        "Ley 4/2015, art. 20"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P5",
+      "nombre": "Un acuerdo con la víctima, solo si ella quiere",
+      "que_pasa": "A veces se puede llegar a un acuerdo: reconocer el daño y pedir perdón (conciliación) o comprometerte a hacer algo para repararlo (reparación). Solo es posible si la víctima está de acuerdo, y nadie puede obligarla. Si sale bien, el caso se puede cerrar.",
+      "quien_esta": [
+        "Una persona mediadora, que ayuda a que el acuerdo se haga con calma y con seguridad",
+        "Tu abogado o abogada y tu familia, que te ayudan a decidir",
+        "La víctima, si quiere participar",
+        "Si la víctima es menor, sus padres o representantes, que asumen el acuerdo. Lo tiene que aprobar el juzgado de menores"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen bien qué significa el acuerdo antes de decir que sí",
+        "Echarte atrás de la mediación cuando quieras. La víctima también puede hacerlo"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 19",
+        "Ley 4/2015, art. 15"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P6",
+      "nombre": "La audiencia: el juicio de menores",
+      "que_pasa": "Si el caso sigue adelante, hay una audiencia: el juicio ante el juez o la jueza de menores. Si decide que hiciste algo que la ley no permite, te puede poner una medida, que no es una pena como las de los adultos.",
+      "quien_esta": [
+        "El juez o la jueza de menores, que escucha a todos y decide",
+        "El fiscal o la fiscal de menores",
+        "Tu abogado o abogada, que te defiende",
+        "Tu familia o quien te represente",
+        "La víctima, que puede ser parte en el caso. Si es menor, lo normal es que declare a distancia"
+      ],
+      "que_puedes_pedir": [
+        "Que tu abogado o abogada te explique antes cómo será la audiencia",
+        "Que te expliquen lo que no entiendas mientras pasa",
+        "Decir lo que piensas si quieres, después de hablarlo con tu abogado o abogada"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 1.1",
+        "LO 5/2000, art. 7.1 i)",
+        "LO 5/2000, art. 4",
+        "CDN, art. 12.2",
+        "LO 1/1996, art. 9.1"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P7",
+      "nombre": "La decisión y lo que viene después",
+      "que_pasa": "Al final, el juez o la jueza de menores decide si te pone una medida o no. Si te la pone, tendrás que cumplirla. Por ejemplo, con una orden de alejamiento no podrás acercarte a la víctima ni contactar con ella de ninguna forma.",
+      "quien_esta": [
+        "El juez o la jueza de menores, que te comunica la decisión",
+        "Tu abogado o abogada, que te explica qué significa",
+        "Tu familia o quien te represente"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen la decisión con palabras claras: qué tienes que hacer y durante cuánto tiempo",
+        "Que tu abogado o abogada te diga qué se puede hacer si no estás de acuerdo",
+        "Quejarte al Defensor del Pueblo si crees que no se han respetado tus derechos. Ser menor no te lo impide"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 7.1 i)",
+        "LO 1/1996, art. 9.1",
+        "LO 1/1996, art. 10.2",
+        "LO 3/1981, art. 10.1"
+      ],
+      "fase": "despues"
+    }
+  ],
+  "validado": true
+}

@@ -1,0 +1,264 @@
+[
+  {
+    "id": "E-101",
+    "tipo": "eleccion",
+    "concepto": "C-ser-oido",
+    "dificultad": 1,
+    "pregunta": "¿Desde qué edad tienes derecho a que te escuchen en lo que te afecta?",
+    "opciones": [
+      "Desde los 12 años",
+      "Desde los 16 años",
+      "Tengas la edad que tengas"
+    ],
+    "correcta": 2,
+    "explicacion": "La ley dice que tienes derecho a que te escuchen, tengas la edad que tengas. Lucía tiene 11 años y también tiene ese derecho.",
+    "fuente": "LO 1/1996, art. 9.1",
+    "validado": true
+  },
+  {
+    "id": "E-102",
+    "tipo": "eleccion",
+    "concepto": "C-ser-oido",
+    "dificultad": 2,
+    "pregunta": "Si ya has cumplido 12 años, ¿qué considera la ley sobre tu madurez para dar tu opinión?",
+    "opciones": [
+      "Que siempre tienes madurez suficiente",
+      "Que tienes que demostrarla con un examen",
+      "Que solo cuenta si tus padres están de acuerdo"
+    ],
+    "correcta": 0,
+    "explicacion": "Con 12 años cumplidos, la ley considera en todo caso que tienes madurez suficiente. Si eres más pequeño, también te escuchan: tu madurez se valora caso a caso.",
+    "fuente": "LO 1/1996, art. 9.2",
+    "validado": true
+  },
+  {
+    "id": "E-103",
+    "tipo": "vf",
+    "concepto": "C-ser-oido",
+    "dificultad": 1,
+    "afirmacion": "Si no entiendes algo, tienen que explicártelo con palabras que puedas entender.",
+    "correcta": true,
+    "explicacion": "Tienes derecho a recibir la información en un lenguaje comprensible, en formatos accesibles y adaptados a ti.",
+    "fuente": "LO 1/1996, art. 9.1",
+    "validado": true
+  },
+  {
+    "id": "E-104",
+    "tipo": "vf",
+    "concepto": "C-ser-oido",
+    "dificultad": 2,
+    "afirmacion": "Si tus padres se separan y no se ponen de acuerdo, el juez solo te escucha si tienes 16 años o más.",
+    "correcta": false,
+    "explicacion": "Desde los 12 años, el juez tiene que escucharte siempre. Si tienes menos, también puede hacerlo si lo ve necesario.",
+    "fuente": "LEC, art. 770",
+    "validado": true
+  },
+  {
+    "id": "E-105",
+    "tipo": "emparejar",
+    "concepto": "C-ser-oido",
+    "dificultad": 2,
+    "pares": [
+      [
+        "Con 12 años cumplidos",
+        "La ley considera que tienes madurez suficiente"
+      ],
+      [
+        "Con menos de 12 años",
+        "Tu madurez se valora caso a caso"
+      ],
+      [
+        "Tengas la edad que tengas",
+        "Tienes derecho a que te escuchen"
+      ]
+    ],
+    "fuente": "LO 1/1996, art. 9",
+    "validado": true
+  },
+  {
+    "id": "E-106",
+    "tipo": "dilo",
+    "concepto": "C-ser-oido",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué significa el derecho a ser oído.",
+    "proposiciones": [
+      "Tienes derecho a que te escuchen en lo que te afecta",
+      "Tu opinión se tiene en cuenta según tu edad y madurez",
+      "A partir de los 12 años se da por hecho que tienes madurez"
+    ],
+    "fuente": "LO 1/1996, art. 9",
+    "validado": true
+  },
+  {
+    "id": "E-107",
+    "tipo": "eleccion",
+    "concepto": "C-fiscalia",
+    "dificultad": 1,
+    "pregunta": "Crees que no se están respetando tus derechos. ¿A quién puedes contárselo tú para que actúe?",
+    "opciones": [
+      "A la Fiscalía",
+      "A nadie: eso solo lo pueden hacer los adultos",
+      "A nadie hasta que cumplas 18 años"
+    ],
+    "correcta": 0,
+    "explicacion": "Puedes contarle tú a la Fiscalía las situaciones que van contra tus derechos, para que actúe.",
+    "fuente": "LO 1/1996, art. 10.2.b",
+    "validado": true
+  },
+  {
+    "id": "E-108",
+    "tipo": "vf",
+    "concepto": "C-defensor",
+    "dificultad": 1,
+    "afirmacion": "Para quejarte al Defensor del Pueblo necesitas que te acompañe un adulto.",
+    "correcta": false,
+    "explicacion": "Ser menor de edad no impide presentar una queja al Defensor del Pueblo. Puedes hacerlo tú.",
+    "fuente": "LO 3/1981, art. 10.1",
+    "validado": true
+  },
+  {
+    "id": "E-109",
+    "tipo": "eleccion",
+    "concepto": "C-defensor",
+    "dificultad": 1,
+    "pregunta": "¿Para qué te sirve el Defensor del Pueblo?",
+    "opciones": [
+      "Para quejarte si una oficina pública no respeta tus derechos",
+      "Para que te defienda en un juicio, como un abogado",
+      "Para poner multas a quien se porta mal"
+    ],
+    "correcta": 0,
+    "explicacion": "Puedes presentar tus quejas al Defensor del Pueblo, o al defensor de tu comunidad autónoma, si crees que una administración (una oficina pública) no ha respetado tus derechos.",
+    "fuente": "LO 1/1996, art. 10.2.c",
+    "validado": true
+  },
+  {
+    "id": "E-110",
+    "tipo": "vf",
+    "concepto": "C-fiscalia",
+    "dificultad": 2,
+    "afirmacion": "Si alguien difunde en redes sociales fotos de una persona menor de edad y eso daña sus derechos, la Fiscalía tiene que intervenir.",
+    "correcta": true,
+    "explicacion": "La Fiscalía interviene y puede pedir medidas para protegerla. Además, pasar a otros imágenes íntimas de alguien sin su permiso puede ser delito: la culpa es de quien las difunde.",
+    "fuente": "LOPDGDD, art. 84.2; Código Penal, art. 197.7",
+    "validado": true
+  },
+  {
+    "id": "E-111",
+    "tipo": "emparejar",
+    "concepto": "C-defensor",
+    "dificultad": 2,
+    "pares": [
+      [
+        "Fiscalía",
+        "Defiende tus derechos y puede actuar si se lo cuentas"
+      ],
+      [
+        "Defensor del Pueblo",
+        "Recibe tus quejas sobre las oficinas públicas"
+      ],
+      [
+        "Coordinador de bienestar",
+        "Es la persona de tu centro a la que puedes contárselo"
+      ]
+    ],
+    "fuente": "LO 1/1996, art. 10.2; LOPIVI, art. 35",
+    "validado": true
+  },
+  {
+    "id": "E-112",
+    "tipo": "dilo",
+    "concepto": "C-fiscalia",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué hace la Fiscalía de Menores.",
+    "proposiciones": [
+      "Defiende los derechos de los menores",
+      "Vigila que el proceso sea justo",
+      "Dirige la investigación"
+    ],
+    "fuente": "LO 5/2000, art. 6",
+    "validado": true
+  },
+  {
+    "id": "E-113",
+    "tipo": "eleccion",
+    "concepto": "C-abogado-gratis",
+    "dificultad": 1,
+    "pregunta": "Si eres víctima de violencia y necesitas abogado, ¿qué tiene que hacer el Colegio de Abogados?",
+    "opciones": [
+      "Asignarte con urgencia un abogado o abogada de oficio",
+      "Esperar a que cumplas 18 años",
+      "Nada: tienes que buscarlo tú"
+    ],
+    "correcta": 0,
+    "explicacion": "Los Colegios de Abogados tienen que asignar con urgencia un abogado o abogada de oficio a los menores víctimas de violencia.",
+    "fuente": "LOPIVI, art. 14.3",
+    "validado": true
+  },
+  {
+    "id": "E-114",
+    "tipo": "eleccion",
+    "concepto": "C-comunicar-violencia",
+    "dificultad": 1,
+    "pregunta": "Si alguien sufre acoso en el instituto, ¿a quién se lo puede contar allí?",
+    "opciones": [
+      "Al coordinador o la coordinadora de bienestar y protección",
+      "A nadie: en el instituto no hay nadie para eso",
+      "Solo al director, y por escrito"
+    ],
+    "correcta": 0,
+    "explicacion": "Todos los centros educativos tienen que tener un coordinador o coordinadora de bienestar y protección. Es la persona de referencia para contarlo.",
+    "fuente": "LOPIVI, art. 35",
+    "validado": true
+  },
+  {
+    "id": "E-115",
+    "tipo": "vf",
+    "concepto": "C-abogado-gratis",
+    "dificultad": 2,
+    "afirmacion": "Si eres víctima, el abogado de oficio es gratis siempre, en todos los casos.",
+    "correcta": false,
+    "explicacion": "Depende. Sin mirar el dinero de tu familia, solo en algunos casos que marca la ley, como los delitos sexuales. En los demás casos, depende de los ingresos de tu familia.",
+    "fuente": "LOPIVI, art. 14.1; Ley 1/1996, art. 2.h",
+    "validado": true
+  },
+  {
+    "id": "E-116",
+    "tipo": "ordenar",
+    "concepto": "C-comunicar-violencia",
+    "dificultad": 2,
+    "enunciado": "Sergio cuenta en su instituto que le acosan. Ordena lo que pasa después.",
+    "pasos": [
+      "Sergio se lo cuenta al coordinador de bienestar",
+      "El centro pone en marcha el protocolo contra el acoso",
+      "El centro toma medidas para proteger a Sergio"
+    ],
+    "fuente": "LOPIVI, arts. 20, 34 y 35",
+    "validado": true
+  },
+  {
+    "id": "E-117",
+    "tipo": "vf",
+    "concepto": "C-comunicar-violencia",
+    "dificultad": 2,
+    "afirmacion": "Sara tiene casi 16 años. Si publican en una red social fotos íntimas suyas sin su permiso, puede pedir ella sola en el Canal prioritario de la AEPD que las retiren.",
+    "correcta": true,
+    "explicacion": "Desde los 14 años puedes usar el Canal prioritario sin un adulto. Sirve para fotos, vídeos o audios sexuales o violentos publicados en redes sociales o webs. No sirve para WhatsApp, Telegram ni el correo: en esos casos, puedes ir a la policía o a la Fiscalía.",
+    "fuente": "AEPD, Canal prioritario y FAQ 15.03; LOPIVI, arts. 17.1 y 52.3",
+    "validado": true
+  },
+  {
+    "id": "E-118",
+    "tipo": "dilo",
+    "concepto": "C-comunicar-violencia",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras cómo puede contar un chico o una chica que sufre violencia.",
+    "proposiciones": [
+      "Puede contarlo él mismo o ella misma",
+      "Puede contárselo a la policía, a la Fiscalía, a un juzgado o a servicios sociales",
+      "Los canales para contarlo tienen que ser seguros y confidenciales"
+    ],
+    "fuente": "LOPIVI, art. 17",
+    "validado": true
+  }
+]

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantalla de arranque de Android 7 a 11: en tema claro, el monograma TuT azul noche sobre amarillo;
+     en oscuro, amarillo sobre azul noche (values-night/colors.xml y drawable-night/splash_monograma.xml).
+     En Android 12 o superior mandan values-v31/styles.xml y values-night-v31/styles.xml. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/tuturno_marca" />
+    <!-- 288 dp, el mismo tamaño que usa Android 12 para el icono del arranque. -->
+    <item
+        android:width="288dp"
+        android:height="288dp"
+        android:drawable="@drawable/splash_monograma"
+        android:gravity="center" />
+</layer-list>

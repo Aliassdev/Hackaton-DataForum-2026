@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monograma de la pantalla de arranque en tema claro: azul noche sobre amarillo (ver
+     values/colors.xml). En tema oscuro manda drawable-night/splash_monograma.xml. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FF0E1A4F"
+        android:pathData="M37.618 72.202L32.624 72.179L33.003 40.879L28 40.871L28.021 35.799L43.422 36.109L43.438 41.093L37.968 41.092Z" />
+    <path
+        android:fillColor="#FF0E1A4F"
+        android:pathData="M46.577 49.388L51.497 49.648C51.497 51.914 51.309 58.276 52.024 60.157C52.395 61.134 53.337 62.013 54.433 61.894C55.175 61.813 56.059 61.375 56.404 60.674C57.82 57.791 57.34 52.736 57.129 49.583L62.169 49.31C62.324 53.601 62.635 58.069 61.222 62.179C60.943 62.99 60.409 63.709 59.852 64.338C56.79 67.794 51.722 67.811 48.712 64.229C48.047 63.437 47.596 62.527 47.214 61.577C47.14 61.392 47.138 61.168 47.091 60.975C46.193 57.205 46.491 53.237 46.577 49.388Z" />
+    <path
+        android:fillColor="#FF0E1A4F"
+        android:pathData="M74.184 72.192L69.219 72.183L69.571 40.873L64.595 40.873L64.595 35.798L80 36.114L79.985 41.089L74.566 41.094Z" />
+</vector>

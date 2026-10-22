@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12 o superior, tema oscuro: el monograma amarillo sobre azul noche. Hace falta
+         este archivo: sin él, values-night ganaría a values-v31 y el arranque oscuro perdería el
+         fondo de marca. NormalTheme sigue en values-night/styles.xml. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/tuturno_marca</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_monograma</item>
+    </style>
+</resources>

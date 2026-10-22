@@ -1,0 +1,185 @@
+{
+  "id": "caso-sala-gesell",
+  "titulo": "Lucía y la sala de la entrevista",
+  "rol": "victima",
+  "basado_en": [],
+  "escenas": [
+    {
+      "id": "S1",
+      "lugar": "colegio",
+      "personajes": ["Lucía", "Su tutora"],
+      "narracion": "Lucía tiene 11 años y va a sexto. Hace unas semanas, en el colegio se preocuparon por cómo estaba en casa y avisaron a quien podía ayudarla. Hoy su tutora le cuenta que un juzgado quiere escucharla. Será una sola vez, en una sala especial llamada Sala Gesell.",
+      "decision": {
+        "pregunta": "¿Por qué quieren hablar con Lucía unas personas a las que no conoce?",
+        "opciones": [
+          {"texto": "Para escucharla: lo que ella piensa importa y quieren protegerla", "correcta": true,
+           "siguiente": "S2",
+           "feedback": "Tienes derecho a que te escuchen en todo lo que te afecta, tengas la edad que tengas. Con 11 años, Lucía también tiene ese derecho.",
+           "fuente": "LO 1/1996, art. 9.1", "carta": "R-ser-escuchada"},
+          {"texto": "Porque Lucía ha hecho algo malo", "correcta": false,
+           "siguiente": "S2",
+           "feedback": "Lucía no ha hecho nada malo. Quieren escucharla porque su opinión cuenta y para poder protegerla.",
+           "fuente": "LO 1/1996, art. 9.1"},
+          {"texto": "Para ponerle nota, como en un examen", "correcta": false,
+           "siguiente": "S2",
+           "feedback": "No es un examen y no hay notas. Quieren escucharla porque lo que piensa cuenta, y quien hablará con ella sabe hacerlo con tacto y respeto.",
+           "fuente": "LOPIVI, art. 11"}
+        ]
+      }
+    },
+    {
+      "id": "S2",
+      "lugar": "casa",
+      "personajes": ["Lucía"],
+      "narracion": "Esa tarde, en casa, a Lucía le salen muchas preguntas. Es normal. Las apunta en una libreta: ¿quién me hará las preguntas?, ¿quién me verá?, ¿tendré que contarlo muchas veces?, ¿tendré que dejar de vivir con mi madre? Tú vas a ayudarla a encontrar las respuestas.",
+      "siguiente": "S3"
+    },
+    {
+      "id": "S3",
+      "lugar": "juzgado",
+      "personajes": ["Lucía", "Su tía Elena"],
+      "narracion": "Llega el día. Lucía va al juzgado con su tía Elena, a la que ha elegido porque con ella se siente tranquila. El edificio es grande y hay gente que va y viene. Pero no van a una sala de juicio: van a una zona preparada para niños y niñas.",
+      "siguiente": "S4"
+    },
+    {
+      "id": "S4",
+      "lugar": "sala_espera",
+      "personajes": ["Lucía", "Su tía Elena", "Ana, la psicóloga"],
+      "narracion": "En la sala de espera hay libros y juegos. Allí las recibe Ana, una psicóloga del equipo psicosocial del juzgado. La jueza le ha pedido que haga ella la entrevista, porque sabe hablar con niños y niñas con calma. A Lucía le preocupa una cosa: cruzarse con la persona a la que están investigando.",
+      "decision": {
+        "pregunta": "¿Tendrá Lucía que ver a la persona investigada?",
+        "opciones": [
+          {"texto": "No: todo se organiza para que no se crucen, y ella no tendrá que verla", "correcta": true,
+           "siguiente": "S5",
+           "feedback": "Los juzgados se organizan para que no te cruces con la persona investigada. Y si estuviera en la entrevista, se evita que la veas cara a cara, con un cristal, una pantalla u otro medio técnico.",
+           "fuente": "LECrim, art. 449 ter; Ley 4/2015, art. 20", "carta": "R-sin-cruzarte"},
+          {"texto": "Sí, tendrá que sentarse delante y mirarla", "correcta": false,
+           "siguiente": "S5",
+           "feedback": "La ley dice que se evite que la veas cara a cara. Para eso se puede usar un cristal, una pantalla u otro medio técnico.",
+           "fuente": "LECrim, art. 449 ter"},
+          {"texto": "Sí, porque esperarán en el mismo pasillo", "correcta": false,
+           "siguiente": "S5",
+           "feedback": "Los juzgados tienen que organizarse para que ni tú ni tu familia os crucéis con la persona investigada.",
+           "fuente": "Ley 4/2015, art. 20"}
+        ]
+      }
+    },
+    {
+      "id": "S5",
+      "lugar": "sala_gesell",
+      "personajes": ["Lucía", "Ana, la psicóloga"],
+      "narracion": "Ana le enseña la Sala Gesell. Es una sala acogedora, con un sofá, una mesa y una cámara pequeña. En otra sala, la jueza, la fiscal y los abogados siguen la entrevista a través de un cristal especial o de una pantalla, sin entrar. También está el abogado de la persona investigada: la ley lo pide para que todo sea justo.",
+      "decision": {
+        "pregunta": "¿Para qué sirve la cámara?",
+        "opciones": [
+          {"texto": "Para grabar la entrevista y que valga para el juicio, sin tener que repetirla", "correcta": true,
+           "siguiente": "S6",
+           "feedback": "Es una prueba preconstituida: se graba una vez y vale para el juicio. Normalmente, en el juicio ponen la grabación y no hace falta que vayas.",
+           "fuente": "LECrim, arts. 449 ter y 703 bis", "carta": "R-una-sola-vez"},
+          {"texto": "Para subir el vídeo a internet", "correcta": false,
+           "siguiente": "S6",
+           "feedback": "La grabación es solo para el proceso. Está prohibido publicar la imagen de una víctima menor de edad o cualquier dato que permita reconocerla.",
+           "fuente": "LECrim, art. 681.3"},
+          {"texto": "Para pillarla si se equivoca", "correcta": false,
+           "siguiente": "S6",
+           "feedback": "No es para pillar a nadie. Se graba para que lo que cuente valga en el juicio y no tenga que repetirlo.",
+           "fuente": "LECrim, art. 449 bis"}
+        ]
+      }
+    },
+    {
+      "id": "S6",
+      "lugar": "sala_gesell",
+      "personajes": ["Lucía", "Ana, la psicóloga"],
+      "narracion": "Antes de empezar, Ana le cuenta cómo será. Ella hará las preguntas. Si alguien de la otra sala quiere preguntar algo, se lo pasa primero a la jueza, que decide si se puede preguntar. Después, Ana se lo pregunta a Lucía con sus palabras. Ahora Lucía quiere saber qué puede pedir ella.",
+      "decision": {
+        "pregunta": "¿Qué puede pedir Lucía?",
+        "opciones": [
+          {"texto": "Que le repitan o le expliquen una pregunta que no entienda", "correcta": true,
+           "siguiente": "S7",
+           "feedback": "Tienes derecho a entender y a que te entiendan. Si una pregunta no se entiende, puedes pedir que te la repitan o que te la expliquen de otra forma.",
+           "fuente": "Ley 4/2015, art. 4", "carta": "R-entender"},
+          {"texto": "Que la acompañe una persona de su confianza", "correcta": true,
+           "siguiente": "S7",
+           "feedback": "Como víctima, puedes ir con la persona adulta que te representa legalmente y con otra persona de confianza que tú elijas. Solo la jueza podría decir que no, y tendría que explicar por qué. A veces esa persona espera fuera de la sala, muy cerca, como la tía Elena.",
+           "fuente": "LECrim, art. 433", "carta": "R-acompanada"},
+          {"texto": "Que le prometan cómo va a acabar todo", "correcta": false,
+           "siguiente": "S7",
+           "feedback": "Eso nadie lo puede prometer, porque todavía no se sabe. Lo que sí puedes pedir es que te expliquen cada paso con palabras claras.",
+           "fuente": "Ley 4/2015, art. 4"}
+        ]
+      }
+    },
+    {
+      "id": "S7",
+      "lugar": "sala_gesell",
+      "personajes": ["Lucía", "Ana, la psicóloga"],
+      "narracion": "La entrevista empieza. Ana habla con calma y Lucía contesta a su ritmo. Cuando no sabe algo, dice «no lo sé». Cuando no se acuerda, dice «no me acuerdo». Las dos respuestas valen. Y cuando se cansa, pide parar un momento.",
+      "siguiente": "S8"
+    },
+    {
+      "id": "S8",
+      "lugar": "sala_espera",
+      "personajes": ["Lucía", "Su tía Elena", "Ana, la psicóloga"],
+      "narracion": "¡Ya está! Lucía sale y abraza a su tía. Ana le cuenta qué pasa ahora. Su entrevista es una prueba preconstituida: vale para el juicio, así que no tendrá que repetirla. La jueza y otros profesionales estudiarán el caso con calma. Si hay juicio, pondrán la grabación y normalmente Lucía no tendrá que ir. Solo de forma excepcional, si el juez o la jueza lo decide y explica por qué, tendría que ir.",
+      "siguiente": "S9"
+    },
+    {
+      "id": "S9",
+      "lugar": "sala_espera",
+      "personajes": ["Lucía", "Ana, la psicóloga"],
+      "narracion": "Lucía abre su libreta. Le queda la pregunta más difícil: «¿Tendré que dejar de vivir con mi madre?». Ana se sienta a su lado para contestarle con sinceridad.",
+      "decision": {
+        "pregunta": "¿Qué crees que le responde Ana?",
+        "opciones": [
+          {"texto": "Que nadie puede prometérselo, pero que se decidirá pensando en lo mejor para ella", "correcta": true,
+           "siguiente": "S10",
+           "feedback": "Lo normal es que Lucía siga con su familia y que se ayude a la familia si hace falta. Solo si quienes la cuidan no pueden protegerla, se busca otra forma de cuidarla. Si su madre fuera víctima, la ley busca que sigan juntas. Si hubiera que decidir algo, se haría con ayuda de profesionales y pensando en lo mejor para ella. Y Lucía tiene derecho a que la escuchen y le expliquen lo que se decida.",
+           "fuente": "LO 1/1996, arts. 12.3, 17.1 y 18.2", "carta": "R-familia"},
+          {"texto": "Que sí, que seguro que tendrá que irse de casa", "correcta": false,
+           "siguiente": "S10",
+           "feedback": "Nadie puede saberlo ahora, y la regla es la contraria: lo normal es que los niños y niñas sigan con su familia y que se ayude a la familia si hace falta.",
+           "fuente": "LO 1/1996, art. 17.1"},
+          {"texto": "Que no, que se lo promete", "correcta": false,
+           "siguiente": "S10",
+           "feedback": "Ana no puede prometerlo, y nadie debería hacerlo. Si hubiera que decidir algo, se haría con ayuda de profesionales y pensando en lo mejor para Lucía. Lo que sí tiene es derecho a que la escuchen y le expliquen lo que se decida.",
+           "fuente": "LO 1/1996, art. 9.1"}
+        ]
+      }
+    },
+    {
+      "id": "S10",
+      "lugar": "despues",
+      "personajes": ["Lucía", "Su tía Elena"],
+      "narracion": "Al salir, Lucía respira hondo. Ha sido valiente. Todavía no sabe cómo acabará todo, pero ya tiene respuestas para su libreta. Y sabe algo importante: tiene derechos, y hay personas cuyo trabajo es protegerla y explicarle cada paso.",
+      "siguiente": "S11"
+    },
+    {
+      "id": "S11",
+      "lugar": "colegio",
+      "personajes": ["Lucía", "Su tutora"],
+      "narracion": "Unos días después, su tutora le pregunta cómo está. Lucía le cuenta que se sintió escuchada. Si le surgen más dudas, sabe que puede preguntar a las personas que la acompañan. Y si alguna vez necesita ayuda, puede llamar gratis al 116 111."
+    }
+  ],
+  "cartas": [
+    {"id": "R-ser-escuchada", "titulo": "Tienes derecho a que te escuchen",
+     "texto": "En todo lo que te afecta, tu opinión cuenta. Tengas la edad que tengas.",
+     "fuente": "LO 1/1996, art. 9.1"},
+    {"id": "R-sin-cruzarte", "titulo": "No tienes que ver a la persona investigada",
+     "texto": "El juzgado se organiza para que no os crucéis. En la entrevista, se evita que la veas cara a cara.",
+     "fuente": "LECrim, art. 449 ter; Ley 4/2015, art. 20"},
+    {"id": "R-una-sola-vez", "titulo": "Lo cuentas una sola vez",
+     "texto": "Tu entrevista se graba y vale para el juicio. Normalmente, no tendrás que ir.",
+     "fuente": "LECrim, arts. 449 ter y 703 bis"},
+    {"id": "R-entender", "titulo": "Tienes derecho a entender",
+     "texto": "Te tienen que hablar claro. Si no entiendes algo, pide que te lo repitan o te lo expliquen.",
+     "fuente": "Ley 4/2015, art. 4"},
+    {"id": "R-acompanada", "titulo": "Puedes ir con alguien de confianza",
+     "texto": "Cuando declaras como víctima, puedes ir con la persona adulta que te representa legalmente y con otra persona de confianza que tú elijas, salvo que el juez explique por qué no.",
+     "fuente": "LECrim, art. 433"},
+    {"id": "R-familia", "titulo": "Tu familia y tu seguridad",
+     "texto": "Si hay problemas en casa, lo normal es ayudar a tu familia para que sigas con ella. Si no es seguro, se busca otra forma de protegerte. Y te tienen que escuchar.",
+     "fuente": "LO 1/1996, arts. 9.1, 17.1 y 18.2"}
+  ],
+  "validado": true
+}

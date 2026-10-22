@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12 o superior, tema claro. El sistema dibuja su propia pantalla de arranque
+         con estos atributos hasta que Flutter pinta el primer fotograma: el monograma TuT
+         azul noche sobre amarillo. NormalTheme sigue en values/styles.xml: es el fondo de la
+         ventana detrás de la interfaz de Flutter. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/tuturno_marca</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_monograma</item>
+    </style>
+</resources>

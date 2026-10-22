@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema oscuro: arranque azul noche con el monograma amarillo y ventana del azul noche del tema. -->
+    <color name="tuturno_marca">#FF0E1A4F</color>
+    <color name="tuturno_fondo">#FF0B1543</color>
+</resources>

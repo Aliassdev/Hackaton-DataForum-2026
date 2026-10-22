@@ -1,0 +1,143 @@
+part of 'personajes.dart';
+
+// El caso oficial: Lucía (11 años), su tía Elena y Ana, la psicóloga del equipo psicosocial del juzgado.
+
+/// Lucía, 11 años: coletas castañas con gomas amarillas, sudadera amarilla con cuello blanco, falda azul de tablas y
+/// zapatos coral. Es la más bajita (empieza en la fila 2).
+const _luciaFilas = <String>[
+  '........................',
+  '........................',
+  '........NNNNNNNN........',
+  '......NNttTTTTTTNN......',
+  '.....NtTTttTTTTTTzN.....',
+  '....NtTTttTTTTTTTTzN....',
+  '...NtTTTTTTTTTTTTTTzN...',
+  '...NtTTTTTTTTTTTTTTzN...',
+  '...NtTT2TTT22TTT2TTzN...',
+  '..NNtT222222222222TzNN..',
+  '.NYNtT22WN2222WN23TzNYN.',
+  'NtTNtT22NN2222NN23TzNTzN',
+  'NtTNtT2s22222222s3TzNTzN',
+  'NtzNN222222RR222223NNTzN',
+  'NTzN.NN2222222233NN.NzzN',
+  '.NzN...NNN3333NNN...NzN.',
+  '..N...NyYWW33WWYoN...N..',
+  '.....NyYYWWYYWWYYoN.....',
+  '....NyYYYYYYYYYYYooN....',
+  '....NYNYYYYYYYYYoNoN....',
+  '....NYNYYYYYYYYYoNoN....',
+  '....NoNooooooooooNoN....',
+  '....N2NaAAAAAAAADN3N....',
+  '.....NaAAAAAAAAAADN.....',
+  '....NaAAADAAAADAAADN....',
+  '....NNNNNNNNNNNNNNNN....',
+  '.......N22N..N23N.......',
+  '.......N22N..N23N.......',
+  '.......NWWN..NWhN.......',
+  '......NrrrN..NrrRN......',
+  '......NNNNN..NNNNN......',
+  '......xxxxxxxxxxxx......',
+];
+
+final _fichaLucia = PersonajePixel(
+  id: 'lucia',
+  nombre: 'Lucía',
+  descripcion: 'Lucía, de 11 años, con coletas y sudadera amarilla',
+  sprite: _personaje('lucia', filas: _luciaFilas, ojos: 10, pecho: 20, piel: '2', ms: 760),
+);
+
+/// Elena, la tía de Lucía: pelo castaño claro rizado por la barbilla, chaqueta de punto coral abierta sobre una
+/// camiseta crema y falda larga verde de lunares. Cuerpo grande y redondeado.
+const _elenaFilas = <String>[
+  '........................',
+  '........NNNNNNNN........',
+  '......NNmmTmmtTtNN......',
+  '.....NmmttTmmttTtTN.....',
+  '....NmtTmmtTmmtTmtTN....',
+  '...NmtTmttTmttTmtTTTN...',
+  '..NmtTmttTtmtTmttTmTTN..',
+  '.NmtTttT2222TTmttTtTtTN.',
+  '..NmtT22222222TTmtTtTN..',
+  '.NtmtT22WN2222WN23TmtTN.',
+  '..NTtT22NN2222NN33tTTN..',
+  '.NmtTT2s22222222s3TmtTN.',
+  '..NtTTN2222RR2223NTtTN..',
+  '.NmtTtTN22222233NTmtTTN.',
+  '..NNNNN.NN3333NN.NNNNN..',
+  '......NNrrP33PrrNN......',
+  '....NNsrrrPPPPrrrRNN....',
+  '...NsrrrrrPPPPrrrrRRN...',
+  '...NsNrrrrPPPPrrrRNRN...',
+  '...NsNrrrrPPPPrrrRNRN...',
+  '...NrNrrrrPPPPrrrRNRN...',
+  '...NrNrrrrPPPPrrrRNRN...',
+  '...NrNrrrrPPPPrrrRNRN...',
+  '...N2NrrrrPPPPrrrRN3N...',
+  '....NNRRRRppppRRRRNN....',
+  '.....NvVVVVVVVVVVVN.....',
+  '.....NvVvVVVVVvVVVN.....',
+  '....NvVVVVVVVVVVVVVN....',
+  '....NvVVVVVvVVVVVvVN....',
+  '....NvVVVVVVVVVVVVVN....',
+  '...NvvVVvVVVVVvVVVVvN...',
+  '...NvVVVVVVVVVVVVVVVN...',
+  '...NNNNNNNNNNNNNNNNNN...',
+  '......NRRRN..NRRRN......',
+  '......NNNNN..NNNNN......',
+  '.....xxxxxxxxxxxxxx.....',
+];
+
+final _fichaElena = PersonajePixel(
+  id: 'elena',
+  nombre: 'Elena',
+  descripcion: 'Elena, la tía de Lucía, con el pelo rizado y una chaqueta coral',
+  sprite: _personaje('elena', filas: _elenaFilas, ojos: 9, pecho: 19, piel: '2', ms: 900),
+);
+
+/// Ana, la psicóloga: moño negro, chaqueta de punto lila sobre una camisa azul cielo y la tarjeta del juzgado colgada
+/// de un cordón amarillo.
+const _anaFilas = <String>[
+  '..........NNNN..........',
+  '.........NKzzzN.........',
+  '........NKzzzzzN........',
+  '......NNNzzzzzzNNN......',
+  '.....NKzzzzzzzzzzzN.....',
+  '.....NKzzzzzzzzzzzN.....',
+  '.....Nz4444444444zN.....',
+  '.....Nz4444444445zN.....',
+  '.....Nz4444444445zN.....',
+  '....N4z4WN4444WN5z5N....',
+  '....N544NN4444NN555N....',
+  '....NY4s4444444s45YN....',
+  '.....NN4444RR4445NN.....',
+  '.......NN444455NN.......',
+  '........NN5555NN........',
+  '......NNLLY55YLLNN......',
+  '.....NLLLLYccYLLDDN.....',
+  '....NLLLLLcYYcLLLDDN....',
+  '....NLNLLLcWWcLLDNDN....',
+  '....NLNLLLcAAcLLDNDN....',
+  '....NLNLLLcWWcLLDNDN....',
+  '....NLNLLLccccLLDNDN....',
+  '....NLNLLLccccLLDNDN....',
+  '....NDNLLLccccLLDNDN....',
+  '....N4NLLLLccLLLDN5N....',
+  '.....NNDDDDDDDDDDNN.....',
+  '......NKKKKKKKKKKN......',
+  '......NKKKKNNKKKKN......',
+  '......NGKKN..NGKKN......',
+  '......NGKKN..NGKKN......',
+  '......NGKKN..NGKKN......',
+  '......NGKKN..NGKKN......',
+  '......NGKKN..NGKKN......',
+  '.....NRRRRN..NRRRRN.....',
+  '.....NNNNNN..NNNNNN.....',
+  '......xxxxxxxxxxxx......',
+];
+
+final _fichaAna = PersonajePixel(
+  id: 'ana',
+  nombre: 'Ana',
+  descripcion: 'Ana, la psicóloga del juzgado, con moño y chaqueta lila',
+  sprite: _personaje('ana', filas: _anaFilas, ojos: 9, pecho: 22, piel: '4', ms: 860),
+);

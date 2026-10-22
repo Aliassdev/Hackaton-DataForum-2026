@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Capa monocroma (iconos temáticos de Android 13 o superior): el sistema solo usa la transparencia
+     y la colorea con el tema del móvil. El mismo monograma, un poco más pequeño para que respire. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38.878 70.802L34.268 70.781L34.618 41.888L30 41.881L30.019 37.199L44.236 37.485L44.251 42.086L39.201 42.085Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M47.148 49.742L51.69 49.983C51.69 52.074 51.516 57.947 52.176 59.684C52.519 60.585 53.388 61.397 54.399 61.286C55.084 61.212 55.901 60.808 56.219 60.16C57.526 57.5 57.083 52.833 56.888 49.923L61.541 49.671C61.684 53.632 61.971 57.756 60.666 61.55C60.409 62.299 59.916 62.962 59.402 63.543C56.576 66.733 51.897 66.748 49.119 63.442C48.505 62.711 48.088 61.871 47.736 60.994C47.668 60.823 47.665 60.617 47.623 60.438C46.793 56.959 47.068 53.296 47.148 49.742Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M72.631 70.793L68.049 70.784L68.373 41.883L63.78 41.883L63.78 37.198L78 37.49L77.986 42.082L72.984 42.087Z" />
+</vector>

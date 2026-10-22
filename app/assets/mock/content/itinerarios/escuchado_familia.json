@@ -1,0 +1,131 @@
+{
+  "rol": "escuchado_familia",
+  "pasos": [
+    {
+      "id": "P1",
+      "nombre": "Te avisan de que te quieren escuchar",
+      "que_pasa": "Un juzgado o los servicios sociales van a decidir algo sobre tu vida, por ejemplo con quién vives si tus padres se separan. Tienen que darte la oportunidad de que te escuchen, tengas la edad que tengas. Si tus padres no se ponen de acuerdo, desde los 12 años el juez tiene que escucharte siempre.",
+      "quien_esta": [
+        "Tus padres o la persona que te cuida, que normalmente son quienes te lo cuentan",
+        "Un adulto de confianza con quien hablar de tus dudas"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen qué se va a decidir y por qué te quieren escuchar",
+        "Que el juez te escuche, también si tienes menos de 12 años",
+        "Que te expliquen las palabras que no entiendas"
+      ],
+      "fuentes": [
+        "CDN, art. 12.2",
+        "LO 1/1996, art. 9.1",
+        "LEC, art. 770"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P2",
+      "nombre": "Te preparas",
+      "que_pasa": "Te tienen que dar la información con palabras que entiendas, para que puedas dar tu opinión. No es un examen: no hay respuestas buenas ni malas.",
+      "quien_esta": [
+        "Tu familia o un adulto de confianza, que te puede ayudar a apuntar tus dudas"
+      ],
+      "que_puedes_pedir": [
+        "Que te cuenten dónde será, quién estará y cuánto puede durar",
+        "Que nadie te diga lo que tienes que contestar: tu opinión es tuya",
+        "Que te expliquen qué pasará con lo que digas"
+      ],
+      "fuentes": [
+        "LO 1/1996, art. 9.1",
+        "CDN, art. 12.2"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P3",
+      "nombre": "Hablas con el equipo técnico",
+      "que_pasa": "A veces, antes de decidir, personas del equipo técnico del juzgado hablan contigo y con tu familia. Son psicólogos y trabajadores sociales que ayudan al juez a conocer tu situación.",
+      "quien_esta": [
+        "Un psicólogo o una psicóloga, o un trabajador o una trabajadora social, del equipo técnico del juzgado",
+        "En un proceso de protección, personas de servicios sociales, que buscan cómo ayudaros"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen quiénes son y para qué hablan contigo",
+        "Que te expliquen para qué sirve lo que les cuentas",
+        "Un descanso si lo necesitas"
+      ],
+      "fuentes": [
+        "LEC, art. 770",
+        "LO 1/1996, art. 17.1"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P4",
+      "nombre": "Hablas con el juez o la jueza",
+      "que_pasa": "El juez o la jueza habla contigo para conocer lo que piensas y lo que sientes. Tu opinión cuenta, pero no tienes que elegir tú: decide el juez.",
+      "quien_esta": [
+        "El juez o la jueza, que te escucha",
+        "A veces, el fiscal o la fiscal, que defiende los derechos de los menores",
+        "A veces, una persona del equipo técnico"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen antes quién estará delante cuando hables",
+        "Que te repitan una pregunta o te la expliquen de otra forma",
+        "Un descanso si lo necesitas",
+        "Que te digan quién va a saber lo que cuentes"
+      ],
+      "fuentes": [
+        "LO 1/1996, art. 9.1",
+        "CDN, art. 12.2",
+        "LEC, art. 770"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P5",
+      "nombre": "Se toma la decisión",
+      "que_pasa": "Después de escuchar a todos, se toma la decisión. En un proceso de protección, la regla es ayudar a tu familia para que sigas con ella; si no es seguro, se busca otra forma de protegerte. Nadie puede prometerte cómo acabará, pero lo que piensas cuenta.",
+      "quien_esta": [
+        "El juez o la jueza, que decide en un proceso de familia, como una separación",
+        "En una separación, tus padres, que explican lo que pide cada uno",
+        "El fiscal o la fiscal, que defiende tus derechos",
+        "En un proceso de protección, servicios sociales o de protección de menores, que ayudan a tu familia y a veces son quienes deciden"
+      ],
+      "que_puedes_pedir": [
+        "Que te digan cuándo se va a decidir",
+        "Que te sigan informando mientras esperas",
+        "Si quien te cuida es víctima de violencia en casa, que os ayuden para que puedas seguir viviendo con esa persona"
+      ],
+      "fuentes": [
+        "LO 1/1996, art. 9.1",
+        "LEC, art. 770",
+        "LO 1/1996, art. 17.1",
+        "LO 1/1996, art. 18.2",
+        "LO 1/1996, art. 12.3"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P6",
+      "nombre": "Después de la decisión",
+      "que_pasa": "La decisión puede cambiar cosas de tu día a día, como con quién vives o cuándo ves a cada uno de tus padres. Si más adelante se vuelve a decidir algo sobre ti, también tienen que darte la oportunidad de que te escuchen.",
+      "quien_esta": [
+        "Tus padres o la persona que te cuida",
+        "Servicios sociales, si siguen ayudándoos",
+        "Un adulto de confianza con quien hablar de cómo te sientes"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen la decisión con palabras que entiendas y qué cambia para ti",
+        "Ayuda si la necesitas: a tu familia, a alguien de tu colegio o a ANAR (900 20 20 10, gratis y a cualquier hora)",
+        "Avisar a la Fiscalía o quejarte al Defensor del Pueblo si crees que no se han respetado tus derechos"
+      ],
+      "fuentes": [
+        "CDN, art. 12.2",
+        "LO 1/1996, art. 9.1",
+        "LO 1/1996, art. 10.2",
+        "LO 3/1981, art. 10.1"
+      ],
+      "fase": "despues"
+    }
+  ],
+  "validado": true
+}
