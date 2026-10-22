@@ -1,0 +1,211 @@
+[
+  {"id": "G-abogado-oficio", "termino": "Abogado de oficio",
+   "definicion": "Abogado o abogada que te asigna el Colegio de Abogados. Si eres víctima de violencia, te lo asignan con urgencia. Es gratis en los casos que marca la ley.",
+   "ejemplo": "Si lo que le han hecho a Sara es un delito sexual, tiene abogado gratis aunque su familia tenga dinero. En otros casos, como el de Sergio, depende de los ingresos de la familia.",
+   "fuente": "LOPIVI, art. 14; Ley 1/1996 de asistencia jurídica gratuita, art. 2.h)", "validado": true},
+
+  {"id": "G-acoso-escolar", "termino": "Acoso escolar",
+   "definicion": "Hacer daño a un compañero o una compañera una y otra vez en el colegio o el instituto, por ejemplo con insultos o amenazas. Para la ley es una forma de violencia.",
+   "ejemplo": "Sergio sufre acoso escolar. Basta con que lo cuente para que su instituto ponga en marcha el protocolo contra el acoso.",
+   "fuente": "LOPIVI, arts. 1.2 y 34.1", "validado": true},
+
+  {"id": "G-agencia-proteccion-datos", "termino": "Agencia Española de Protección de Datos",
+   "definicion": "Organismo público que se ocupa de proteger los datos personales, como tu imagen. Tiene un canal para denunciar contenidos de internet que dañan gravemente tu privacidad.",
+   "ejemplo": "Como Sara tiene más de 14 años, puede denunciar ella misma ante la AEPD. También puede llamar a su Canal Joven: 900 293 183.",
+   "fuente": "LOPIVI, arts. 52.2 y 52.3; AEPD, Canal prioritario y Canal Joven", "validado": true},
+
+  {"id": "G-audiencia-menor", "termino": "Audiencia del menor",
+   "definicion": "Momento en que el juez escucha a un niño, una niña o un adolescente en un proceso. Puede hacerse con ayuda de un equipo psicosocial.",
+   "ejemplo": "Lucía tiene menos de 14 años, así que su audiencia se graba como prueba preconstituida, en una sala preparada.",
+   "fuente": "LECrim, art. 449 ter; Ley 4/2015, art. 25.1", "validado": true},
+
+  {"id": "G-canal-prioritario", "termino": "Canal prioritario",
+   "definicion": "Web de la Agencia Española de Protección de Datos (AEPD) para pedir que quiten enseguida fotos, vídeos o audios sexuales o violentos publicados sin permiso. Sirve para redes sociales y webs, no para WhatsApp, Telegram ni el correo.",
+   "ejemplo": "Si publican imágenes de Sara en una red social sin su permiso, puede pedir que las quiten en el Canal prioritario. Como tiene más de 14 años, puede hacerlo ella sola.",
+   "fuente": "LOPIVI, art. 52; AEPD, Canal prioritario y FAQ 15.03", "validado": true},
+
+  {"id": "G-ciberacoso", "termino": "Ciberacoso",
+   "definicion": "Acoso que se hace por el móvil o por internet: mensajes, redes sociales, grupos… Para la ley es una forma de violencia.",
+   "ejemplo": "Los chicos que se meten con Sergio también le escriben por el móvil. El protocolo contra el acoso de su instituto también sirve para el ciberacoso.",
+   "fuente": "LOPIVI, arts. 1.2 y 34.1", "validado": true},
+
+  {"id": "G-citacion", "termino": "Citación",
+   "definicion": "Aviso oficial que dice qué día, a qué hora y dónde tienes que ir. Si eres víctima y menor de edad, el aviso se envía a tus padres o a quien te represente.",
+   "ejemplo": "La citación de Lucía dice qué día y a qué hora es su entrevista, y dónde.",
+   "fuente": "Ley 4/2015, arts. 4 y 7.1", "validado": true},
+
+  {"id": "G-conciliacion", "termino": "Conciliación",
+   "definicion": "Acuerdo en el que quien causó un daño lo reconoce y pide perdón a la víctima, y la víctima acepta sus disculpas. Si la víctima no las acepta, no hay conciliación.",
+   "ejemplo": "Solo habrá conciliación si Sergio acepta las disculpas. Como es menor, el compromiso lo asumen sus padres o quien le represente, y tiene que aprobarlo el juez de menores.",
+   "fuente": "LO 5/2000, art. 19", "validado": true},
+
+  {"id": "G-coordinador-bienestar", "termino": "Coordinador de bienestar y protección",
+   "definicion": "Persona de tu colegio o instituto con la que puedes hablar si sufres o ves violencia, como el acoso. Todos los centros tienen que tener un coordinador o una coordinadora.",
+   "ejemplo": "Sergio puede hablar con la coordinadora de bienestar de su instituto. Basta con que lo cuente para que el centro ponga en marcha su protocolo contra el acoso.",
+   "fuente": "LOPIVI, arts. 34.1 y 35", "validado": true},
+
+  {"id": "G-declaracion", "termino": "Declaración",
+   "definicion": "Lo que una persona cuenta ante la policía, la Fiscalía o el juzgado. Si eres víctima, puede hacerse en una sala preparada y con profesionales formados.",
+   "ejemplo": "Como Sergio tiene menos de 14 años, la Fiscalía tiene que pedir que su declaración se grabe con garantías, para que no tenga que repetirla.",
+   "fuente": "Ley 4/2015, art. 25.1; LO 5/2000, art. 23.4 b)", "validado": true},
+
+  {"id": "G-defensor-pueblo", "termino": "Defensor del Pueblo",
+   "definicion": "Institución a la que puedes quejarte si una administración no respeta tus derechos. Ser menor de edad no te impide hacerlo.",
+   "ejemplo": "Si Sergio cree que una administración no ha respetado sus derechos, puede quejarse al Defensor del Pueblo o al defensor de su comunidad autónoma. No necesita que le acompañe un adulto.",
+   "fuente": "LO 3/1981, art. 10.1; LO 1/1996, art. 10.2.c)", "validado": true},
+
+  {"id": "G-defensor-judicial", "termino": "Defensor judicial",
+   "definicion": "Persona a la que el juez nombra para representar a alguien menor de edad en el proceso. Se puede nombrar, por ejemplo, cuando los intereses de sus padres o tutores chocan con los suyos.",
+   "ejemplo": "Si los intereses de quienes representan a Lucía chocan con los suyos, la Fiscalía pedirá al juez un defensor judicial para ella.",
+   "fuente": "Ley 4/2015, art. 26.2 a)", "validado": true},
+
+  {"id": "G-denuncia", "termino": "Denuncia",
+   "definicion": "Contar a la policía, a la Fiscalía o a un juzgado algo que puede ser un delito, para que lo investiguen.",
+   "ejemplo": "Sara puede ir a la policía y denunciar ella misma, sin que la acompañe un adulto.",
+   "fuente": "LOPIVI, arts. 17.1 y 50.2.e)", "validado": true},
+
+  {"id": "G-derecho-propia-imagen", "termino": "Derecho a la propia imagen",
+   "definicion": "Derecho a que nadie haga, copie ni publique fotos o vídeos tuyos sin permiso. Si un día diste permiso, puedes retirarlo cuando quieras.",
+   "ejemplo": "Si alguien publica una foto de Sara sin su permiso, va contra su derecho a la propia imagen.",
+   "fuente": "LO 1/1996, art. 4.1; LO 1/1982, arts. 2.2, 2.3 y 7.5", "validado": true},
+
+  {"id": "G-derecho-ser-oido", "termino": "Derecho a ser oído",
+   "definicion": "Derecho a que te escuchen en lo que te afecta, tengas la edad que tengas. Con 12 años cumplidos, la ley considera siempre que tienes madurez suficiente.",
+   "ejemplo": "Lucía tiene 11 años y también tiene derecho a que la escuchen. Su madurez se valora caso a caso.",
+   "fuente": "LO 1/1996, art. 9; CDN, art. 12.2", "validado": true},
+
+  {"id": "G-derecho-olvido", "termino": "Derecho al olvido",
+   "definicion": "Derecho a pedir que borren datos tuyos, como una foto. Si se usaron de forma ilegal, tienen que borrarlos sin retrasos.",
+   "ejemplo": "Sara tiene 15 años. Si una red social tiene fotos suyas, basta con que pida que las borre, aunque las haya subido otra persona. La red social tiene que hacerlo sin retrasos.",
+   "fuente": "RGPD, art. 17.1; LOPDGDD, art. 94.3", "validado": true},
+
+  {"id": "G-desamparo", "termino": "Desamparo",
+   "definicion": "Cuando a una persona menor de edad le falta lo necesario porque quienes la cuidan no cumplen, no pueden o no saben protegerla. Entonces la Administración se hace cargo de su cuidado.",
+   "ejemplo": "Si en una familia hay problemas, pero no tan graves, los servicios sociales la ayudan. Así, el niño o la niña puede seguir viviendo en casa. Eso no es desamparo.",
+   "fuente": "LO 1/1996, arts. 17.1 y 18.2", "validado": true},
+
+  {"id": "G-detencion", "termino": "Detención",
+   "definicion": "Cuando la policía retiene a una persona durante una investigación. Si es un chico o una chica de 14 a 17 años, tiene que hacerse de la forma que menos le perjudique.",
+   "ejemplo": "Si detienen a un chico de 15 años, le tienen que explicar enseguida y con palabras claras por qué le detienen. También de qué se le acusa y qué derechos tiene.",
+   "fuente": "LO 5/2000, art. 17.1; LECrim, art. 520.2 bis", "validado": true},
+
+  {"id": "G-difusion-imagenes-intimas", "termino": "Difusión de imágenes íntimas",
+   "definicion": "Pasar a otras personas o publicar fotos o vídeos íntimos de alguien sin su permiso. Puede ser un delito. La culpa es de quien los difunde, nunca de quien sale en ellos.",
+   "ejemplo": "Si alguien pasa imágenes íntimas de Sara sin su permiso, la culpa es de quien las pasa. Sara puede pedir ayuda y denunciarlo.",
+   "fuente": "Código Penal, arts. 189.1 y 197.7; LO 1/1982, art. 7.5", "validado": true},
+
+  {"id": "G-equipo-psicosocial", "termino": "Equipo psicosocial",
+   "definicion": "Grupo de profesionales, como psicólogos y trabajadores sociales, que ayuda al juez. Estudian tu situación y el juez puede pedirles que te hagan ellos la entrevista, para tratarte mejor.",
+   "ejemplo": "En la entrevista de Lucía, las preguntas se las puede hacer una psicóloga del equipo psicosocial.",
+   "fuente": "LECrim, art. 449 ter", "validado": true},
+
+  {"id": "G-estatuto-victima", "termino": "Estatuto de la víctima",
+   "definicion": "Ley que reúne los derechos de las víctimas de delitos. Por ejemplo, que te hablen claro y que te informen desde el primer momento, incluso antes de denunciar.",
+   "ejemplo": "Por el Estatuto de la víctima, la policía tiene que explicarle a Sara sus derechos con palabras claras. Por ejemplo, cómo pedir protección.",
+   "fuente": "Ley 4/2015, arts. 4 y 5.1", "validado": true},
+
+  {"id": "G-expediente", "termino": "Expediente",
+   "definicion": "Caso que puede abrir la Fiscalía de Menores si un chico o una chica de 14 a 17 años ha podido cometer un delito. En él se reúnen los papeles y los pasos.",
+   "ejemplo": "Si es un delito menos grave y sin violencia ni amenazas, la Fiscalía puede no abrir el expediente. Si lo decide, tiene que comunicárselo a la víctima.",
+   "fuente": "LO 5/2000, arts. 16.2 y 18", "validado": true},
+
+  {"id": "G-fiscalia", "termino": "Fiscalía",
+   "definicion": "También se llama Ministerio Fiscal. Defiende los derechos de los menores. Puedes contarle tú que no se respetan tus derechos, para que actúe.",
+   "ejemplo": "Si difunden en redes imágenes de Sara que dañan sus derechos, la Fiscalía tiene que intervenir. Puede pedir medidas urgentes para protegerla.",
+   "fuente": "LO 1/1996, art. 10.2.b); LO 5/2000, art. 6; LOPDGDD, art. 84.2", "validado": true},
+
+  {"id": "G-fiscalia-menores", "termino": "Fiscalía de Menores",
+   "definicion": "Parte de la Fiscalía que defiende los derechos de los menores. Si un chico o una chica de 14 a 17 años puede haber cometido un delito, dirige la investigación.",
+   "ejemplo": "Cuando los padres de Sergio denuncian, la Fiscalía de Menores decide si el caso sigue adelante y les comunica su decisión.",
+   "fuente": "LO 5/2000, arts. 1.1, 6 y 16.2", "validado": true},
+
+  {"id": "G-intimidad", "termino": "Intimidad",
+   "definicion": "Tu vida privada: lo que es solo tuyo o de tu familia. Tienes derecho a que la respeten y a que nadie se meta en ella sin motivo.",
+   "ejemplo": "Si eres víctima y menor de edad, está prohibido publicar tu nombre, tus fotos o cualquier dato que permita reconocerte.",
+   "fuente": "LO 1/1996, art. 4.1; CDN, art. 16; LECrim, art. 681.3", "validado": true},
+
+  {"id": "G-juez-menores", "termino": "Juez de menores",
+   "definicion": "Juez o jueza que decide en los casos en que un chico o una chica de 14 a 17 años puede haber cometido un delito. También tiene que proteger los derechos de la víctima.",
+   "ejemplo": "Si la Fiscalía se lo pide, el juez de menores puede prohibir que la persona denunciada se acerque a Sergio o le escriba.",
+   "fuente": "LO 5/2000, arts. 1.1, 4 y 28.1", "validado": true},
+
+  {"id": "G-juicio", "termino": "Juicio",
+   "definicion": "Sesión del juzgado en la que se ven las pruebas de un caso. Si eres víctima, os tienen que avisar de la fecha, la hora y el lugar.",
+   "ejemplo": "Si hay juicio en el caso de Lucía, normalmente pondrán la grabación de su entrevista y ella no tendrá que ir.",
+   "fuente": "Ley 4/2015, art. 7.1; LECrim, art. 703 bis", "validado": true},
+
+  {"id": "G-mediacion", "termino": "Mediación",
+   "definicion": "Encuentro entre la víctima y quien le hizo daño para buscar una solución. Solo se hace si la víctima da su permiso después de que se lo expliquen bien, y si no es peligroso para ella.",
+   "ejemplo": "Si a Sergio le proponen una mediación, puede decir que no. Y si dice que sí, puede echarse atrás cuando quiera.",
+   "fuente": "Ley 4/2015, art. 15", "validado": true},
+
+  {"id": "G-medida", "termino": "Medida",
+   "definicion": "Decisión del juez de menores sobre alguien de 14 a 17 años. Puede ser durante el proceso, como medida cautelar, o al final, si decide que cometió un delito. No son penas como las de los adultos.",
+   "ejemplo": "Una medida puede ser prohibir acercarse a la víctima o comunicarse con ella. Las que más limitan son las de internamiento: vivir un tiempo en un centro de menores.",
+   "fuente": "LO 5/2000, arts. 1.1, 7.1 y 28.1", "validado": true},
+
+  {"id": "G-medida-cautelar", "termino": "Medida cautelar",
+   "definicion": "Decisión que el juez puede tomar antes de que acabe el proceso, por ejemplo, para proteger a la víctima.",
+   "ejemplo": "La Fiscalía puede pedir una medida cautelar para que la persona denunciada no se acerque a Sergio ni le escriba mientras dura el proceso.",
+   "fuente": "LO 5/2000, art. 28.1", "validado": true},
+
+  {"id": "G-orden-alejamiento", "termino": "Orden de alejamiento",
+   "definicion": "Prohibición de acercarse a una persona o de comunicarse con ella, también por el móvil o las redes sociales. En la ley se llama «prohibición de aproximarse o comunicarse con la víctima».",
+   "ejemplo": "Si el juez la pone, la persona denunciada no podrá acercarse a Sergio, a su casa ni a su instituto, ni escribirle por redes sociales.",
+   "fuente": "LO 5/2000, arts. 7.1 i) y 28.1", "validado": true},
+
+  {"id": "G-persona-confianza", "termino": "Persona de confianza",
+   "definicion": "Persona que eliges tú para que te acompañe, por ejemplo cuando declaras como víctima o cuando denuncias en la policía. Al declarar como víctima, solo te la pueden negar si el juez explica por qué.",
+   "ejemplo": "Lucía va al juzgado con su tía Elena. La ha elegido porque con ella se siente tranquila.",
+   "fuente": "LECrim, art. 433; LOPIVI, art. 50.2.h)", "validado": true},
+
+  {"id": "G-persona-investigada", "termino": "Persona investigada",
+   "definicion": "Persona a la que se investiga para saber si ha cometido un delito. También tiene derechos: por ejemplo, si la detienen, se los tienen que explicar con palabras que entienda.",
+   "ejemplo": "Si la persona investigada está en la entrevista de Lucía, se evita que se vean cara a cara. Para eso se puede usar un cristal o una pantalla.",
+   "fuente": "LECrim, arts. 449 ter y 520.2 bis", "validado": true},
+
+  {"id": "G-protocolo-acoso", "termino": "Protocolo contra el acoso",
+   "definicion": "Plan con los pasos que sigue un colegio o instituto si hay acoso o ciberacoso. Se pone en marcha con solo que un alumno o una alumna lo cuente.",
+   "ejemplo": "Si se difunde algo íntimo de Sara por el móvil, el protocolo de su instituto tiene que tener pasos concretos para ese caso.",
+   "fuente": "LOPIVI, arts. 34.1 y 34.2", "validado": true},
+
+  {"id": "G-prueba-preconstituida", "termino": "Prueba preconstituida",
+   "definicion": "Declaración que se graba antes del juicio y que vale como si hablaras en el juicio. Así, normalmente, no tienes que ir a contarlo otra vez.",
+   "ejemplo": "Como Lucía tiene menos de 14 años, su entrevista se graba como prueba preconstituida. En el juicio, normalmente, se pone la grabación y ella no tiene que ir.",
+   "fuente": "LECrim, arts. 449 bis, 449 ter y 703 bis", "validado": true},
+
+  {"id": "G-responsabilidad-penal", "termino": "Responsabilidad penal",
+   "definicion": "Tener que responder ante la justicia por haber cometido un delito. De 14 a 17 años se aplica la ley penal de menores, que pone medidas, no penas. Con menos de 14, no hay responsabilidad penal.",
+   "ejemplo": "Si un chico o una chica de 13 años hace algo que es delito, no se le juzga con la ley de menores. En su lugar, actúan los servicios de protección de menores.",
+   "fuente": "LO 5/2000, arts. 1.1, 3 y 7.1", "validado": true},
+
+  {"id": "G-sala-gesell", "termino": "Sala Gesell",
+   "definicion": "Sala preparada para que niños, niñas y adolescentes declaren con tranquilidad, con profesionales formados. La entrevista se graba y se evita que veas a la persona investigada.",
+   "ejemplo": "Lucía va a hablar en una Sala Gesell. Es una sala tranquila, pensada para niños y niñas.",
+   "fuente": "Ley 4/2015, art. 25.1; LECrim, arts. 449 bis y 449 ter", "validado": true},
+
+  {"id": "G-sentencia", "termino": "Sentencia",
+   "definicion": "Decisión del juez o del tribunal que pone fin al proceso. Si eres víctima, os la tienen que comunicar.",
+   "ejemplo": "Si hay sentencia en el caso de Lucía, se la comunicarán a quien la representa.",
+   "fuente": "Ley 4/2015, arts. 4 y 7.1", "validado": true},
+
+  {"id": "G-testigo", "termino": "Testigo",
+   "definicion": "Persona que cuenta ante el juez lo que sabe sobre un caso. Una víctima también puede declarar como testigo.",
+   "ejemplo": "Cuando Lucía declare como testigo, puede ir con quien la representa legalmente. También con una persona de confianza que elija, salvo que el juez explique por qué no.",
+   "fuente": "LECrim, arts. 433 y 449 ter", "validado": true},
+
+  {"id": "G-victima", "termino": "Víctima",
+   "definicion": "Persona que ha sufrido un delito. La ley le da derechos, como que le expliquen todo con palabras claras y que la protejan durante el proceso.",
+   "ejemplo": "Como víctima, Sergio tiene derecho a que el juzgado y la Fiscalía se organicen para que no se cruce con la persona denunciada.",
+   "fuente": "Ley 4/2015, arts. 4, 19 y 20", "validado": true},
+
+  {"id": "G-victimizacion-secundaria", "termino": "Victimización secundaria",
+   "definicion": "Daño que el propio proceso puede hacer a la víctima. Quienes investigan y juzgan tienen que evitarlo. Si la víctima es menor, la Fiscalía lo vigila de forma especial.",
+   "ejemplo": "Para no hacerle más daño, el juzgado y la Fiscalía evitan que Sergio se cruce con los chicos denunciados.",
+   "fuente": "Ley 4/2015, arts. 19 y 20", "validado": true},
+
+  {"id": "G-videoconferencia", "termino": "Videoconferencia",
+   "definicion": "Hablar con el juzgado o la Fiscalía a través de una pantalla, sin estar en la misma sala que las demás personas.",
+   "ejemplo": "Los chicos denunciados por Sergio tienen 14 y 15 años. Como Sergio es menor, lo normal es que declare por videoconferencia.",
+   "fuente": "LO 5/2000, art. 4", "validado": true}
+]

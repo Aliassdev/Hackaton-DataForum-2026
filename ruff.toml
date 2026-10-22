@@ -1,0 +1,10 @@
+# ruff para backend/ y ml/: `ruff check .` da el mismo resultado desde la raíz que desde backend/.
+# - src: `app` es el paquete de backend/, así el orden de los imports no depende de la carpeta.
+# - E402: ml/ y algunos scripts añaden backend/ a sys.path antes de importar app (con su `# noqa: E402`).
+#   Se activa a mano porque las versiones recientes de ruff ya no la incluyen por defecto.
+# - line-length: el código usa líneas largas (E501 no se comprueba); solo decide cuándo se parten los imports.
+src = ["backend"]
+line-length = 150
+
+[lint]
+extend-select = ["E402"]

@@ -1,0 +1,36 @@
+# La imagen del backend (Dockerfile) solo necesita backend/, content/ y artifacts/index
+# (y artifacts/models/guardrail si se ha entrenado). Todo lo demás se queda fuera.
+
+# Secretos: nunca en la imagen. El Space los inyecta como variables de entorno.
+**/.env
+**/.env.*
+
+# Git, entornos y cachés
+.git
+.gitignore
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+
+# Carpetas que no usa el servidor
+app/
+docs/
+fuentes/
+ml/
+scripts/
+data/
+backend/tests/
+backend/scripts/
+backend/DESPLIEGUE.md
+
+# De artifacts/ solo el índice del RAG y, si existe, el modelo del guardrail
+artifacts/*
+!artifacts/index
+!artifacts/models
+artifacts/models/*
+!artifacts/models/guardrail
+artifacts/index/metrics_rag.json

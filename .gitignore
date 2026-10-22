@@ -1,0 +1,25 @@
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Datos y artefactos (nunca en git)
+data/
+artifacts/
+
+# Node
+node_modules/
+dist/
+
+# Editor y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,173 @@
+# API del backend para la app
+
+Contratos de `docs/ARQUITECTURA.md` (sección 8) tal y como están implementados. `POST /v1/chat/completions` (Custom LLM de ElevenLabs) no cambia: sigue con su secreto, sin límites y sin el filtro de orígenes.
+
+## Errores (8.4)
+
+Todos los endpoints de `/api/*` responden los errores así. `mensaje` siempre se puede enseñar tal cual a un chico o una chica de 11 años:
+
+```json
+{"error": {"codigo": "LLM_NO_DISPONIBLE", "mensaje": "No he podido responder ahora. Prueba otra vez o pulsa Ayuda."}}
+```
+
+| Estado | `codigo` | Cuándo |
+|---|---|---|
+| 403 | `ORIGEN_NO_PERMITIDO` | La petición trae `Origin` y no está en `ALLOWED_ORIGINS` ni en `ALLOWED_ORIGIN_REGEX` |
+| 404 | `CONCEPTO_DESCONOCIDO` | `grade` con un `concepto_id` sin ideas clave |
+| 422 | `PETICION_INVALIDA` | Cuerpo mal formado (pregunta vacía o de más de 2000 caracteres, `modo` desconocido…) |
+| 429 | `DEMASIADAS_PETICIONES` | Límite por IP. Lleva `Retry-After` en segundos |
+| 429 | `LIMITE_DIARIO` | Tope diario para todos. `Retry-After` hasta las 00:00 UTC |
+| 500 | `ERROR_INTERNO` | Fallo inesperado |
+| 502 | `ELEVENLABS_NO_DISPONIBLE` | ElevenLabs no responde o no da el token |
+| 503 | `SIN_CONFIGURACION` | Faltan `ELEVENLABS_API_KEY` o `ELEVENLABS_AGENT_ID` |
+| 503 | `LLM_NO_DISPONIBLE` | El LLM no responde (o falta `GROQ_API_KEY`). Se puede reintentar |
+
+## `GET /api/session/token` (8.5)
+
+Token de conversación (WebRTC) de corta duración para el agente privado. Para pedirlo, el backend llama a ElevenLabs (`GET https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=…` con la cabecera `xi-api-key`) y solo devuelve el token:
+
+```json
+{"token": "<token de conversación>"}
+```
+
+La app lo usa así: `startSession(conversationToken: token, dynamicVariables: {...})`. Se pide un token nuevo para cada sesión. Si devuelve 503, 502 o 429, la app pasa al modo texto (`/api/agent/ask`).
+
+`GET /api/session/signed-url` → `{"signed_url": "wss://…"}` se mantiene para el SDK de React. Los dos comparten el límite «sesion», porque cada uno abre una conversación que gasta créditos.
+
+## `POST /api/agent/ask` (8.1, modo texto)
+
+Lo usan la web (iPhone) y la APK cuando ElevenLabs falla. Tiene las mismas capas que la voz: guardrail → datos personales fuera → reformulación y RAG → generación → verificación frase a frase.
+
+Petición (`perfil` es nuevo y opcional; son las mismas cuatro variables de 8.6 que van a la sesión de voz):
+
+```json
+{
+  "pregunta": "Si tengo 13 años y hago algo malo, ¿me pueden juzgar?",
+  "modo": "libre",
+  "situacion": null,
+  "historial": [{"rol": "usuario", "texto": "..."}, {"rol": "asistente", "texto": "..."}],
+  "perfil": {"edad": "13", "procedimiento": "penal", "rol": "investigado", "fase": "no_lo_se"}
+}
+```
+
+- `modo`: `"libre"` o `"situacion"`. `situacion`: `null`, `"testigo"`, `"victima"`, `"investigado"` (también vale `"escuchado_familia"`). En «Mi situación», ese papel manda sobre el `rol` del perfil.
+- `perfil`: `"no_lo_se"` o `""` = sin dato; `"escuchado_familia"` = menor escuchado en un proceso de familia. Cualquier otro valor se ignora: no llega al prompt.
+- `historial`: se usan los 4 últimos mensajes.
+
+Respuesta:
+
+```json
+{
+  "tipo": "normal",
+  "respuesta": "Antes de los 14 años no te pueden juzgar en el juzgado de menores.\n\nSi tienes 14 o más...",
+  "fuentes": [
+    {"id": "LORPM-3", "titulo": "Régimen de los menores de catorce años", "norma": "LORPM", "articulo": "3",
+     "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2000-641#a3"}
+  ],
+  "sugerencias": [],
+  "terminos": [],
+  "latencia_ms": 2140
+}
+```
+
+- `tipo`: `"normal"`, `"crisis"`, `"hechos"` o `"fuera_de_ambito"`. Si no es `normal`, `respuesta` es la plantilla fija de `content/seguridad.json` en versión para pantalla (sin etiquetas de voz y con los teléfonos en cifras: 900 20 20 10, 116 111, 112), y no se llama al LLM.
+- `respuesta` se lee en pantalla: cifras y párrafos cortos separados por una línea en blanco (`\n\n`).
+- `fuentes`: los artículos que el LLM dice haber usado (como mucho 4), solo si están entre los recuperados. Si el LLM no lo dice, salen los 2 primeros. `url` es nuevo y opcional: enlace al artículo en el BOE (o a la norma).
+- Una fuente también puede ser una entrada del glosario validado o una cita de `docs/MARCO_LEGAL.md` (sección «Calidad de las respuestas»). Mismos campos y tipos; lo que cambia son los valores:
+
+  | Fuente | `id` | `norma` | `articulo` | `titulo` | `url` |
+  |---|---|---|---|---|---|
+  | Artículo de ley (como siempre) | `LORPM-3` | `LORPM` | `3` | título del artículo | BOE |
+  | Cita del marco legal | `LORPM-28` | `LORPM` | `28.1` (el apartado exacto) | título | BOE |
+  | Web oficial del marco legal | `AEPD-canal-prioritario` | `AEPD · Canal prioritario` | `""` | título de la página | web de la AEPD |
+  | Glosario | `G-sala-gesell` | `Glosario TuTurno · Sala Gesell` | `""` | su base legal: `Ley 4/2015, art. 25.1; LECrim, arts. 449 bis y 449 ter` | `""` |
+
+  La app ya las enseña bien (`etiquetaFuente`): sin artículo, la etiqueta es la `norma` («AEPD · Canal prioritario», como en sus ejemplos sin conexión), y la hoja de la fuente pone el `titulo` arriba.
+- `sugerencias` y `terminos` van vacíos. Para `hechos` y `fuera_de_ambito`, la app ya pone sus sugerencias.
+
+## `POST /api/learn/grade` (8.2)
+
+```json
+{"concepto_id": "C-ser-oido", "texto": "Que el juez tiene que escucharte si tienes 12 años"}
+```
+
+```json
+{
+  "puntuacion": 0.67,
+  "cubiertas": ["Tienes derecho a que te escuchen en lo que te afecta", "A partir de los 12 años se da por hecho que tienes madurez"],
+  "faltan": ["Tu opinión se tiene en cuenta según tu edad y madurez"],
+  "feedback": "¡Muy bien! Te falta una idea: tu opinión se tiene en cuenta según tu edad y madurez.",
+  "tipo": "normal"
+}
+```
+
+- **Campo nuevo `tipo`** (compatible hacia atrás): `"normal"` o `"crisis"`. Antes que nada se pasa el guardrail. Si el texto suena a crisis, no se corrige y la respuesta es `{"puntuacion": 0.0, "cubiertas": [], "faltan": [], "feedback": "<plantilla de ayuda con ANAR>", "tipo": "crisis"}`. La app debería enseñar la tarjeta de Ayuda y no tocar ni el dominio (BKT) ni los puntos.
+- Hay un LLM que hace de juez, pero solo devuelve en JSON estricto los números de las ideas cubiertas. La puntuación (cubiertas / total) y el feedback salen de frases fijas, así que el LLM no puede comentar lo que ha escrito el alumno. Si el JSON no vale, se le pregunta una vez más; si vuelve a fallar, 503.
+- Las ideas clave están en `content/evaluador.json`: 17 conceptos, los «dilo» validados y con fuente de las unidades 1 a 7 de la app (antes eran 6 y los de las unidades 3 a 7 daban 404). Se generan con `backend/scripts/sincronizar_evaluador.py <app/assets/mock/content/ejercicios>`; con `--comprobar` dice si están al día. Si existe `content/ejercicios/*.json` (esquema 9.3), se lee primero.
+
+## Límites de peticiones
+
+Afectan a `/api/session/*`, `/api/agent/ask` y `/api/learn/grade`. Los valores están en `app/config.py` y se pueden cambiar con variables de entorno (0 = sin límite):
+
+| Grupo | Por IP (cada `LIMITE_VENTANA_S`=60 s) | Diario, para todos |
+|---|---|---|
+| sesion (token y signed-url) | `LIMITE_SESION_IP`=60 | `LIMITE_SESION_DIA`=500 |
+| ask | `LIMITE_ASK_IP`=120 | `LIMITE_ASK_DIA`=3000 |
+| grade | `LIMITE_GRADE_IP`=120 | `LIMITE_GRADE_DIA`=3000 |
+
+- Por IP es una ventana deslizante en memoria (Hugging Face corre un solo contenedor). Las IPv6 se agrupan por /64.
+- En la demo toda la sala sale por la IP de la wifi del evento, así que el límite por IP es el de la sala entera. Un aula de 30 personas, en el peor momento unas 3 preguntas por minuto cada una, son unas 90 por minuto: 120 deja margen. En sesiones de voz, 60 por minuto cubre a las 30 entrando a la vez y los reintentos.
+- Los topes diarios protegen los créditos: cada pregunta son dos llamadas al LLM (unos 0,001 $ en el router de Hugging Face), así que 3000 preguntas son unos 3 $. El de sesiones es el mismo que el del agente de ElevenLabs (`call_limits.daily_limit`=500). Con 120 por minuto, una sola IP tardaría 25 minutos en agotar el tope diario de preguntas.
+- Los contadores viven en memoria: se reinician a las 00:00 UTC y cada vez que se reinicia el Space.
+- No se guardan IP: la clave es un resumen con una sal aleatoria por arranque, y en los logs solo salen 8 caracteres de ese resumen.
+
+## IP real detrás de Hugging Face
+
+Lo comprobamos el 22/10/2026 con Spaces públicos de httpbin (su `/ip` devuelve `X-Forwarded-For` tal cual le llega) y cabeceras falsificadas:
+
+- El proxy de HF **añade la IP real al final** de `X-Forwarded-For` y **conserva delante** lo que mande el cliente. Si se envía `X-Forwarded-For: 203.0.113.7`, al contenedor le llega `203.0.113.7, <IP real>`. Esa última entrada coincide con la IP que firma el propio HF en `X-Ip-Token`.
+- `X-Real-IP` y `Forwarded` llegan tal cual las escribe el cliente, así que no sirven.
+- Por eso `app/api/limites.py` usa la última entrada (`PROXIES_DE_CONFIANZA=1`) y nadie puede saltarse el límite escribiendo la cabecera. `request.client.host` tampoco sirve: sin `--forwarded-allow-ips` es la IP interna del proxy, la misma para todos, y con `--forwarded-allow-ips='*'` uvicorn toma la **primera** entrada, que la escribe el cliente.
+- Si el backend corre sin proxy (en local), hay que poner `PROXIES_DE_CONFIANZA=0`.
+
+## Orígenes (CORS) en Hugging Face
+
+El proxy de HF contesta él mismo al preflight (`OPTIONS`) y añade `Access-Control-Allow-Origin` con **cualquier** origen cuando la app no lo pone (comprobado). Si la app sí lo pone, el proxy no lo duplica. Por eso `CORSMiddleware` no basta para impedir que otra web use la API desde el navegador, y `limites.py` responde **403** si la petición trae un `Origin` no permitido. Las peticiones sin `Origin` (la APK, curl) pasan: contra los scripts protegen los límites. Por defecto se permiten `https://aliassdev.github.io` y localhost en cualquier puerto.
+
+## Custom LLM de la voz (`POST /v1/chat/completions`)
+
+El formato no cambia (Chat Completions de OpenAI en streaming, `data: {...}` y `data: [DONE]`). Lo que dice la voz:
+
+- Si el último turno de la conversación no es del usuario (ElevenLabs le da la palabra al agente sin mensaje nuevo), el stream sale vacío y correcto: el agente no dice nada. Antes decía la respuesta segura y, si el mensaje anterior del usuario era de crisis, repetía la plantilla. Los mensajes de sistema no cuentan como turno.
+- Si el guardrail dice «normal», el primer trozo es una frase puente («Vale, te lo explico.» o «Vale, te cuento.»), que sale en milisegundos, antes de reformular, buscar y generar. El prompt avisa al LLM y, si aun así abre con una muletilla, se quita. No sale en crisis, hechos ni fuera de ámbito, ni con saludos o agradecimientos cortos. Se desactiva con `VOZ_FRASE_PUENTE=false`.
+- Sin corchetes: las etiquetas de tono de las plantillas (`[slow]`) y cualquier cosa entre corchetes de lo generado se quitan, porque `eleven_flash_v2_5` las leería (`TTS_ETIQUETAS=true` las deja).
+- Si el LLM falla o se pasa del plazo (`LLM_PLAZO_VOZ_S`, 7 s contando el respaldo), la respuesta segura. Detrás de la frase puente empieza por «Perdona, …».
+- Cabeceras `Cache-Control: no-cache` y `X-Accel-Buffering: no`, para que ningún proxy acumule el SSE.
+
+## Seguridad de las respuestas (pruebas adversariales del 22/10/2026)
+
+Los contratos no cambian. Lo que cambia es el contenido de `respuesta` (y lo que dice la voz):
+
+- **Crisis sin el clasificador.** Mientras no haya modelo entrenado, solo hay reglas (`content/seguridad_patrones.json`). Ahora cubren también las formas más habituales que no nombran la muerte («me quiero matar», «me tiro por la ventana», «sería mejor no despertarme», «me quiero ir para siempre», «no aguanto más», «me he tomado un montón de pastillas») y el peligro ahora («me ha seguido desde el insti», «estoy escondida», «mi padre le pega a mi madre», sextorsión). También el condicional («me tomaría un bote de pastillas»), cifras en vez de letras («me kiero m4t4r»), frases en inglés («I want to kill myself») y un adulto que pide fotos o quedar a solas. Todas dan `tipo: "crisis"` con la plantilla, sin LLM. Con las reglas de antes, 7 de los 9 mensajes de crisis de la prueba llegaban al LLM como `normal`.
+- **Malestar o violencia que no llega a crisis** («tengo mucho miedo», «me acosan», «me pegaron en el baño», «pasó una foto mía desnuda»): si la respuesta no nombra a ANAR, se añade «Si lo necesitas, en la Fundación ANAR te escuchan a cualquier hora: 900 20 20 10.» (en el texto, antes de la pregunta final). Con malestar, la frase puente de la voz es «Gracias por contármelo.» en vez de «Vale, te lo explico.»: sigue saliendo al instante, porque si el primer trozo tardara más de `cascade_timeout_seconds` (4 s) ElevenLabs pasaría a su propio LLM de respaldo, sin ninguna de estas capas.
+- **Prompt** (normas 8 a 10, iguales en los dos canales): ante ideas de morir, autolesión o peligro, nada de leyes, solo ANAR, 116 111 y 112; de 14 a 17 años no hay cárcel de adultos sino medidas educativas, sin decir cuáles ni cuánto duran; con menos de 14 años no se puede juzgar a nadie; sin juramento ni «falso testimonio» para menores de 14; siempre en español, y los jailbreaks se rechazan con amabilidad.
+- **Verificación**: una frase en inglés se cambia por «Con eso no te puedo ayudar…»; las duraciones de internamiento («de uno a ocho años»), por una frase sobre medidas educativas; con menos de 14 años (si se sabe la edad), el juramento y el falso testimonio, por «El juez te pedirá que cuentes lo que recuerdes…». Las citas con corchetes lenticulares («【LECrim art. 682】») se quitan como las demás, también los números de artículo entre paréntesis («(artículo 20)», norma 6), y los espacios finos de los teléfonos (U+202F) pasan a espacios normales. «No irás a la cárcel» ya no se borra como si fuera una predicción, y «depende de lo que pasó» ya no se borra como si preguntara por los hechos.
+- **Datos personales**: antes de ir al LLM también se quitan el nombre al presentarse («me llamo…», «soy» + nombre con mayúscula), el centro educativo («IES Cervantes») y la localidad tras «vivo en», además de los teléfonos con las cifras en grupos («612 34 56 78»).
+
+## Calidad de las respuestas (medidas del 22/10/2026)
+
+Los contratos no cambian. Las métricas del RAG se repiten con `ml/eval_rag.py` (resume aparte las 13 preguntas de la demo, `"demo": true` en `content/eval/golden_rag.jsonl`, cada una con su respuesta verificada en el texto de la ley).
+
+- **Fuentes validadas en el RAG** (`ml/fuentes_validadas.py`, las añade `ml/ingest_leyes.py`): el glosario validado de la app (`content/glosario.json`, esquema 9.6, 42 términos) y las 92 citas literales de `docs/MARCO_LEGAL.md` (`content/marco_legal.json`, comprobadas contra el BOE, la AEPD y el INCIBE; sin la explicación «Para explicarlo», que es orientativa). Cada trozo lleva su etiqueta de cita: «Glosario TuTurno · Sala Gesell (Ley 4/2015, art. 25.1; LECrim, arts. 449 bis y 449 ter)», «LORPM art. 28.1», «AEPD · Canal prioritario». Una cita de una ley del corpus lleva el id de su artículo y compite con él: nunca salen dos trozos del mismo artículo. «Sala Gesell», «orden de alejamiento» o «Canal prioritario» no salen en ninguna ley: ahora los explica el glosario. Pesos de perfil fijados antes de medir (`content/rag_perfiles.json`, con el porqué).
+- **Verificación de las citas**: `fuentes_usadas` acepta la etiqueta tal cual, con el título detrás, sin la base legal, el término del glosario solo o el artículo entero de una cita de un apartado («LORPM art. 28» por «LORPM art. 28.1»), y siempre devuelve el fragmento recuperado, no lo que escribe el LLM. Las inventadas se descartan: «LECrim art. 449» no es «449 ter», «LORPM art. 281» no es «28.1» ni «LOPIVI art. 12» es «1.2». En el texto, las etiquetas coladas del glosario o de la AEPD se quitan como las de los artículos; en la voz, también las de más de 80 caracteres.
+- **Recuperación**: la consulta BM25 lleva además cada edad con letras y su tramo de la ley («13 años» → «trece años menor de catorce años»): con «Tengo 13 años y he hecho algo malo, ¿me pueden juzgar?», el artículo 3 de la LORPM pasa del 6.º al 2.º puesto. La reformulación jurídica es la de antes más unas pistas de vocabulario de la ley («la Fiscalía» → «el Ministerio Fiscal», «orden de alejamiento» → «prohibición de aproximarse o comunicarse con la víctima», «quitar fotos de internet» → «retirada de contenidos y supresión de datos personales»). Se probaron dos variantes más amplias y salieron peor en las 48 preguntas de referencia: quitar del todo el contexto del perfil (Acierto@5 0,646) y escribir las edades con letras en la reformulación (0,667; el modelo metía la edad del perfil en casi todas las consultas, como ya se vio en las pruebas adversariales).
+- **Prompt**: normas 11 («la defensa» es el abogado de la persona investigada: a una víctima nunca «tu defensa») y 12 (no aplicar un fragmento a otra situación: la LOPIVI 55 habla de las visitas a centros de protección, no a institutos); norma 3: decir las condiciones que ponen los fragmentos (no «gratis para todo el mundo»); pares concretos para no usar género («irás con alguien», «no tienes que», «si tienes miedo»); aviso de que los ejemplos del glosario son de Lucía, Sergio y Sara, personajes de la app, y de que hay que apoyarse en la definición del glosario con sus condiciones. Los fragmentos llevan la etiqueta sola entre corchetes y el título detrás.
+- **Verificación de las frases** (voz y texto): filtro ligero de las formas con género más comunes, solo detrás de un verbo en segunda persona o en infinitivo («puedes ir acompañado de tu madre» → «puedes ir con tu madre», «si estás asustada» → «si estás con miedo», «no estás obligado a» → «no tienes que», «puedes ser llamada» → «te pueden llamar», también con barra: «incómodo/a»); «la persona acompañada», «el menor está obligado» o «solo una vez» no se tocan. A una víctima o a un testigo, «tu defensa» → «la defensa de la persona investigada» y «tu defensor» → «tu abogado o tu abogada». En una frase sobre juzgar o responsabilidad penal, «menores de 13 años» → «menores de 14 años» (el límite de la LORPM). A una víctima, si la respuesta dice que el abogado es gratis sin ninguna condición, se añade la precisión del glosario: «El abogado es gratis en los casos que marca la ley: si es un delito sexual, aunque tu familia tenga dinero; en otros casos, depende de los ingresos de tu familia.»
+- **Medidas** (local, modelo real por el router, como en el Space): RAG con 61 preguntas (las 48 de referencia y 13 de la demo, `content/eval/golden_rag.jsonl`), en el modo de producción. Las 48: Acierto@5 0,750 → 0,729-0,771 (el ruido de la reformulación entre dos pasadas es de una o dos preguntas), Recall@5 0,604 → 0,597-0,601, MRR@10 0,576 → 0,613-0,616. Las 13 de la demo: 0,692 / 0,276 / 0,408 → 0,923 / 0,462-0,494 / 0,647-0,686. Respuestas reales de la demo (13 preguntas × 3): «no lo sé» con la Sala Gesell 3 → 0, Canal prioritario al borrar fotos 0/3 → 3/3, artículo 3 de la LORPM con 13 años 0/3 → 3/3, «tu defensa» a una víctima 2 → 0, «la Fiscalía puede ir a tu instituto» 2 → 0. Latencia igual: primera frase de la voz p50 0,77-0,86 s antes y 0,77-0,84 s después; texto p50 1,02-1,17 s antes y 0,92-0,95 s después. Las reglas de crisis no se han tocado: los 10 mensajes con riesgo de las pruebas adversariales siguen dando `crisis`.
+
+## Privacidad de los logs
+
+- Nunca va al log el texto del usuario. Tampoco la consulta jurídica reformulada (es una paráfrasis de la pregunta): solo si la hay.
+- Tampoco van la API key, el `agent_id` ni el token. httpx queda en WARNING porque registra las URL y la del token lleva el `agent_id`.
+- De los errores del proveedor solo se escribe el principio (`LLM 429`): en modo JSON, Groq devuelve en el cuerpo lo que había generado el modelo. Los fallos del LLM salen como `LLM principal (router.huggingface.co) ha fallado: LLM 429`, con el host y nunca la clave.
+- Las líneas de acceso de uvicorn salen sin IP (filtro en `app/main.py`). El Dockerfile, además, arranca con `--no-access-log`.
