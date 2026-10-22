@@ -357,4 +357,5 @@ def test_fotos_de_mi_ex_no_es_hablar_de_mis_fotos():
 
 def test_norma_9_no_supone_la_edad():
     """Sin esto, a Lucía le decía «No, si tu tío es menor de 18 años no irá a una cárcel de adultos»."""
-    assert "Si no se sabe su edad, no la supongas." in prompts.sistema(PERFIL, [])
+    assert "Si no se sabe su edad, no la supongas: explica qué pasa si tiene menos de 14 años, de 14 a 17 o si es adulto." in (
+        prompts.sistema(PERFIL, []))

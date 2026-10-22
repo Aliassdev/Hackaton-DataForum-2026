@@ -165,6 +165,32 @@ Los contratos no cambian. Las métricas del RAG se repiten con `ml/eval_rag.py` 
 - **Verificación de las frases** (voz y texto): filtro ligero de las formas con género más comunes, solo detrás de un verbo en segunda persona o en infinitivo («puedes ir acompañado de tu madre» → «puedes ir con tu madre», «si estás asustada» → «si estás con miedo», «no estás obligado a» → «no tienes que», «puedes ser llamada» → «te pueden llamar», también con barra: «incómodo/a»); «la persona acompañada», «el menor está obligado» o «solo una vez» no se tocan. A una víctima o a un testigo, «tu defensa» → «la defensa de la persona investigada» y «tu defensor» → «tu abogado o tu abogada». En una frase sobre juzgar o responsabilidad penal, «menores de 13 años» → «menores de 14 años» (el límite de la LORPM). A una víctima, si la respuesta dice que el abogado es gratis sin ninguna condición, se añade la precisión del glosario: «El abogado es gratis en los casos que marca la ley: si es un delito sexual, aunque tu familia tenga dinero; en otros casos, depende de los ingresos de tu familia.»
 - **Medidas** (local, modelo real por el router, como en el Space): RAG con 61 preguntas (las 48 de referencia y 13 de la demo, `content/eval/golden_rag.jsonl`), en el modo de producción. Las 48: Acierto@5 0,750 → 0,729-0,771 (el ruido de la reformulación entre dos pasadas es de una o dos preguntas), Recall@5 0,604 → 0,597-0,601, MRR@10 0,576 → 0,613-0,616. Las 13 de la demo: 0,692 / 0,276 / 0,408 → 0,923 / 0,462-0,494 / 0,647-0,686. Respuestas reales de la demo (13 preguntas × 3): «no lo sé» con la Sala Gesell 3 → 0, Canal prioritario al borrar fotos 0/3 → 3/3, artículo 3 de la LORPM con 13 años 0/3 → 3/3, «tu defensa» a una víctima 2 → 0, «la Fiscalía puede ir a tu instituto» 2 → 0. Latencia igual: primera frase de la voz p50 0,77-0,86 s antes y 0,77-0,84 s después; texto p50 1,02-1,17 s antes y 0,92-0,95 s después. Las reglas de crisis no se han tocado: los 10 mensajes con riesgo de las pruebas adversariales siguen dando `crisis`.
 
+## Revisión jurídica de las respuestas (22/10/2026)
+
+Los contratos no cambian (mismos campos y tipos en 8.1 y en la voz). Revisión adversarial de 227 respuestas reales, 109 del Space y 118 en local con el mismo modelo (59 preguntas de la demo y variantes coloquiales con los perfiles de Lucía, Sergio, Sara, un investigado de 15 años y una menor escuchada en familia de 12), contra `docs/MARCO_LEGAL.md` y el texto de las normas. Detalle e informe en `calidad/REVISION.md` del espacio de trabajo.
+
+- **Recuperación** (`app/rag/retrieve.py`, `content/rag_perfiles.json`):
+  - Si la pregunta nombra un término del glosario validado (también con otra forma de la palabra: «denunciar» → «Denuncia»), su definición entra siempre entre los 6 fragmentos (como mucho dos; los términos de una palabra muy generales, como «víctima» o «juicio», no).
+  - El título IV de la LOPIVI (centros de protección) pesa la mitad salvo en un procedimiento de protección; la LEC, ×0,7 en lo penal; la LORPM, ×0,6 en familia.
+  - El prompt enseña en qué parte de la ley está cada artículo («TÍTULO IV. De las actuaciones en centros de protección»).
+  - Medido con las 61 preguntas del conjunto de evaluación y las mismas consultas: los 6 fragmentos que ve el LLM aciertan igual en las 48 de referencia (Acierto@6 0,812) y la demo sube de Recall@6 0,481 a 0,506 (sin reformular, de 0,404 a 0,429).
+- **Reformulación**: la pista de las fotos ya no es «retirada de contenidos» (traía los artículos 578, terrorismo, y 510, odio, del Código Penal) sino el Canal prioritario. «La Fiscalía de Menores» se mantiene junto a «Ministerio Fiscal». Pistas nuevas: ir al juicio o contarlo otra vez (prueba preconstituida), las preguntas del abogado de la otra parte, «la foto que yo le mandé» (art. 197.7) y «¿se van a enterar mis padres?» (Estatuto de la víctima, art. 4).
+- **Prompt** (normas iguales en voz y texto):
+  - La norma 1 sugiere la Oficina de Asistencia a las Víctimas solo a víctimas y testigos.
+  - La norma 13 depende del papel: a quien investigan, presunción de inocencia y derecho a no declarar; a una víctima o un testigo, que eso no es un derecho suyo y que con menos de 14 años la declaración suele grabarse antes del juicio.
+  - Más normas: nunca culpar a la víctima (aunque ella enviara la foto), el derecho a ser oído no depende de la edad, los avisos a los padres de una víctima menor, no decir si le van a creer, «de oficio» no es gratis y la Fiscalía no visita los institutos.
+- **Verificación** (`app/agent/verificacion.py`), frases que se cambian:
+  - «La Fiscalía visita o supervisa el centro» → el protocolo del instituto y la coordinadora de bienestar; si la pregunta no habla del colegio, lo que hace la Fiscalía de Menores. No se aplica en un procedimiento de protección.
+  - A quien investigan, penas de prisión → la frase de las medidas educativas.
+  - A una víctima, «el abogado es gratis» sin condición → la precisión del glosario.
+  - «Cuando el responsable es menor, sus padres asumen el compromiso» → la regla de la ley de menores (art. 19.6).
+  - «Para denunciar necesitas un adulto» → se puede denunciar sin un adulto (LOPIVI, art. 50.2.e).
+  - Se quitan: lo que diga cómo se valorará el testimonio, la promesa de decir la verdad a menores de 14 y los números de artículo escritos con letras o pegados al nombre de la ley.
+  - Con menos de 14 años, «no te juzgan como a un adulto» → «por un delito».
+  - Sin la Oficina de Víctimas para quien investigan o en familia.
+  - Más formas sin género: «solo/a con», «preparado/a», «listo», «presionado», «nerviosa», «seguro» y «acompañad@».
+  - El orquestador añade además la condición del Canal prioritario: no sirve para WhatsApp, Telegram ni el correo.
+
 ## Privacidad de los logs
 
 - Nunca va al log el texto del usuario. Tampoco la consulta jurídica reformulada (es una paráfrasis de la pregunta): solo si la hay.

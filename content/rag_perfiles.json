@@ -2,8 +2,8 @@
   "_nota": "Refuerzo por perfil: multiplica la puntuación RRF de cada fragmento según su ley. peso = base × procedimiento × rol. Fijados a priori con criterio jurídico (NO ajustados mirando el conjunto de evaluación). LEC y LECrim son códigos enormes y generales: base < 1 para que no ahoguen a las leyes de menores salvo que el perfil las pida. EVD (Estatuto de la víctima): estatuto general de las víctimas de delitos, sube con rol víctima (como la LOPIVI) y algo en penal, porque regula su papel en el proceso penal. LAJG (asistencia jurídica gratuita): la mayoría de sus artículos regulan el trámite ante las Comisiones y los Colegios, así que base < 1; sube con rol víctima por el art. 2 h) (gratuidad sin mirar ingresos para ciertas víctimas). 'escuchado_familia' es el valor que envía la app (sección 8.6) para 'escuchado'. Fuentes validadas (ml/fuentes_validadas.py), fijadas antes de medir: GLOSARIO (glosario validado de la app) base 1.2, porque cada trozo es una definición escrita para 11-17 años, con una sola idea y su fuente legal, y es lo único del índice que conecta los nombres de la calle (Sala Gesell, orden de alejamiento, Canal prioritario) con la ley; 1.2 queda por debajo de los refuerzos de papel (1.3-1.5), para que no desplace a la ley que pide el perfil. Las citas de docs/MARCO_LEGAL.md de una ley del corpus llevan el id de esa ley y sus mismos pesos. AEPD (Canal prioritario, Canal Joven) e INCIBE (017) suben sin procedimiento abierto como la LOPDGDD y la LO 1/1982 (es lo que se puede hacer antes de denunciar) y la AEPD algo con rol víctima, como la LAJG (un trámite concreto para la víctima). LODP (LO 3/1981, Defensor del Pueblo) sube sin procedimiento, como la LO 1/1996. CE (art. 24.2: derecho a la defensa y presunción de inocencia) sube con rol investigado, por debajo de la LORPM. LOPJ (art. 453.1) sin refuerzo.",
   "base": {"LEC": 0.8, "LECRIM": 0.9, "RGPD": 0.9, "CP": 0.85, "LAJG": 0.9, "GLOSARIO": 1.2},
   "procedimiento": {
-    "penal": {"LECRIM": 1.3, "LORPM": 1.2, "LOPIVI": 1.2, "CP": 1.1, "EVD": 1.1},
-    "familia": {"LEC": 1.4, "LOPJM": 1.3, "CDN": 1.2},
+    "penal": {"LECRIM": 1.3, "LORPM": 1.2, "LOPIVI": 1.2, "CP": 1.1, "EVD": 1.1, "LEC": 0.7},
+    "familia": {"LEC": 1.4, "LOPJM": 1.3, "CDN": 1.2, "LORPM": 0.6},
     "proteccion": {"LOPJM": 1.4, "LOPIVI": 1.4, "CDN": 1.1},
     "ninguno": {"LOPJM": 1.2, "LOPIVI": 1.2, "LOHIP": 1.2, "LOPDGDD": 1.2, "CP": 1.2, "AEPD": 1.2, "INCIBE": 1.2, "LODP": 1.2}
   },
@@ -13,5 +13,9 @@
     "testigo": {"LECRIM": 1.2},
     "escuchado": {"LEC": 1.2, "LOPJM": 1.2},
     "escuchado_familia": {"LEC": 1.2, "LOPJM": 1.2}
-  }
+  },
+  "_nota_contexto": "Pesos por parte de la ley (revisión jurídica del 22/10/2026, fijados con criterio jurídico, no ajustados con el conjunto de evaluación): el título IV de la LOPIVI (arts. 53 a 55) regula los centros de protección, donde viven niños, niñas y adolescentes bajo la tutela o la guarda de la Administración, así que solo pesa entero en un procedimiento de protección. Con el peso de víctima (LOPIVI ×1,56), la LOPIVI 53 (protocolos de esos centros, que nombra el acoso) y la 55 (el Ministerio Fiscal los visita) salían para «¿Qué hace la Fiscalía de Menores si hay acoso escolar?», y el LLM decía que la Fiscalía visita los institutos. Ninguna pregunta de content/eval/golden_rag.jsonl tiene esos artículos como relevantes. En la misma revisión, LEC ×0,7 en un procedimiento penal: la Ley de Enjuiciamiento Civil solo es supletoria en lo penal, y a Lucía (11 años, víctima) se le contestaba con el interrogatorio de las partes del proceso civil (LEC, art. 306) a «¿El abogado del que me hizo daño me puede hacer preguntas?»; ninguna pregunta penal del conjunto de evaluación tiene un artículo de la LEC como relevante. Y LORPM ×0,6 en un proceso de familia: la ley penal de menores no regula la separación de los padres, y a «¿Mis padres se van a enterar de lo que le diga al juez?» se contestaba con los derechos del menor investigado (LORPM, art. 22).",
+  "contexto": [
+    {"ley": "LOPIVI", "empieza": "TÍTULO IV. De las actuaciones en centros de protección", "peso": 0.5, "salvo_procedimiento": ["proteccion"]}
+  ]
 }

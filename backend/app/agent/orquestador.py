@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from app.agent import prompts
 from app.agent.pii import limpiar
 from app.agent.safety import normalizar
-from app.agent.verificacion import normalizar_salida, verificar_stream, verificar_texto
+from app.agent.verificacion import PRECISION_GRATIS, normalizar_salida, verificar_stream, verificar_texto
 from app.api.errores import resumen_error
 from app.config import settings
 from app.llm import client
@@ -40,6 +40,9 @@ TURNOS_HISTORIAL = 6
 K_FRAGMENTOS = 6  # artículos que ve el LLM: con 4, artículos clave en 5.º-7.º lugar quedaban fuera
 MAX_TOKENS_TEXTO = 900  # incluye el razonamiento de gpt-oss
 MARGEN_REFORMULAR_S = 0.3  # la llamada ya tiene su plazo; esto cubre el reparto entre hilos
+# Tokens de la reformulación, razonamiento incluido: con 250 (el valor por defecto) y el prompt con más pistas, alguna
+# consulta salía cortada («derecho a no declarar contra»)
+MAX_TOKENS_REFORMULAR = 400
 
 # Frase puente de la voz: corta, neutra y válida para cualquier pregunta. No se usa con saludos, agradecimientos ni
 # mensajes muy cortos («hola», «gracias», «vale»): ahí no pega un «te lo explico» y la respuesta ya es breve.
@@ -89,20 +92,45 @@ RE_AYUDA_DICHA = re.compile(r"\bANAR\b|\b900 ?20 ?20 ?10\b|\b116 ?111\b|(?i:\bno
 # condición, se añade la precisión del glosario (G-abogado-oficio; Ley 1/1996, art. 2 h). A quien investigan no: esa
 # gratuidad sin mirar los ingresos es para las víctimas.
 RE_ABOGADO_GRATIS = re.compile(
-    r"\b(?:abogad[oa]s?|letrad[oa]s?|asistencia jurídica)\b[^.?!\n]*\b(?:grat(?:is|uit[oa]s?)|sin coste|sin pagar)\b"
-    r"|\b(?:grat(?:is|uit[oa]s?)|sin coste)\b[^.?!\n]*\b(?:abogad[oa]s?|letrad[oa]s?)\b",
+    r"\b(?:abogad[oa]s?|letrad[oa]s?|asistencia jurídica)\b[^.?!\n]*\b(?:grat(?:is|uit[oa]s?|uitamente)|sin coste|sin pagar)\b"
+    r"|\b(?:grat(?:is|uit[oa]s?|uitamente)|sin coste)\b[^.?!\n]*\b(?:abogad[oa]s?|letrad[oa]s?)\b",
     re.IGNORECASE,
 )
 RE_CONDICION_GRATIS = re.compile(r"depende|en (?:los|algunos|ciertos) casos|ingresos|recursos|dinero|no siempre|si es un delito", re.IGNORECASE)
-PRECISION_GRATIS = (
-    "El abogado es gratis en los casos que marca la ley: si es un delito sexual, aunque tu familia tenga dinero; "
-    "en otros casos, depende de los ingresos de tu familia."
+# PRECISION_GRATIS (app/agent/verificacion.py): la misma frase sustituye en la verificación las que no tienen condición
+# Revisión jurídica (22/10/2026): «¿Tengo abogado gratis?» → «un abogado de oficio, es decir, gratuito». La verificación
+# deja «de oficio» (de oficio no quiere decir gratis); si la pregunta era sobre el coste y la respuesta habla del abogado
+# sin decir de qué depende, también va la precisión.
+RE_PIDE_GRATIS = re.compile(r"grat(?:is|uit)|pagar|cuesta|coste|dinero", re.IGNORECASE)
+RE_ABOGADO = re.compile(r"\b(?:abogad[oa]s?|letrad[oa]s?|asistencia jurídica)\b", re.IGNORECASE)
+
+
+RE_PREGUNTA = re.compile(r"[^.!?\n]*\?")
+
+
+def precisar_gratis(texto: str, perfil: dict, pregunta: str = "") -> bool:
+    """La respuesta a una víctima dice que el abogado es gratis, o le pregunta si lo es, sin decir de qué depende. Las
+    preguntas de la respuesta no cuentan («¿Te explico cómo funciona la asistencia jurídica gratuita?»)."""
+    afirmaciones = RE_PREGUNTA.sub("", texto)
+    if perfil.get("rol") != "victima" or RE_CONDICION_GRATIS.search(afirmaciones):
+        return False
+    return bool(RE_ABOGADO_GRATIS.search(afirmaciones) or (RE_PIDE_GRATIS.search(pregunta) and RE_ABOGADO.search(afirmaciones)))
+
+
+# El Canal prioritario de la AEPD solo sirve para contenido sexual o violento publicado en redes sociales y webs, no para
+# WhatsApp, Telegram ni el correo (glosario validado, G-canal-prioritario; AEPD, FAQ 15.03). En la revisión jurídica, a
+# «un chaval ha pasado una foto mía por el grupo de clase» se le mandaba al Canal prioritario sin esa condición (2 de 2).
+RE_CANAL_PRIORITARIO = re.compile(r"\bcanal prioritario\b", re.IGNORECASE)
+RE_CONDICION_CANAL = re.compile(r"whatsapp|telegram|mensajer[íi]a|correo", re.IGNORECASE)
+PRECISION_CANAL = (
+    "El Canal prioritario sirve para fotos, vídeos o audios sexuales o violentos publicados en redes sociales y webs; "
+    "no sirve para WhatsApp, Telegram ni el correo."
 )
 
 
-def precisar_gratis(texto: str, perfil: dict) -> bool:
-    """La respuesta dice a una víctima que el abogado es gratis sin decir de qué depende."""
-    return perfil.get("rol") == "victima" and bool(RE_ABOGADO_GRATIS.search(texto)) and not RE_CONDICION_GRATIS.search(texto)
+def precisar_canal(texto: str) -> bool:
+    """La respuesta manda al Canal prioritario sin decir para qué no sirve."""
+    return bool(RE_CANAL_PRIORITARIO.search(texto)) and not RE_CONDICION_CANAL.search(texto)
 
 
 # La reformulación corre en estos hilos mientras el hilo de la petición busca la pregunta original. Uno por cada hilo
@@ -139,6 +167,17 @@ def menor_de_14(perfil: dict) -> bool:
 def victima_o_testigo(perfil: dict) -> bool:
     """Por el perfil de la app: a una víctima o a un testigo no se le habla de «tu defensa» (norma 11)."""
     return perfil.get("rol") in ("victima", "testigo")
+
+
+# La pregunta habla del colegio o del acoso: la frase que sustituye «la Fiscalía visita el centro» es la del protocolo del
+# instituto; si no, la de lo que hace la Fiscalía de Menores (app/agent/verificacion.py)
+RE_TEMA_ESCOLAR = re.compile(r"\b(acoso|ciberacoso|bullying|insti|instituto|colegio|cole|escuela|clase|compañer[oa]s?|profe\w*)\b")
+
+
+def opciones_verificacion(perfil: dict, pregunta: str = "") -> dict:
+    """Lo que la verificación frase a frase necesita saber del perfil y de la pregunta (app/agent/verificacion.py)."""
+    return {"menor_14": menor_de_14(perfil), "victima": victima_o_testigo(perfil), "rol": perfil.get("rol"),
+            "proteccion": perfil.get("procedimiento") == "proteccion", "escolar": bool(RE_TEMA_ESCOLAR.search(normalizar(pregunta)))}
 
 
 def malestar(pregunta: str) -> bool:
@@ -197,6 +236,7 @@ def reformular(pregunta: str, historial: list[dict], perfil: dict) -> str | None
             [{"role": "user", "content": prompts.REFORMULAR.format(
                 perfil=prompts.describir_perfil(perfil), historial=texto_hist, pregunta=pregunta)}],
             modelo=settings.llm_modelo_reformular,
+            max_tokens=MAX_TOKENS_REFORMULAR,
             plazo_s=settings.reformular_plazo_s,
         )
         return limpiar_consulta(consulta)
@@ -255,7 +295,7 @@ def responder(mensajes: list[dict], perfil: dict, puente: str | None = None) -> 
             return
         llamada = [{"role": "system", "content": prompts.sistema(perfil, contexto.fragmentos, puente=bool(puente))}] + contexto.historial
         generado = client.stream(llamada, modelo=settings.llm_modelo, plazo_s=settings.llm_plazo_voz_s)
-        for trozo in verificar_stream(generado, menor_14=menor_de_14(perfil), victima=victima_o_testigo(perfil)):
+        for trozo in verificar_stream(generado, **opciones_verificacion(perfil, _ultima_pregunta(mensajes))):
             if puente and not dicho:
                 trozo = sin_eco_del_puente(trozo)
                 if not trozo:
@@ -269,10 +309,14 @@ def responder(mensajes: list[dict], perfil: dict, puente: str | None = None) -> 
         log.error("Generación fallida: %s", resumen_error(e))
     if not dicho:
         yield RESPUESTA_SEGURA_TRAS_PUENTE if puente else RESPUESTA_SEGURA
-    if dicho and precisar_gratis("".join(texto_dicho), perfil):
+    if dicho and precisar_gratis("".join(texto_dicho), perfil, _ultima_pregunta(mensajes)):
         log.info("Precisión de la asistencia jurídica gratuita añadida")
         texto_dicho.append(PRECISION_GRATIS)
         yield PRECISION_GRATIS + " "
+    if dicho and precisar_canal("".join(texto_dicho)):
+        log.info("Precisión del Canal prioritario añadida")
+        texto_dicho.append(PRECISION_CANAL)
+        yield PRECISION_CANAL + " "
     if recordar_ayuda(_ultima_pregunta(mensajes)) and not RE_AYUDA_DICHA.search("".join(texto_dicho)):
         log.info("Recordatorio de ANAR añadido (malestar)")
         # Lo verificado ya acaba en espacio; la respuesta segura, no
@@ -288,12 +332,15 @@ def responder_texto(mensajes: list[dict], perfil: dict) -> RespuestaTexto:
     bruto = client.completar(llamada, modelo=settings.llm_modelo, max_tokens=MAX_TOKENS_TEXTO, temperatura=0.3)
     # Antes de separar las fuentes: así una cita con corchetes lenticulares («【LECrim art. 682】») se quita como las demás
     cuerpo, citas = prompts.separar_fuentes(normalizar_salida(bruto))
-    texto = verificar_texto(cuerpo, menor_14=menor_de_14(perfil), victima=victima_o_testigo(perfil))
+    texto = verificar_texto(cuerpo, **opciones_verificacion(perfil, _ultima_pregunta(mensajes)))
     if not texto:
         raise client.ErrorLLM("Respuesta vacía después de la verificación")
-    if precisar_gratis(texto, perfil):
+    if precisar_gratis(texto, perfil, _ultima_pregunta(mensajes)):
         log.info("Precisión de la asistencia jurídica gratuita añadida")
         texto = con_recordatorio(texto, PRECISION_GRATIS)
+    if precisar_canal(texto):
+        log.info("Precisión del Canal prioritario añadida")
+        texto = con_recordatorio(texto, PRECISION_CANAL)
     if recordar_ayuda(_ultima_pregunta(mensajes)) and not RE_AYUDA_DICHA.search(texto):
         log.info("Recordatorio de ANAR añadido (malestar)")
         texto = con_recordatorio(texto, RECORDATORIO_ANAR["texto"])

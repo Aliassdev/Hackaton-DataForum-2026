@@ -104,12 +104,18 @@ def test_limpiar_consulta_juridica():
 
 
 def test_reformulacion_con_el_vocabulario_de_la_ley():
-    """La consulta jurídica usa las palabras de la ley («Ministerio Fiscal», no «Fiscalía»), sin cambiar el resto del
-    prompt validado: las variantes que quitaban el contexto o escribían las edades con letras salían peor en
-    content/eval/golden_rag.jsonl (ver backend/API.md)."""
-    for pista in ('"la Fiscalía" → "el Ministerio Fiscal"', "prohibición de aproximarse o comunicarse con la víctima",
-                  "asistencia jurídica gratuita", "retirada de contenidos y supresión de datos personales"):
+    """La consulta jurídica usa las palabras de la ley («Ministerio Fiscal»), sin cambiar el resto del prompt validado: las
+    variantes que quitaban el contexto o escribían las edades con letras salían peor en content/eval/golden_rag.jsonl (ver
+    backend/API.md). Revisión jurídica (22/10/2026): «Fiscalía de Menores» se queda junto a «Ministerio Fiscal» (si no, la
+    definición validada no salía) y la pista de las fotos ya no es «retirada de contenidos», que traía los artículos 578
+    (terrorismo) y 510 (odio) del Código Penal."""
+    for pista in ('"la Fiscalía de Menores" → "el Ministerio Fiscal, Fiscalía de Menores"', "prohibición de aproximarse o comunicarse con la víctima",
+                  "asistencia jurídica gratuita", "Canal prioritario de la Agencia Española de Protección de Datos",
+                  "prueba preconstituida, reproducción de la grabación en el juicio", "mantenlo en la consulta"):
         assert pista in prompts.REFORMULAR
+    assert "retirada de contenidos" not in prompts.REFORMULAR
+    # La pista del «¿tengo que declarar?» del investigado se colaba en las consultas de las víctimas
+    assert "derecho a no declarar" not in prompts.REFORMULAR
     assert prompts.REFORMULAR.rstrip().endswith("Consulta jurídica:")
 
 
@@ -142,13 +148,13 @@ def test_abogado_gratis_con_sus_condiciones(monkeypatch):
     sin_condicion = "Sí, tienes derecho a un abogado de oficio, es decir, gratuito.\n\n¿Quieres saber cómo pedirlo?\nFUENTES: ninguna"
     monkeypatch.setattr(orquestador.client, "completar", lambda *a, **k: sin_condicion)
     texto = orquestador.responder_texto([{"role": "user", "content": "¿Tengo abogado gratis?"}], {"rol": "victima"}).texto
-    assert texto == ("Sí, tienes derecho a un abogado de oficio, es decir, gratuito.\n\n" + orquestador.PRECISION_GRATIS
-                     + "\n\n¿Quieres saber cómo pedirlo?")
+    # Revisión jurídica: la frase sin condición se cambia por la precisión (antes se añadía detrás y se contradecían)
+    assert texto == orquestador.PRECISION_GRATIS + "\n\n¿Quieres saber cómo pedirlo?"
     assert orquestador.PRECISION_GRATIS not in orquestador.responder_texto([{"role": "user", "content": "x"}], {"rol": "investigado"}).texto
     con_condicion = "Es gratis en los casos que marca la ley; si no, depende de los ingresos de tu familia.\nFUENTES: ninguna"
     monkeypatch.setattr(orquestador.client, "completar", lambda *a, **k: con_condicion)
     assert orquestador.PRECISION_GRATIS not in orquestador.responder_texto([{"role": "user", "content": "x"}], {"rol": "victima"}).texto
-    # En la voz, al final
+    # En la voz, igual: la frase se cambia por la precisión
     monkeypatch.setattr(orquestador.client, "stream", lambda *a, **k: iter(["Sí, el abogado ", "es gratis."]))
     voz = "".join(orquestador.responder([{"role": "user", "content": "¿Tengo abogado gratis?"}], {"rol": "victima"}))
-    assert voz.strip() == "Sí, el abogado es gratis. " + orquestador.PRECISION_GRATIS
+    assert voz.strip() == orquestador.PRECISION_GRATIS

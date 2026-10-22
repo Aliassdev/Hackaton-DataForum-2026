@@ -30,6 +30,7 @@ import os
 import re
 import threading
 import time
+import unicodedata
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -60,6 +61,56 @@ PESO_MENORES = 1.3
 RE_EDAD = re.compile(r"\b(\d{1,2})\s+años\b")
 TRAMO_MENOR_14 = "menor de catorce años"
 TRAMO_14_A_17 = "mayores de catorce años y menores de dieciocho"
+# Términos del glosario validado nombrados en la pregunta (revisión jurídica del 22/10/2026): si alguien pregunta por la
+# «Fiscalía de Menores», el «acoso escolar» o el «juicio», la definición validada de ese término entra siempre entre los
+# fragmentos. Con la reformulación, «la Fiscalía de Menores» pasaba a «el Ministerio Fiscal» y la definición se quedaba
+# fuera, por detrás de la LOPIVI 53 y 55 (centros de protección), que el LLM aplicaba a los institutos. Como mucho dos,
+# los más largos primero; un término dentro de otro ya nombrado no cuenta («Fiscalía» en «Fiscalía de Menores»).
+MAX_TERMINOS_GLOSARIO = 2
+GLOSARIO = "GLOSARIO"
+PREFIJO_GLOSARIO = "Glosario TuTurno · "
+
+
+def _normalizar_termino(texto: str) -> str:
+    """Minúsculas, sin tildes y con un solo espacio: «¿Qué es la Sala   Gesell?» → «¿que es la sala gesell?»."""
+    texto = unicodedata.normalize("NFD", texto.lower())
+    return re.sub(r"\s+", " ", "".join(c for c in texto if unicodedata.category(c) != "Mn"))
+
+
+# También con otra forma de la palabra («denunciar» → «Denuncia»), por las raíces del lematizador de BM25. Los términos
+# de una palabra muy generales no se fuerzan: «víctima», «declarar» o «juicio» salen en muchas preguntas sin ser de lo
+# que tratan, y su definición quitaba el sitio a un artículo relevante (medido con las 61 preguntas del conjunto de
+# evaluación y las consultas reales guardadas: «qué derechos tengo si soy víctima» perdía la LORPM 4 por G-victima).
+TERMINOS_GENERICOS = frozenset({"victima", "testigo", "declaracion", "juicio", "medida", "sentencia", "expediente", "intimidad"})
+
+
+@lru_cache(maxsize=256)
+def _raices(texto: str) -> tuple[str, ...]:
+    import Stemmer
+
+    return tuple(Stemmer.Stemmer("spanish").stemWords(re.findall(r"\w+", texto)))
+
+
+def _contiene(secuencia: tuple[str, ...], parte: tuple[str, ...]) -> bool:
+    return bool(parte) and any(secuencia[i : i + len(parte)] == parte for i in range(len(secuencia) - len(parte) + 1))
+
+
+def terminos_nombrados(pregunta: str, terminos: dict[str, int], maximo: int = MAX_TERMINOS_GLOSARIO) -> list[int]:
+    """Índices de los trozos del glosario cuyo término aparece en la pregunta: tal cual (palabras enteras, sin tildes ni
+    mayúsculas) o con otra forma de las mismas palabras. terminos: término normalizado → índice del trozo."""
+    texto = _normalizar_termino(pregunta)
+    raices = _raices(texto)
+    elegidos: list[str] = []
+    for termino in sorted(terminos, key=len, reverse=True):
+        if len(elegidos) == maximo:
+            break
+        if termino in TERMINOS_GENERICOS or any(termino in otro for otro in elegidos):
+            continue
+        if re.search(rf"(?<!\w){re.escape(termino)}(?!\w)", texto) or _contiene(raices, _raices(termino)):
+            elegidos.append(termino)
+    return [terminos[t] for t in elegidos]
+
+
 # Peso de la consulta jurídica frente a la pregunta original. Probados 1, 1,5, 2, 3 y "solo consulta"
 # con el conjunto de referencia: ninguno mejora a 1,0 (diferencias de una pregunta), así que se deja en 1.
 PESO_CONSULTA = 1.0
@@ -243,6 +294,9 @@ class Fragmento:
     # Lo que enseña la app en la etiqueta de la fuente (contrato 8.1). None en los artículos de ley: se saca de la cita
     norma: str | None = None
     articulo: str | None = None
+    # Parte de la ley en la que está el artículo («TÍTULO IV. De las actuaciones en centros de protección»). Solo en los
+    # artículos de ley: el prompt la enseña para que no se aplique un artículo fuera de su sitio
+    contexto: str | None = None
 
 
 class Recuperador:
@@ -256,6 +310,16 @@ class Recuperador:
         self.encoder = SentenceTransformer(ENCODER)
         self.perfiles = json.loads(perfiles_path.read_text(encoding="utf-8"))
         self.habla_de_menores = [bool(RE_MENORES.search(t["texto"])) for t in self.trozos]
+        self.terminos_glosario = {
+            _normalizar_termino((t.get("norma") or "").removeprefix(PREFIJO_GLOSARIO)): i
+            for i, t in enumerate(self.trozos) if t["ley"] == GLOSARIO and t.get("norma")
+        }
+        # Pesos por parte de la ley (rag_perfiles.json, «contexto»): por ejemplo, los artículos de la LOPIVI sobre los
+        # centros de protección pesan menos salvo en un procedimiento de protección
+        self.reglas_contexto = [
+            (i, regla) for i, t in enumerate(self.trozos) for regla in self.perfiles.get("contexto", [])
+            if t["ley"] == regla["ley"] and t.get("contexto", "").startswith(regla["empieza"])
+        ]
         hilos = ajustar_hilos()
         self.codificador = Codificador(self.encoder)  # con los hilos de torch ya ajustados
         self.rankings("calentamiento")  # la primera codificación es más lenta: que no le toque a nadie
@@ -277,6 +341,11 @@ class Recuperador:
             peso *= p["procedimiento"].get(perfil.get("procedimiento") or "", {}).get(ley, 1.0)
             peso *= p["rol"].get(perfil.get("rol") or "", {}).get(ley, 1.0)
         return peso
+
+    def pesos_contexto(self, perfil: dict | None) -> dict[int, float]:
+        """Peso de cada trozo según la parte de la ley en la que está (solo los que tienen regla)."""
+        procedimiento = (perfil or {}).get("procedimiento") or ""
+        return {i: regla["peso"] for i, regla in self.reglas_contexto if procedimiento not in regla.get("salvo_procedimiento", [])}
 
     def rankings(self, consulta: str, modo: str = "hibrido_perfil") -> list[list[int]]:
         """Rankings de una consulta (BM25 y denso, o solo uno según el modo), en el orden en que se fusionan."""
@@ -302,26 +371,36 @@ class Recuperador:
         for ranking, peso in listas:
             for pos, i in enumerate(ranking):
                 puntos[int(i)] = puntos.get(int(i), 0.0) + peso / (K_RRF + pos + 1)
+        forzados: list[int] = []
         if modo in ("hibrido_perfil", "completo"):
-            puntos = {i: s * self.peso_perfil(self.trozos[i]["ley"], perfil) for i, s in puntos.items()}
+            contexto = self.pesos_contexto(perfil)
+            puntos = {i: s * self.peso_perfil(self.trozos[i]["ley"], perfil) * contexto.get(i, 1.0) for i, s in puntos.items()}
+            forzados = terminos_nombrados(pregunta, self.terminos_glosario)
         if modo == "completo":
             puntos = {i: s * (PESO_MENORES if self.habla_de_menores[i] else 1.0) for i, s in puntos.items()}
 
-        # Agregación por artículo: el mejor fragmento representa al artículo
-        vistos, salida = set(), []
+        # Agregación por artículo: el mejor fragmento representa al artículo. Los términos del glosario nombrados en la
+        # pregunta entran siempre: ocupan el sitio de los últimos y luego todo va por puntuación.
+        forzados = forzados[:k]
+        ids_forzados = {self.trozos[i]["articulo_id"] for i in forzados}
+        vistos, elegidos = set(ids_forzados), list(forzados)
         for i in sorted(puntos, key=puntos.get, reverse=True):
+            if len(elegidos) == k:
+                break
+            if self.trozos[i]["articulo_id"] not in vistos:
+                vistos.add(self.trozos[i]["articulo_id"])
+                elegidos.append(i)
+        elegidos.sort(key=lambda i: puntos.get(i, 0.0), reverse=True)
+        salida = []
+        for i in elegidos:
             t = self.trozos[i]
-            if t["articulo_id"] in vistos:
-                continue
-            vistos.add(t["articulo_id"])
             norma = t.get("norma")  # solo las fuentes validadas: glosario y marco legal
             salida.append(Fragmento(
                 id=t["id"], articulo_id=t["articulo_id"], ley=t["ley"], cita=t.get("cita") or f"{t['ley_corta']} art. {t['articulo']}",
-                titulo=t["titulo"], texto=t["texto"], url=t["url"], puntuacion=puntos[i],
+                titulo=t["titulo"], texto=t["texto"], url=t["url"], puntuacion=puntos.get(i, 0.0),
                 norma=norma, articulo=t.get("articulo", "") if norma is not None else None,
+                contexto=(t.get("contexto") or None) if norma is None else None,
             ))
-            if len(salida) == k:
-                break
         log.debug("RAG %s: %.0f ms", modo, (time.perf_counter() - inicio) * 1000)
         return salida
 
