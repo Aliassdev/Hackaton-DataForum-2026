@@ -78,8 +78,12 @@ void main() {
       }
       final alturas = [for (final nombre in nombresConFases) tester.getTopLeft(find.text(nombre)).dy];
       expect(alturas, orderedEquals([...alturas]..sort()));
-      for (final fase in ['Antes', 'Durante', 'Después']) {
+      // Las fases son carteles de sala (en mayúsculas), con su icono de la capa justicia.
+      for (final fase in ['ANTES', 'DURANTE', 'DESPUÉS']) {
         expect(find.text(fase), findsOneWidget);
+      }
+      for (final icono in [TuIcono.citacion, TuIcono.puertaSala, TuIcono.reloj]) {
+        expect(find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == icono), findsOneWidget);
       }
       expect(find.bySemanticsLabel(RegExp(r'^Paso 1 de 6: Te llega una citación')), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp(r'^Paso 4 de 6: La entrevista en la Sala Gesell')), findsOneWidget);
@@ -103,7 +107,9 @@ void main() {
       expect(find.textContaining('Te hace las preguntas una persona preparada'), findsOneWidget);
       expect(find.text('Quién estará'), findsOneWidget);
       expect(find.text('Una psicóloga o un psicólogo del juzgado'), findsOneWidget);
-      expect(find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == TuIcono.idea), findsOneWidget);
+      // Quién estará, con los personajes de «Vive el caso»: la psicóloga es Ana, la del caso de Lucía.
+      expect(find.byWidgetPredicate((w) => w is RetratoPersonaje && w.id == 'ana'), findsOneWidget);
+      expect(find.text('Como Ana, la psicóloga del caso de Lucía'), findsOneWidget);
       expect(find.text('Puedes pedir'), findsOneWidget);
       expect(find.text('Un descanso'), findsOneWidget);
       expect(find.text('Que te repitan una pregunta'), findsOneWidget);
@@ -152,7 +158,7 @@ void main() {
       await montarLinea(tester, repo: repo, rol: 'testigo', faseActual: Fase.durante);
 
       expect(find.text('Estás aquí'), findsOneWidget);
-      expect(find.text('Durante'), findsNWidgets(2));
+      expect(find.text('DURANTE'), findsNWidgets(2));
       // Los pasos de la fase siguen resaltados en los dos grupos.
       expect(find.bySemanticsLabel(RegExp(r'^Paso 1 de 3: .*Estás en esta parte')), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp(r'^Paso 3 de 3: .*Estás en esta parte')), findsOneWidget);
@@ -331,7 +337,7 @@ void main() {
     }
 
     testWidgets('al abrir abajo un paso que cabe, se desplaza lo justo para verlo entero', (tester) async {
-      await montarLinea(tester, repo: repoVictima, tamano: const Size(390, 700));
+      await montarLinea(tester, repo: repoVictima, tamano: const Size(390, 900));
       final cabecera = find.bySemanticsLabel(RegExp(r'^Paso 6 de 6'));
       await Scrollable.ensureVisible(tester.element(cabecera), alignment: 1);
       await tester.pumpAndSettle();
@@ -442,6 +448,193 @@ void main() {
     });
   });
 
+  group('fase marcada y capa justicia', () {
+    testWidgets('con la Entrada en víctima · durante, la línea de víctima marca «Estás aquí» en Durante', (
+      tester,
+    ) async {
+      await montarLinea(
+        tester,
+        repo: repoVictima,
+        preferencias: entradaGuardada(rol: 'victima', fase: 'durante'),
+      );
+
+      expect(find.text('Estás aquí'), findsOneWidget);
+      expect(find.bySemanticsLabel('Durante. Estás aquí'), findsOneWidget);
+      final marca = tester.getCenter(find.text('Estás aquí')).dy;
+      expect(marca, greaterThan(tester.getCenter(find.text('Te explican tus derechos')).dy));
+      expect(marca, lessThan(tester.getCenter(find.text('Llegas al juzgado')).dy));
+    });
+
+    testWidgets('quién estará: la jueza con la toga y el fiscal con la ley (nunca un mazo ni la balanza)', (
+      tester,
+    ) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(tester, repo: repo);
+      await _pulsar(tester, find.text('Te escuchan'));
+
+      // Fuera de la sala (sin toga en el dibujo), la jueza es su icono: la toga.
+      expect(find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == TuIcono.toga), findsOneWidget);
+      // El fiscal sale con su personaje sin toga (el del despacho) y, en la esquina, el icono de la ley.
+      expect(find.byWidgetPredicate((w) => w is RetratoPersonaje && w.id == 'fiscal-despacho'), findsOneWidget);
+      expect(find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == TuIcono.ley), findsWidgets);
+      // «De dónde sale» lleva el libro de la ley.
+      expect(find.text('De dónde sale'), findsOneWidget);
+      expect(find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == TuIcono.balanza), findsNothing);
+    });
+
+    testWidgets('en la sala (estrados), la jueza y el fiscal salen con su toga', (tester) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(
+        tester,
+        repo: repo,
+        personalizacion: const PersonalizacionLinea(extras: {'P2': ExtrasPaso(enSala: true)}),
+      );
+      await _pulsar(tester, find.text('Te escuchan'));
+
+      expect(find.byWidgetPredicate((w) => w is RetratoPersonaje && w.id == 'jueza'), findsOneWidget);
+      expect(find.byWidgetPredicate((w) => w is RetratoPersonaje && w.id == 'fiscal'), findsOneWidget);
+    });
+  });
+
+  group('personalizada (Mi situación)', () {
+    testWidgets('«Para ti», el ejemplo y con quién irás salen en su paso, con sus fuentes', (tester) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(
+        tester,
+        repo: repo,
+        personalizacion: const PersonalizacionLinea(
+          estilo: EstiloExplicacion.ejemplos,
+          conQuien: 'una persona de confianza',
+          extras: {
+            'P2': ExtrasPaso(
+              esCita: true,
+              ejemplo: 'Lucía va con su tía Elena.',
+              paraTi: [
+                NotaParaTi(texto: 'Como tienes 11 años, se graba.', fuentes: ['LECrim, art. 449 ter']),
+              ],
+              llevar: [CosaQueLlevar(id: 'agua', texto: 'Agua y algo de comer')],
+            ),
+          },
+        ),
+      );
+      await _pulsar(tester, find.text('Te escuchan'));
+
+      expect(find.text('Para ti'), findsOneWidget);
+      expect(find.text('Como tienes 11 años, se graba.'), findsOneWidget);
+      expect(find.text('LECrim · art. 449 ter'), findsWidgets);
+      expect(find.textContaining('Lucía va con su tía Elena.'), findsOneWidget);
+      expect(find.text('Tú irás con una persona de confianza'), findsOneWidget);
+      expect(find.text('Qué llevar'), findsOneWidget);
+      expect(find.text('Agua y algo de comer'), findsOneWidget);
+      // El ejemplo solo sale si lo prefiere con ejemplos.
+    });
+
+    testWidgets('sin «con ejemplos», el ejemplo no sale; con «corto», «Qué pasa» se queda en su primera frase', (
+      tester,
+    ) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(
+        tester,
+        repo: repo,
+        personalizacion: const PersonalizacionLinea(
+          estilo: EstiloExplicacion.corto,
+          extras: {'P2': ExtrasPaso(ejemplo: 'Lucía va con su tía Elena.')},
+        ),
+      );
+      await _pulsar(tester, find.text('Te escuchan'));
+
+      expect(find.textContaining('Lucía va con su tía Elena.'), findsNothing);
+      expect(find.text('Te escuchan en una sala preparada.'), findsOneWidget);
+      expect(find.textContaining('Se graba para el juicio'), findsNothing);
+      await _pulsar(tester, find.text('Leer todo'));
+      expect(find.textContaining('Se graba para el juicio'), findsOneWidget);
+    });
+
+    testWidgets('«Paso a paso» abre el paso de tu momento y lleva «Siguiente paso»', (tester) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(
+        tester,
+        repo: repo,
+        faseActual: Fase.durante,
+        personalizacion: const PersonalizacionLinea(estilo: EstiloExplicacion.pasoAPaso),
+      );
+
+      // Abierto al entrar: el primero de «Durante» (el paso 2).
+      expect(tester.getSemantics(find.bySemanticsLabel(RegExp(r'^Paso 2 de 3'))), isSemantics(isExpanded: true));
+      await _pulsar(tester, find.text('Siguiente paso: El juicio'));
+      expect(tester.getSemantics(find.bySemanticsLabel(RegExp(r'^Paso 2 de 3'))), isSemantics(isExpanded: false));
+      expect(tester.getSemantics(find.bySemanticsLabel(RegExp(r'^Paso 3 de 3'))), isSemantics(isExpanded: true));
+      // El último no tiene siguiente.
+      expect(find.textContaining('Siguiente paso'), findsNothing);
+    });
+
+    testWidgets('un paso que no es para tu edad lo dice, y el lector de pantalla también', (tester) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(
+        tester,
+        repo: repo,
+        personalizacion: const PersonalizacionLinea(
+          extras: {'P3': ExtrasPaso(noEsParaTi: 'Este paso es para chicos y chicas de 14 a 17 años')},
+        ),
+      );
+      expect(find.text('Este paso es para chicos y chicas de 14 a 17 años'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Paso 3 de 3: El juicio\. Este paso es para chicos y chicas de 14 a 17 años')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('«Pregúntaselo a TuTurno» lleva la duda del paso (o una por defecto) ya escrita', (tester) async {
+      final preguntas = <(String, String)>[];
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(
+        tester,
+        repo: repo,
+        personalizacion: PersonalizacionLinea(
+          extras: const {'P2': ExtrasPaso(duda: '¿Cómo será el día que me escuchen?')},
+          alPreguntar: (paso, duda) => preguntas.add((paso.id, duda)),
+        ),
+      );
+      await _pulsar(tester, find.text('Te escuchan'));
+      expect(find.text('«¿Cómo será el día que me escuchen?»'), findsOneWidget);
+      await _pulsar(tester, find.text('Pregúntaselo a TuTurno'));
+      expect(preguntas, [('P2', '¿Cómo será el día que me escuchen?')]);
+
+      await _pulsar(tester, find.text('Te escuchan'));
+      await _pulsar(tester, find.text('El juicio'));
+      await _pulsar(tester, find.text('Pregúntaselo a TuTurno'));
+      expect(preguntas.last, ('P3', '¿Me explicas qué pasa en el paso «El juicio»?'));
+    });
+
+    testWidgets('sin «alPreguntar», no sale el botón de Pregunta', (tester) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia});
+      await montarLinea(tester, repo: repo);
+      await _pulsar(tester, find.text('Te escuchan'));
+      expect(find.text('Pregúntaselo a TuTurno'), findsNothing);
+    });
+
+    testWidgets('las palabras que oirás salen del Glosario (las pedidas primero) y cada una es un botón', (
+      tester,
+    ) async {
+      final (repo, _) = repoCon({real('victima'): _itinerarioJusticia, '${ContentRepo.raiz}/glosario.json': _glosario});
+      await montarLinea(
+        tester,
+        repo: repo,
+        personalizacion: const PersonalizacionLinea(
+          extras: {
+            'P2': ExtrasPaso(palabras: ['Sala Gesell']),
+          },
+        ),
+      );
+      await _pulsar(tester, find.text('Te escuchan'));
+
+      expect(find.text('Palabras que oirás'), findsOneWidget);
+      final chips = tester.widgetList<ActionChip>(find.byType(ActionChip)).map((c) => (c.label as Text).data);
+      expect(chips, containsAllInOrder(['Sala Gesell', 'Prueba preconstituida']));
+      expect(find.bySemanticsLabel('Palabra: Sala Gesell'), findsOneWidget);
+    });
+  });
+
   test('el icono de cada persona sale de quién es: manda la palabra que aparece antes', () {
     expect(iconoPersona('Una psicóloga o un psicólogo del juzgado'), TuIcono.idea);
     expect(iconoPersona('El juez o la jueza, que cuida de que todo sea justo'), TuIcono.toga);
@@ -469,3 +662,26 @@ void main() {
     expect(iconoPersona('Otras personas'), TuIcono.miSituacion);
   });
 }
+
+/// Itinerario de víctima para la capa justicia y la personalización: la jueza y el fiscal en el paso 2.
+const _itinerarioJusticia = """
+{"rol": "victima", "validado": true, "pasos": [
+  {"id": "P1", "fase": "antes", "nombre": "Te citan", "que_pasa": "Llega un aviso.",
+   "quien_esta": ["Tu familia"], "que_puedes_pedir": ["Que te lo expliquen"], "fuentes": ["Ley 4/2015, art. 4"]},
+  {"id": "P2", "fase": "durante", "nombre": "Te escuchan",
+   "que_pasa": "Te escuchan en una sala preparada. Se graba para el juicio y es la prueba preconstituida.",
+   "quien_esta": ["El juez o la jueza, que cuida de que todo sea justo", "El fiscal o la fiscal, que vigila tus derechos"],
+   "que_puedes_pedir": ["Un descanso"], "fuentes": ["LECrim, art. 449 ter"]},
+  {"id": "P3", "fase": "durante", "nombre": "El juicio", "que_pasa": "Normalmente ponen la grabación.",
+   "quien_esta": ["El juez o la jueza"], "que_puedes_pedir": [], "fuentes": ["LECrim, art. 703 bis"]}
+]}
+""";
+
+/// Glosario mínimo para «Palabras que oirás».
+const _glosario = """
+[
+  {"id": "G-sala-gesell", "termino": "Sala Gesell", "definicion": "Una sala preparada.", "fuente": "LECrim, art. 449 ter", "validado": true},
+  {"id": "G-prueba-preconstituida", "termino": "Prueba preconstituida", "definicion": "Se graba.", "fuente": "LECrim, art. 449 ter", "validado": true},
+  {"id": "G-juicio", "termino": "Juicio", "definicion": "Donde se decide.", "fuente": "Ley 4/2015, art. 7.1", "validado": true}
+]
+""";

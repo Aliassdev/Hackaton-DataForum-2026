@@ -3,13 +3,23 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/agente/respuesta_agente.dart' show telefonosEn;
 import '../../core/api/tuturno_api.dart';
+import '../../core/demo.dart' show usarEjemploPreguntaProvider;
+import '../../core/entrada.dart' show entradaProvider;
 import '../../core/providers.dart';
+import '../../core/seguridad.dart';
+import '../../core/texto.dart';
 import '../../core/voz/stt.dart';
 import '../../core/voz/tts.dart';
+import 'ejemplos.dart';
 
-// Estado del chat de «Pregunta». Solo vive en memoria: no se guarda en el dispositivo ni se escribe en los
-// logs, y se borra al salir de la pantalla.
+// Estado del chat de «Pregunta». Solo vive en memoria: la app no lo guarda en el dispositivo ni lo escribe en los
+// logs, y desaparece al salir de la pantalla.
+//
+// Las respuestas salen, por orden, del agente de voz (modo agente, agente/chat_agente.dart), del modo texto real
+// (`apiProvider.ask`: POST /api/agent/ask con el perfil) y, si no responde nadie y se pide, de los ejemplos
+// (ejemplos.dart), siempre marcados como ejemplo.
 
 /// Micrófono.
 enum EstadoVoz { inactivo, preparando, escuchando }
@@ -28,6 +38,7 @@ class MensajeChat {
     this.vozAutomaticaOriginal = false,
     this.ejemplo = false,
     this.telefonos = const [],
+    this.ayudaImagenes = false,
   });
 
   factory MensajeChat.usuario(int id, String texto) => MensajeChat._(id: id, autor: Autor.usuario, texto: texto);
@@ -37,6 +48,7 @@ class MensajeChat {
     AskResponse respuesta, {
     bool ejemplo = false,
     List<String> telefonos = const [],
+    bool ayudaImagenes = false,
   }) => MensajeChat._(
     id: id,
     autor: Autor.asistente,
@@ -44,6 +56,7 @@ class MensajeChat {
     respuesta: respuesta,
     ejemplo: ejemplo,
     telefonos: telefonos,
+    ayudaImagenes: ayudaImagenes,
   );
 
   factory MensajeChat.error(
@@ -77,11 +90,15 @@ class MensajeChat {
   /// Si la respuesta de la pregunta original se iba a leer sola (se preguntó con la voz).
   final bool vozAutomaticaOriginal;
 
-  /// Modo agente: respuesta de ejemplo (la API simulada) porque el agente no responde. Se marca como ejemplo.
+  /// Respuesta de ejemplo (ejemplos.dart) porque no responde nadie. Siempre se marca como ejemplo.
   final bool ejemplo;
 
-  /// Modo agente: teléfonos de la respuesta, en cifras, para enseñarlos como botones (agente/telefonos.dart).
+  /// Teléfonos de la respuesta, en cifras y en orden, para enseñarlos como botones (agente/telefonos.dart).
   final List<String> telefonos;
+
+  /// Respuesta de «hechos» a un mensaje que hablaba de fotos, vídeos o imágenes (regla local: no se envía nada). Además
+  /// del aviso, el 017 (en [telefonos]) y «Quitar fotos o vídeos de internet» (Canal prioritario de la AEPD).
+  final bool ayudaImagenes;
 
   bool get esUsuario => autor == Autor.usuario;
 
@@ -100,6 +117,9 @@ class EstadoChat {
     this.problemaVoz,
     this.hablandoId,
     this.agenteHablando = false,
+    this.ejemplos = false,
+    this.esperandoVoz = false,
+    this.conectandoVoz = false,
   });
 
   final List<MensajeChat> mensajes;
@@ -127,6 +147,16 @@ class EstadoChat {
   /// Modo agente: el agente de voz está hablando. Mientras, no se escucha con el micrófono.
   final bool agenteHablando;
 
+  /// Las respuestas salen de los ejemplos (no responde nadie, o se ha forzado en el modo demo). Se queda así hasta
+  /// «Volver a TuTurno».
+  final bool ejemplos;
+
+  /// Modo agente: la pregunta está esperando la respuesta del agente de voz (a los 8 s se ofrece contestar por escrito).
+  final bool esperandoVoz;
+
+  /// Modo agente: se está abriendo la sesión con el agente. Mientras, el micrófono espera: el saludo cortaría el dictado.
+  final bool conectandoVoz;
+
   bool get escuchando => voz != EstadoVoz.inactivo;
 
   EstadoChat copyWith({
@@ -139,6 +169,9 @@ class EstadoChat {
     ProblemaVoz? Function()? problemaVoz,
     int? Function()? hablandoId,
     bool? agenteHablando,
+    bool? ejemplos,
+    bool? esperandoVoz,
+    bool? conectandoVoz,
   }) => EstadoChat(
     mensajes: mensajes ?? this.mensajes,
     esperando: esperando ?? this.esperando,
@@ -149,8 +182,41 @@ class EstadoChat {
     problemaVoz: problemaVoz != null ? problemaVoz() : this.problemaVoz,
     hablandoId: hablandoId != null ? hablandoId() : this.hablandoId,
     agenteHablando: agenteHablando ?? this.agenteHablando,
+    ejemplos: ejemplos ?? this.ejemplos,
+    esperandoVoz: esperandoVoz ?? this.esperandoVoz,
+    conectandoVoz: conectandoVoz ?? this.conectandoVoz,
   );
 }
+
+/// Los teléfonos de [texto], sin mirar dentro de las referencias a fuentes: [A-017] o [ML-INCIBE-017] no son el 017.
+List<String> telefonosDeRespuesta(String texto) => telefonosEn(texto.replaceAll(_referenciaFuente, ' '));
+
+/// Como las referencias que numera widgets/texto_con_terminos.dart: [A-017], [ML-LO5-16.2], [A-017, ML-CE-24.2]…
+final _referenciaFuente = RegExp(r'\[[A-Za-z]{1,4}-[\w.-]+(?:\s*[,;]\s*[A-Za-z]{1,4}-[\w.-]+)*\]');
+
+/// true si [texto] habla de fotos, vídeos o imágenes (sin que importen tildes ni mayúsculas). Es una regla local: lo
+/// que escribe el usuario no sale del móvil por esto.
+bool hablaDeImagenes(String texto) => _imagenes.hasMatch(normalizar(texto));
+
+final _imagenes = RegExp(r'\b(fotos?|fotografias?|videos?|imagen|imagenes)\b');
+
+/// Las fuentes de la ayuda para fotos y vídeos (docs/MARCO_LEGAL.md, «INCIBE · 017» y «AEPD · Canal prioritario»).
+const fuentesAyudaImagenes = [
+  Fuente(
+    id: 'ML-INCIBE-017',
+    titulo: 'El 017, ayuda con problemas en internet',
+    norma: 'INCIBE · 017',
+    articulo: '',
+    url: 'https://www.incibe.es/linea-de-ayuda-en-ciberseguridad',
+  ),
+  Fuente(
+    id: 'ML-AEPD-CP',
+    titulo: 'Canal prioritario de la Agencia Española de Protección de Datos',
+    norma: 'AEPD · Canal prioritario',
+    articulo: '',
+    url: 'https://www.aepd.es/canalprioritario',
+  ),
+];
 
 /// Un chat por cada forma de entrar: `/pregunta` (null) o `/pregunta?situacion=testigo`.
 /// Se borra al salir de la pantalla.
@@ -185,7 +251,8 @@ class ChatNotifier extends Notifier<EstadoChat> {
     ref.listen(ajustesProvider.select((a) => a.vozActivada), (_, activada) {
       if (!activada && state.hablandoId != null) unawaited(callar());
     });
-    return EstadoChat(situacion: situacionInicial);
+    // «Usar siempre el ejemplo en Pregunta» (modo demo, lib/core/demo.dart): si la red del recinto va mal.
+    return EstadoChat(situacion: situacionInicial, ejemplos: ref.read(usarEjemploPreguntaProvider));
   }
 
   /// Envía una pregunta. Si [vozAutomatica] y la voz está activada en Ajustes, la respuesta se lee en voz alta.
@@ -227,21 +294,17 @@ class ChatNotifier extends Notifier<EstadoChat> {
     );
   }
 
-  /// Pide la respuesta de [pregunta] (ya está en la conversación y [EstadoChat.esperando] es true) y la añade. El modo
-  /// agente lo sobrescribe para preguntar al agente de voz en vez de a la API.
+  /// Pide la respuesta de [pregunta] (ya está en la conversación y [EstadoChat.esperando] es true) y la añade: al
+  /// modo texto real (`apiProvider.ask`, con el perfil) o, con [EstadoChat.ejemplos], a los ejemplos. El modo agente lo
+  /// sobrescribe para preguntar antes al agente de voz.
   @protected
   Future<void> preguntar(String pregunta, List<Mensaje> historial, {required bool vozAutomatica}) async {
+    if (state.ejemplos) return responderConEjemplo(pregunta, historial);
     final conversacion = _conversacion;
-    final situacion = state.situacion;
-    final peticion = AskRequest(
-      pregunta: pregunta,
-      modo: situacion == null ? ModoPregunta.libre : ModoPregunta.situacion,
-      situacion: situacion,
-      historial: historial,
-    );
+    final peticion = peticionPara(pregunta, historial);
     MensajeChat mensaje;
     try {
-      mensaje = MensajeChat.asistente(_nuevoId(), await ref.read(apiProvider).ask(peticion));
+      mensaje = mensajeAsistente(await ref.read(apiProvider).ask(peticion), pregunta: pregunta);
     } on ApiException catch (e) {
       mensaje = MensajeChat.error(
         _nuevoId(),
@@ -264,6 +327,94 @@ class ChatNotifier extends Notifier<EstadoChat> {
     if (!mensaje.esError && vozAutomatica && ref.read(ajustesProvider).vozActivada) {
       await leer(mensaje.id);
     }
+  }
+
+  /// La petición de [pregunta] para el modo texto, con el papel de «Mi situación» y el perfil de la hoja (las mismas
+  /// variables que la sesión de voz).
+  @protected
+  AskRequest peticionPara(String pregunta, List<Mensaje> historial) {
+    final situacion = state.situacion;
+    return AskRequest(
+      pregunta: pregunta,
+      modo: situacion == null ? ModoPregunta.libre : ModoPregunta.situacion,
+      situacion: situacion,
+      historial: historial,
+      perfil: ref.read(entradaProvider).variablesAgente(situacion: situacion),
+    );
+  }
+
+  /// Una respuesta (del modo texto, del agente o de ejemplo) lista para la conversación:
+  /// - red de seguridad (sección 10.2): si [pregunta] suena a peligro, la tarjeta de Ayuda sale siempre (tipo crisis);
+  /// - los teléfonos del texto, para enseñarlos como botones ([telefonos] si ya vienen calculados);
+  /// - «hechos» sobre fotos, vídeos o imágenes: además, el 017 y el Canal prioritario de la AEPD, con sus fuentes.
+  @protected
+  MensajeChat mensajeAsistente(
+    AskResponse respuesta, {
+    required String? pregunta,
+    bool ejemplo = false,
+    List<String>? telefonos,
+  }) {
+    var r = respuesta;
+    if (pregunta != null && r.tipo != TipoRespuesta.crisis && pareceCrisis(pregunta)) {
+      r = r.copyWith(tipo: TipoRespuesta.crisis);
+    }
+    final lista = [...(telefonos ?? telefonosDeRespuesta(r.respuesta))];
+    final imagenes = r.tipo == TipoRespuesta.hechos && pregunta != null && hablaDeImagenes(pregunta);
+    if (imagenes) {
+      if (!lista.contains('017')) lista.add('017');
+      r = r.copyWith(
+        fuentes: [
+          ...r.fuentes,
+          for (final f in fuentesAyudaImagenes)
+            if (!r.fuentes.any((otra) => otra.id == f.id)) f,
+        ],
+      );
+    }
+    return MensajeChat.asistente(_nuevoId(), r, ejemplo: ejemplo, telefonos: lista, ayudaImagenes: imagenes);
+  }
+
+  /// Contesta [pregunta] con un ejemplo (ejemplos.dart), marcado como ejemplo.
+  @protected
+  Future<void> responderConEjemplo(String pregunta, List<Mensaje> historial) async {
+    final conversacion = _conversacion;
+    MensajeChat mensaje;
+    try {
+      final respuesta = await ref.read(respuestasEjemploProvider).ask(peticionPara(pregunta, historial));
+      mensaje = mensajeAsistente(respuesta, pregunta: pregunta, ejemplo: true);
+    } catch (_) {
+      mensaje = MensajeChat.error(_nuevoId(), ApiException.mensajeSeguro, pregunta: pregunta, historial: historial);
+    }
+    if (!ref.mounted || conversacion != _conversacion) return;
+    state = state.copyWith(mensajes: [...state.mensajes, mensaje], esperando: false);
+  }
+
+  /// «Ver una respuesta de ejemplo» (no responde nadie): desde ahora se contesta con ejemplos, marcados como ejemplo,
+  /// hasta «Volver a TuTurno». La pregunta que se quedó sin respuesta se contesta ya.
+  Future<void> usarEjemplos() async {
+    if (!ref.mounted || state.esperando) return;
+    state = state.copyWith(ejemplos: true);
+    await alPasarAEjemplos();
+    if (!ref.mounted) return;
+    final ultimo = state.mensajes.lastOrNull;
+    final pregunta = ultimo?.preguntaOriginal;
+    if (ultimo == null || !ultimo.esError || pregunta == null) return;
+    state = state.copyWith(
+      mensajes: [
+        for (final m in state.mensajes)
+          if (m.id != ultimo.id) m,
+      ],
+      esperando: true,
+    );
+    await responderConEjemplo(pregunta, ultimo.historialOriginal);
+  }
+
+  /// El modo agente cierra aquí la sesión con el agente de voz.
+  @protected
+  Future<void> alPasarAEjemplos() async {}
+
+  /// «Volver a TuTurno»: deja los ejemplos; la siguiente pregunta va otra vez al asistente.
+  void volverATuTurno() {
+    if (state.ejemplos) state = state.copyWith(ejemplos: false);
   }
 
   /// Lee en voz alta una respuesta (texto completo, sin las referencias a fuentes).
@@ -359,13 +510,14 @@ class ChatNotifier extends Notifier<EstadoChat> {
   /// Quita «Mi situación»: a partir de ahora se pregunta en modo libre.
   void quitarSituacion() => state = state.copyWith(situacion: () => null);
 
-  /// Empieza de cero. No queda nada guardado.
+  /// Empieza de cero: la conversación desaparece de la pantalla (la app no la guarda en ningún sitio). Si se estaba
+  /// con los ejemplos, se sigue con ellos.
   void borrar() {
     _conversacion++;
     _sesionVoz++;
     unawaited(_tts.parar());
     unawaited(_stt.cancelar());
-    state = EstadoChat(situacion: state.situacion);
+    state = EstadoChat(situacion: state.situacion, ejemplos: state.ejemplos);
   }
 
   /// Los últimos turnos que se envían como contexto (sin errores ni preguntas que no tuvieron respuesta).
@@ -387,11 +539,26 @@ class ChatNotifier extends Notifier<EstadoChat> {
     return turnos.length <= AskRequest.maxHistorial ? turnos : turnos.sublist(turnos.length - AskRequest.maxHistorial);
   }
 
-  /// true en el modo agente (features/pregunta/agente/chat_agente.dart).
+  /// true en el modo agente (features/pregunta/agente/chat_agente.dart): hay agente de voz, aunque ahora se conteste
+  /// por escrito.
   bool get conAgente => false;
 
   /// Mientras se escribe o se dicta. Solo lo usa el modo agente, para que el agente no interrumpa.
   void avisarQueEscribe() {}
+
+  /// La pantalla ya está lista (después de la hoja del perfil, si ha salido). El modo agente abre aquí la sesión de
+  /// voz, salvo con «Sin voz» o con lector de pantalla ([lectorDePantalla]).
+  void empezar({required bool lectorDePantalla}) {}
+
+  /// Se ha activado o desactivado el lector de pantalla (TalkBack): con él, el modo agente contesta por escrito.
+  void ponerLectorDePantalla(bool activo) {}
+
+  /// La app pasa a segundo plano. El modo agente cierra la sesión de voz.
+  void pausar() {}
+
+  /// Ha cambiado el perfil de la hoja. En el modo texto viaja ya en la siguiente pregunta; el modo agente abre otra
+  /// sesión, porque las variables solo se leen al abrirla.
+  Future<void> cambiarPerfil() async {}
 
   bool _vigente(int sesion) => ref.mounted && sesion == _sesionVoz;
 

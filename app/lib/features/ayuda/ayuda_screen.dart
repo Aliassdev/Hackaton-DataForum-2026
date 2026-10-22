@@ -8,16 +8,23 @@ import '../../core/progreso.dart' show relojProvider;
 import '../../core/recursos_ayuda.dart';
 import '../../tema.dart';
 import '../../widgets/animaciones.dart';
+import '../../widgets/iconos/iconos.dart';
 import '../../widgets/modulos.dart';
 import '../../widgets/movimiento/hapticos.dart';
+import '../../widgets/salida_rapida_button.dart';
 import '../../widgets/tuturno_scaffold.dart';
 
 const avisoLlamar = 'Llamar abre el teclado del teléfono con el número; tú decides si llamas.';
 
-/// Solo en la web: el historial del navegador guarda la visita aunque se use «Salir rápido».
-const avisoHistorialWeb =
-    'En el navegador, el historial guarda que has entrado en TuTurno. Si no quieres que se vea, ábrelo en una ventana '
-    'privada (o de incógnito).';
+/// Para qué sirve «Salir rápido» (plan v2, producto §5.3). Va justo debajo del botón. Sin prometer que la conversación
+/// «se borra» (auditoría P1-4): con la voz pasa por ElevenLabs, que la guarda según cómo esté configurado el agente.
+/// Lo cierto es que desaparece de la pantalla (core/salida_rapida.dart no borra nada).
+const explicacionSalidaRapida =
+    '¿Alguien se acerca y prefieres que no vea la pantalla? Pulsa «Salir rápido». TuTurno se cierra al momento y la '
+    'conversación de Pregunta desaparece de la pantalla.';
+
+/// Solo en la web: «Salir rápido» quita TuTurno de la pestaña, pero el navegador guarda la visita en su historial.
+const avisoIncognitoWeb = 'Si usas un móvil o un ordenador compartido, abre TuTurno en una ventana de incógnito.';
 
 const textoAbierto = 'Abierto ahora';
 const textoCerrado = 'Cerrado ahora';
@@ -26,13 +33,39 @@ const textoCerrado = 'Cerrado ahora';
 const textoAlternativa = 'Mientras, ANAR te atiende a cualquier hora. Si estás en peligro, llama al 112.';
 const textoLlamarAnar = 'Llamar a ANAR';
 
+/// El desplegable de la tarjeta de ANAR, para dar el primer paso al llamar o al escribir.
+const tituloNoSabesQueDecir = '¿No sabes qué decir?';
+
 /// Cuándo vuelve a abrir un recurso con horario, p. ej. «Abre a las 8:00.». Que está cerrado ya lo dice la pastilla.
 String textoAbre(Horario horario) => 'Abre a las ${horario.textoApertura}.';
 
-/// ANAR atiende a cualquier hora: es la alternativa cuando el 017 está cerrado.
+/// Frases para empezar a hablar con [recurso] (producto §5.3). Son de quien llama o escribe: no dicen nada nuevo del
+/// recurso. La del chat, solo si el recurso tiene chat.
+List<String> frasesParaEmpezar(RecursoAyuda recurso) => [
+  'Puedes empezar así: «Hola, tengo una duda y no sé a quién preguntar».',
+  'Si te cuesta hablar, puedes decirlo: «Me cuesta hablar de esto».',
+  if (recurso.chat != null) 'Si prefieres escribir, usa el chat.',
+  'Puedes colgar cuando quieras.',
+];
+
+/// El icono de TuTurno de cada recurso (los datos de lib/core/recursos_ayuda.dart no se tocan): el salvavidas de Ayuda
+/// para el 112, el globo para la web del Canal prioritario, el escudo para la ciberseguridad del 017, el candado para
+/// la privacidad del Canal Joven y el teléfono para el resto.
+TuIcono iconoDeRecurso(RecursoAyuda recurso) {
+  if (recurso.urgente) return TuIcono.ayuda;
+  if (recurso.telefono == null) return TuIcono.web;
+  if (recurso.horario != null) return TuIcono.escudo;
+  if (recurso.nombre.contains('AEPD')) return TuIcono.candado;
+  return TuIcono.telefono;
+}
+
+/// ANAR atiende a cualquier hora: es la alternativa cuando el 017 está cerrado, y su tarjeta lleva «¿No sabes qué
+/// decir?».
 final _anar = recursosAyuda.firstWhere((r) => r.telefono == '900 20 20 10');
 
-/// Ayuda (sección 4.5): tranquila, pero imposible de no ver. Arriba, el 112; después, todos los recursos.
+/// Ayuda (sección 4.5): tranquila, pero imposible de no ver. Arriba, el 112 y «Salir rápido»; después, todos los
+/// recursos. Nunca se gamifica: el rojo es solo para el 112 (y el botón de Ayuda de las demás pantallas), y no hay
+/// confeti, sellos ni puntos.
 class AyudaScreen extends StatelessWidget {
   const AyudaScreen({super.key});
 
@@ -50,6 +83,7 @@ class AyudaScreen extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: anchoMaximo),
           child: SingleChildScrollView(
+            key: const Key('ayuda-contenido'),
             padding: const EdgeInsets.fromLTRB(Espacio.m, Espacio.s, Espacio.m, Espacio.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,8 +93,11 @@ class AyudaScreen extends StatelessWidget {
                     orden: orden++,
                     child: _BloquePeligro(recurso: recurso),
                   ),
-                  const SizedBox(height: Espacio.l),
+                  const SizedBox(height: Espacio.m),
                 ],
+                // Justo debajo del 112: si alguien se acerca, TuTurno desaparece en un toque.
+                Entrada(orden: orden++, child: const PanelSalidaRapida()),
+                const SizedBox(height: Espacio.l),
                 Entrada(
                   orden: orden++,
                   child: Semantics(
@@ -74,7 +111,7 @@ class AyudaScreen extends StatelessWidget {
                 const SizedBox(height: Espacio.s),
                 Entrada(
                   orden: orden++,
-                  child: _Linea(icono: Icons.dialpad_rounded, texto: avisoLlamar),
+                  child: const _Linea(icono: TuIcono.telefono, texto: avisoLlamar),
                 ),
                 const SizedBox(height: Espacio.m),
                 for (final recurso in resto) ...[
@@ -86,17 +123,44 @@ class AyudaScreen extends StatelessWidget {
                 ],
                 const SizedBox(height: Espacio.s),
                 Entrada(orden: orden++, child: const _TarjetaAdulto()),
-                // En la web, «Salir rápido» quita TuTurno de la pestaña, pero el historial del navegador guarda la visita.
-                if (kIsWeb) ...[
-                  const SizedBox(height: Espacio.m),
-                  Entrada(
-                    orden: orden++,
-                    child: const _Linea(icono: Icons.history_rounded, texto: avisoHistorialWeb),
-                  ),
-                ],
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// «Salir rápido» con lo que hace (producto §5.3): el botón neutro de lib/widgets/salida_rapida_button.dart a todo el
+/// ancho, la explicación y, solo en la web, el consejo de la ventana de incógnito (el historial del navegador no se
+/// puede borrar desde TuTurno).
+class PanelSalidaRapida extends StatelessWidget {
+  const PanelSalidaRapida({super.key, this.web = kIsWeb});
+
+  /// Si se enseña el consejo de la web. Por defecto, solo en la web.
+  final bool web;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    return DecoratedBox(
+      key: const Key('ayuda-salida-rapida'),
+      decoration: _panel(esquema, Radios.l),
+      child: Padding(
+        padding: const EdgeInsets.all(Espacio.m),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SalidaRapidaButton(),
+            const SizedBox(height: Espacio.s + Espacio.xs),
+            Text(explicacionSalidaRapida, style: tema.textTheme.bodyLarge?.copyWith(color: esquema.onSurface)),
+            if (web) ...[
+              const SizedBox(height: Espacio.s + Espacio.xs),
+              const _Linea(icono: TuIcono.info, texto: avisoIncognitoWeb),
+            ],
+          ],
         ),
       ),
     );
@@ -143,11 +207,15 @@ void _avisar(ScaffoldMessengerState avisos, String texto) {
     ..showSnackBar(SnackBar(content: Text(texto)));
 }
 
+/// Icono de un botón (toma el color y el tamaño del botón, como un `Icon`).
+Widget _iconoBoton(TuIcono icono) => IconoTuTurno(icono, estilo: EstiloIcono.mono, decorativo: true);
+
 /// Texto e iconos encima de [fondo]: blanco sobre un color oscuro y negro sobre uno claro. Así el bloque del 112
 /// sigue leyéndose bien aunque cambie el color de Ayuda de la paleta.
 Color _colorSobre(Color fondo) =>
     ThemeData.estimateBrightnessForColor(fondo) == Brightness.dark ? Colors.white : Colors.black;
 
+/// El 112: lo único rojo de la pantalla.
 class _BloquePeligro extends StatelessWidget {
   const _BloquePeligro({required this.recurso});
 
@@ -160,6 +228,7 @@ class _BloquePeligro extends StatelessWidget {
     final sobreRojo = _colorSobre(rojo);
     final forma = BorderRadius.circular(Radios.l);
     return DecoratedBox(
+      key: const Key('ayuda-112'),
       decoration: BoxDecoration(color: rojo, borderRadius: forma, boxShadow: sombraDe(context, [rojo, rojo])),
       child: Padding(
         padding: const EdgeInsets.all(Espacio.l),
@@ -168,12 +237,17 @@ class _BloquePeligro extends StatelessWidget {
           children: [
             Row(
               children: [
-                ExcludeSemantics(
-                  child: Container(
-                    width: Espacio.xxl,
-                    height: Espacio.xxl,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: sobreRojo.withValues(alpha: 0.2)),
-                    child: Icon(recurso.icono, color: sobreRojo),
+                Container(
+                  width: Espacio.xxl,
+                  height: Espacio.xxl,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: sobreRojo.withValues(alpha: 0.2)),
+                  child: IconoTuTurno(
+                    iconoDeRecurso(recurso),
+                    size: Espacio.l + Espacio.xs,
+                    estilo: EstiloIcono.mono,
+                    color: sobreRojo,
+                    decorativo: true,
                   ),
                 ),
                 const SizedBox(width: Espacio.m),
@@ -206,7 +280,7 @@ class _BloquePeligro extends StatelessWidget {
                 minimumSize: const Size.fromHeight(Espacio.xxl + Espacio.s),
               ),
               onPressed: () => _abrir(context, recurso),
-              icon: const Icon(Icons.call_rounded),
+              icon: _iconoBoton(TuIcono.telefono),
               label: Text(_textoBoton(recurso)),
             ),
           ],
@@ -262,6 +336,7 @@ class _TarjetaRecursoState extends ConsumerState<_TarjetaRecurso> {
     final abierto = horario == null || horario.abierto(ref.watch(relojProvider)());
     final conBorde = _estiloConBorde(context);
     final destacado = tema.textTheme.titleLarge?.copyWith(color: esquema.primary, fontWeight: FontWeight.w700);
+    final icono = _IconoRecurso(icono: iconoDeRecurso(recurso));
     final titulos = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -289,16 +364,13 @@ class _TarjetaRecursoState extends ConsumerState<_TarjetaRecurso> {
           children: [
             // Con letra grande, el icono va encima: así el número tiene todo el ancho.
             if (letraGrande(context)) ...[
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: IconoSuave(icono: recurso.icono),
-              ),
+              Align(alignment: AlignmentDirectional.centerStart, child: icono),
               const SizedBox(height: Espacio.s + Espacio.xs),
               titulos,
             ] else
               Row(
                 children: [
-                  IconoSuave(icono: recurso.icono),
+                  icono,
                   const SizedBox(width: Espacio.m),
                   Expanded(child: titulos),
                 ],
@@ -317,7 +389,7 @@ class _TarjetaRecursoState extends ConsumerState<_TarjetaRecurso> {
             if (telefono != null && abierto)
               FilledButton.icon(
                 onPressed: () => _abrir(context, recurso),
-                icon: const Icon(Icons.call_rounded),
+                icon: _iconoBoton(TuIcono.telefono),
                 label: Text(_textoBoton(recurso)),
               )
             // Cerrado: el botón sigue (la persona decide), pero sin destacar; lo destacado es la alternativa.
@@ -325,13 +397,13 @@ class _TarjetaRecursoState extends ConsumerState<_TarjetaRecurso> {
               OutlinedButton.icon(
                 style: conBorde,
                 onPressed: () => _abrir(context, recurso),
-                icon: const Icon(Icons.call_rounded),
+                icon: _iconoBoton(TuIcono.telefono),
                 label: Text(_textoBoton(recurso)),
               )
             else
               FilledButton.tonalIcon(
                 onPressed: () => _abrir(context, recurso),
-                icon: const Icon(Icons.open_in_new_rounded),
+                icon: _iconoBoton(TuIcono.web),
                 label: Text(_textoBoton(recurso)),
               ),
             // Para escribir en vez de llamar: si te da vergüenza o no puedes hablar sin que te oigan.
@@ -341,7 +413,7 @@ class _TarjetaRecursoState extends ConsumerState<_TarjetaRecurso> {
                 key: ValueKey('chat-${recurso.nombre}'),
                 style: conBorde,
                 onPressed: () => _abrirChat(context, recurso),
-                icon: const Icon(Icons.chat_rounded),
+                icon: _iconoBoton(TuIcono.pregunta),
                 label: const Text('Escribir por chat'),
               ),
             ],
@@ -351,13 +423,36 @@ class _TarjetaRecursoState extends ConsumerState<_TarjetaRecurso> {
                 key: ValueKey('whatsapp-${recurso.nombre}'),
                 style: conBorde,
                 onPressed: () => _abrirWhatsapp(context, recurso),
-                icon: const Icon(Icons.chat_rounded),
+                icon: _iconoBoton(TuIcono.pregunta),
                 label: const Text('Escribir por WhatsApp'),
               ),
+            ],
+            // Para dar el primer paso: frases para empezar, que se abren solo si se piden.
+            if (identical(recurso, _anar)) ...[
+              const SizedBox(height: Espacio.m),
+              _NoSabesQueDecir(frases: frasesParaEmpezar(recurso)),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+/// El icono del recurso a dos tintas, en un círculo suave.
+class _IconoRecurso extends StatelessWidget {
+  const _IconoRecurso({required this.icono});
+
+  final TuIcono icono;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: Espacio.xxl,
+      height: Espacio.xxl,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: tinte(context, Theme.of(context).colorScheme.primary)),
+      child: IconoTuTurno(icono, size: Espacio.xl - 2, decorativo: true),
     );
   }
 }
@@ -389,13 +484,20 @@ class _Horario extends StatelessWidget {
           runSpacing: Espacio.s,
           children: [
             _Pastilla(
-              icono: Icon(Icons.schedule_rounded, size: Espacio.m + Espacio.xs / 2, color: esquema.onSurfaceVariant),
+              icono: IconoTuTurno(
+                TuIcono.reloj,
+                size: Espacio.m + Espacio.xs / 2,
+                estilo: EstiloIcono.mono,
+                color: esquema.onSurfaceVariant,
+                decorativo: true,
+              ),
               texto: horario.texto,
             ),
+            // Abierto: un punto lleno del color de «sirve»; cerrado, un aro vacío. El texto lo dice igual.
             _Pastilla(
               icono: abierto
                   ? _Punto(color: context.colores.exito)
-                  : Icon(Icons.bedtime_rounded, size: Espacio.m + Espacio.xs / 2, color: esquema.onSurfaceVariant),
+                  : _Punto(color: esquema.onSurfaceVariant, aro: true),
               texto: estado,
               destacada: true,
             ),
@@ -445,11 +547,12 @@ class _Pastilla extends StatelessWidget {
   }
 }
 
-/// Punto de color de «abierto ahora».
+/// Punto de «abierto ahora» (lleno) o de «cerrado ahora» ([aro]: solo el borde).
 class _Punto extends StatelessWidget {
-  const _Punto({required this.color});
+  const _Punto({required this.color, this.aro = false});
 
   final Color color;
+  final bool aro;
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +562,11 @@ class _Punto extends StatelessWidget {
       child: Container(
         width: tamano,
         height: tamano,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: aro ? null : color,
+          border: aro ? Border.all(color: color, width: 2) : null,
+        ),
       ),
     );
   }
@@ -507,7 +614,7 @@ class _Cerrado extends StatelessWidget {
             const SizedBox(height: Espacio.s + Espacio.xs),
             FilledButton.icon(
               onPressed: () => _abrir(context, _anar),
-              icon: const Icon(Icons.support_agent_rounded),
+              icon: _iconoBoton(TuIcono.telefono),
               label: const Text(textoLlamarAnar),
             ),
           ],
@@ -517,7 +624,8 @@ class _Cerrado extends StatelessWidget {
   }
 }
 
-/// Aclaración de un recurso: el icono ayuda a verla de un vistazo, pero el texto se entiende solo.
+/// Aclaración de un recurso: el icono ayuda a verla de un vistazo, pero el texto se entiende solo. Lo que no sirve va
+/// en ocre, como los fallos del resto de la app: el rojo es solo para el 112.
 class _Nota extends StatelessWidget {
   const _Nota({required this.nota});
 
@@ -528,23 +636,151 @@ class _Nota extends StatelessWidget {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
     final (icono, color) = switch (nota.tipo) {
-      TipoNota.sirve => (Icons.check_circle_rounded, context.colores.exito),
-      TipoNota.noSirve => (Icons.do_not_disturb_on_rounded, esquema.error),
-      TipoNota.info => (Icons.info_rounded, esquema.primary),
+      TipoNota.sirve => (TuIcono.check, context.colores.exito),
+      TipoNota.noSirve => (TuIcono.cruz, esquema.tertiary),
+      TipoNota.info => (TuIcono.info, esquema.primary),
     };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ExcludeSemantics(
-          child: Padding(
-            padding: const EdgeInsets.only(top: Espacio.xs / 4),
-            child: Icon(icono, size: Espacio.l - Espacio.xs, color: color),
+        Padding(
+          padding: const EdgeInsets.only(top: Espacio.xs / 4),
+          child: IconoTuTurno(
+            icono,
+            size: Espacio.l - Espacio.xs,
+            estilo: EstiloIcono.mono,
+            color: color,
+            decorativo: true,
           ),
         ),
         const SizedBox(width: Espacio.s),
         Expanded(
           child: Text(nota.texto, style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurface)),
         ),
+      ],
+    );
+  }
+}
+
+/// «¿No sabes qué decir?»: un desplegable cerrado al principio con [frases] para empezar la llamada o el chat. Nada de
+/// animaciones llamativas: se abre y se cierra (de golpe con «reducir animaciones»).
+class _NoSabesQueDecir extends StatefulWidget {
+  const _NoSabesQueDecir({required this.frases});
+
+  final List<String> frases;
+
+  @override
+  State<_NoSabesQueDecir> createState() => _NoSabesQueDecirState();
+}
+
+class _NoSabesQueDecirState extends State<_NoSabesQueDecir> {
+  bool _abierto = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    final forma = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radios.m),
+      side: BorderSide(color: esquema.outlineVariant),
+    );
+    return Material(
+      key: const Key('ayuda-no-sabes-que-decir'),
+      color: esquema.surfaceContainerHigh,
+      shape: forma,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            container: true,
+            button: true,
+            expanded: _abierto,
+            child: InkWell(
+              onTap: () => setState(() => _abierto = !_abierto),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: Espacio.xxl),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Espacio.m, vertical: Espacio.s),
+                  child: Row(
+                    children: [
+                      IconoTuTurno(
+                        TuIcono.idea,
+                        size: Espacio.l - Espacio.xs,
+                        estilo: EstiloIcono.mono,
+                        color: esquema.primary,
+                        decorativo: true,
+                      ),
+                      const SizedBox(width: Espacio.s + Espacio.xs),
+                      Expanded(
+                        child: Text(
+                          tituloNoSabesQueDecir,
+                          style: tema.textTheme.titleSmall?.copyWith(
+                            color: esquema.onSurface,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: Espacio.s),
+                      // No hay flecha de desplegar en TuIcono: la de Material.
+                      AnimatedRotation(
+                        turns: _abierto ? 0.5 : 0,
+                        duration: duracion(context, Duracion.corta),
+                        child: ExcludeSemantics(child: Icon(Icons.expand_more_rounded, color: esquema.onSurface)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: duracionTamano(context, Duracion.media),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _abierto
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(Espacio.m, 0, Espacio.m, Espacio.m),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final (i, frase) in widget.frases.indexed) ...[
+                          if (i > 0) const SizedBox(height: Espacio.s),
+                          _Frase(texto: frase),
+                        ],
+                      ],
+                    ),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Una frase de «¿No sabes qué decir?», con su viñeta.
+class _Frase extends StatelessWidget {
+  const _Frase({required this.texto});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    final estilo = tema.textTheme.bodyLarge?.copyWith(color: esquema.onSurface);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ExcludeSemantics(
+          child: Text(
+            '•',
+            style: estilo?.copyWith(color: esquema.primary, fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(width: Espacio.s),
+        Expanded(child: Text(texto, style: estilo)),
       ],
     );
   }
@@ -564,7 +800,13 @@ class _TarjetaAdulto extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconoSuave(icono: Icons.diversity_3_rounded, fondo: esquema.surface, color: esquema.primary),
+            Container(
+              width: Espacio.xxl,
+              height: Espacio.xxl,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: esquema.surface),
+              child: const IconoTuTurno(TuIcono.personaConfianza, size: Espacio.xl - 2, decorativo: true),
+            ),
             const SizedBox(width: Espacio.m),
             Expanded(
               child: Column(
@@ -586,10 +828,11 @@ class _TarjetaAdulto extends StatelessWidget {
   }
 }
 
+/// Una línea de aviso en tinta secundaria, con su icono (decorativo: el texto se entiende solo).
 class _Linea extends StatelessWidget {
   const _Linea({required this.icono, required this.texto});
 
-  final IconData icono;
+  final TuIcono icono;
   final String texto;
 
   @override
@@ -599,8 +842,15 @@ class _Linea extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ExcludeSemantics(
-          child: Icon(icono, size: Espacio.l - Espacio.xs, color: color),
+        Padding(
+          padding: const EdgeInsets.only(top: Espacio.xs / 4),
+          child: IconoTuTurno(
+            icono,
+            size: Espacio.l - Espacio.xs,
+            estilo: EstiloIcono.mono,
+            color: color,
+            decorativo: true,
+          ),
         ),
         const SizedBox(width: Espacio.s),
         Expanded(

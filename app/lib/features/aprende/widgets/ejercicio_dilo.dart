@@ -8,6 +8,7 @@ import '../../../core/seguridad.dart';
 import '../../../core/voz/stt.dart';
 import '../../../core/voz/tts.dart';
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../modelos.dart';
 import '../textos.dart';
@@ -26,7 +27,8 @@ String mensajeVozDilo(ProblemaVoz problema) => switch (problema) {
 };
 
 /// «Dilo con tus palabras»: un campo de texto y el micrófono (pulsar para hablar). La transcripción va al campo
-/// y se puede corregir antes de comprobar. Si la voz falla, el campo sigue ahí.
+/// y se puede corregir antes de comprobar. Si la voz falla, el campo sigue ahí. Encima va el aviso «Tu turno de
+/// palabra» (en la cabecera del ejercicio) y una ayuda calmada: «Explícalo como se lo contarías a un amigo».
 class VistaDilo extends ConsumerStatefulWidget {
   const VistaDilo({super.key, required this.ejercicio, required this.bloqueado, required this.onRespuesta});
 
@@ -151,7 +153,7 @@ class _VistaDiloState extends ConsumerState<VistaDilo> {
       children: [
         Text(widget.ejercicio.pregunta, style: tema.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: Espacio.s),
-        Text(textoDiloAyuda, style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant)),
+        Text(textoDiloAyuda, style: tema.textTheme.bodyLarge?.copyWith(color: esquema.onSurfaceVariant)),
         const SizedBox(height: Espacio.m),
         TextField(
           key: const ValueKey('campo-dilo'),
@@ -169,7 +171,7 @@ class _VistaDiloState extends ConsumerState<VistaDilo> {
             if (_desdeVoz) setState(() => _desdeVoz = false);
           },
           decoration: InputDecoration(
-            hintText: 'Escribe aquí con tus palabras…',
+            hintText: textoDiloPista,
             semanticCounterText: '',
             fillColor: widget.bloqueado ? esquema.surfaceContainerLow : null,
           ),
@@ -229,7 +231,7 @@ class _VistaDiloState extends ConsumerState<VistaDilo> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (suficiente) ...[
-                        Icon(Icons.check_circle_rounded, size: Espacio.m + 2, color: context.colores.exito),
+                        const IconoTuTurno(TuIcono.check, size: Espacio.m + 4, decorativo: true),
                         const SizedBox(width: Espacio.xs),
                       ],
                       Text(
@@ -242,6 +244,27 @@ class _VistaDiloState extends ConsumerState<VistaDilo> {
               ),
             ],
           ),
+        if (!widget.bloqueado) ...[
+          const SizedBox(height: Espacio.s),
+          Row(
+            children: [
+              IconoTuTurno(
+                TuIcono.idea,
+                estilo: EstiloIcono.mono,
+                size: Espacio.m + 2,
+                color: esquema.onSurfaceVariant,
+                decorativo: true,
+              ),
+              const SizedBox(width: Espacio.xs + 2),
+              Expanded(
+                child: Text(
+                  textoDiloComprueba,
+                  style: tema.textTheme.bodySmall?.copyWith(color: esquema.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+        ],
         if (aviso != null && !widget.bloqueado) ...[
           const SizedBox(height: Espacio.s),
           Semantics(
@@ -339,10 +362,14 @@ class _BotonMicro extends StatelessWidget {
                             dimension: Espacio.l,
                             child: CircularProgressIndicator(strokeWidth: 3, color: sobreColor(colores.first)),
                           )
-                        : Icon(
-                            escuchando ? Icons.stop_rounded : Icons.mic_rounded,
+                        : escuchando
+                        ? Icon(Icons.stop_rounded, size: Espacio.xl, color: sobreColor(colores.first))
+                        : IconoTuTurno(
+                            TuIcono.microfono,
+                            estilo: EstiloIcono.mono,
                             size: Espacio.xl,
                             color: sobreColor(colores.first),
+                            decorativo: true,
                           ),
                   ),
                 ),

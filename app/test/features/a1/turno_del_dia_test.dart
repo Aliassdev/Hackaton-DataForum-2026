@@ -5,6 +5,7 @@ import 'package:tuturno/core/progreso.dart';
 import 'package:tuturno/core/providers.dart';
 import 'package:tuturno/features/inicio/nivel.dart';
 import 'package:tuturno/features/inicio/turno_del_dia.dart';
+import 'package:tuturno/features/inicio/widgets/saludo.dart' show textoRacha;
 
 /// Jueves 22/10/2026: toca lección; el 23, carta; el 24, puntos; y vuelta a empezar.
 final _jueves = DateTime(2026, 10, 22, 10);
@@ -116,7 +117,7 @@ void main() {
       ahora = _jueves.add(const Duration(days: 1));
       expect(turno(abrir()).numero, 2);
 
-      // El viernes no se hace nada: el sábado el número sigue siendo el 2 (sin perder nada).
+      // El viernes no se hace nada: el sábado el número sigue siendo el 2 (no baja).
       ahora = _jueves.add(const Duration(days: 2));
       expect(turno(abrir()).numero, 2);
     });
@@ -197,6 +198,41 @@ void main() {
       expect(rachaViva(con(null), hoy), 0);
       expect(leccionHoy(con(DateTime(2026, 10, 22, 9)), hoy), isTrue);
       expect(leccionHoy(con(DateTime(2026, 10, 21)), hoy), isFalse);
+    });
+
+    test('rachaViva es la racha amable de estadoRacha (y sigue siendo pública)', () {
+      final hoy = DateTime(2026, 10, 22);
+      final progresos = [
+        const Progreso(),
+        Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2026, 10, 22)),
+        Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2026, 10, 21)),
+        Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2026, 10, 20)),
+        Progreso(racha: 4, mejorRacha: 9, ultimoDiaConLeccion: DateTime(2026, 10, 15)),
+      ];
+      for (final p in progresos) {
+        expect(rachaViva(p, hoy), estadoRacha(p, hoy).dias, reason: '$p');
+      }
+    });
+
+    test('«Cómo se ganan»: el descanso de cada semana, la mejor racha y nunca palabras de pérdida', () {
+      const sinNada = EstadoRacha(dias: 0, mejor: 0, tipo: TipoRacha.sinRacha);
+      const conMejor = EstadoRacha(dias: 0, mejor: 6, tipo: TipoRacha.sinRacha);
+      const hoy = EstadoRacha(dias: 3, mejor: 6, tipo: TipoRacha.hoyHecha);
+      const pendiente = EstadoRacha(dias: 1, mejor: 1, tipo: TipoRacha.pendienteHoy);
+      const descanso = EstadoRacha(dias: 5, mejor: 5, tipo: TipoRacha.conDescanso);
+      expect(
+        textoRacha(sinNada),
+        'La racha suma un día cada día que completas una lección. Si un día no puedes, no pasa nada: tienes un día de '
+        'descanso cada semana. Y tus puntos nunca bajan.',
+      );
+      expect(textoRacha(conMejor), endsWith(' Tu mejor racha: 6 días.'));
+      expect(textoRacha(hoy), startsWith('Tu racha de 3 días suma un día'));
+      expect(textoRacha(pendiente), startsWith('Tu racha de 1 día suma un día'));
+      expect(textoRacha(hoy), isNot(contains('mejor')));
+      for (final estado in [sinNada, conMejor, hoy, pendiente, descanso]) {
+        expect(textoRacha(estado), isNot(contains(RegExp('perd|pierd', caseSensitive: false))), reason: '$estado');
+        expect(textoRacha(estado), contains('día de descanso cada semana'));
+      }
     });
 
     test('los días se cuentan bien aunque cambie la hora (horario de verano)', () {

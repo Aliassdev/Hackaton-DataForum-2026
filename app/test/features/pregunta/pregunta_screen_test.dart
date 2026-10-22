@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +11,8 @@ import 'package:tuturno/app.dart';
 import 'package:tuturno/core/api/mock_api.dart';
 import 'package:tuturno/core/api/tuturno_api.dart';
 import 'package:tuturno/core/providers.dart';
+import 'package:tuturno/features/pregunta/agente/textos_agente.dart';
+import 'package:tuturno/features/pregunta/ejemplos.dart';
 import 'package:tuturno/features/pregunta/pregunta_screen.dart';
 import 'package:tuturno/features/pregunta/textos.dart';
 import 'package:tuturno/features/pregunta/widgets/mensajes.dart';
@@ -26,6 +30,34 @@ const _enviar = Key('boton-enviar');
 const _micro = Key('boton-micro');
 const _microPequeno = Key('boton-micro-pequeno');
 const _llamarAnar = 'Llamar a ANAR · 900\u00A020\u00A020\u00A010';
+
+/// API que siempre contesta lo mismo (por ejemplo, como el backend real: párrafos y fuentes con enlace).
+class _ApiFija implements TuTurnoApi {
+  const _ApiFija(this.respuesta);
+
+  final AskResponse respuesta;
+
+  @override
+  Future<AskResponse> ask(AskRequest request) async => respuesta;
+
+  @override
+  Future<GradeResponse> grade(GradeRequest request) => throw UnimplementedError();
+
+  @override
+  Future<HealthResponse> health() => throw UnimplementedError();
+}
+
+/// Simula url_launcher: guarda las direcciones que se piden abrir.
+List<String> _simularLanzador(WidgetTester tester) {
+  final pedidas = <String>[];
+  const canal = MethodChannel('plugins.flutter.io/url_launcher');
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(canal, (llamada) async {
+    if (llamada.method == 'launch') pedidas.add((llamada.arguments as Map)['url'] as String);
+    return true;
+  });
+  addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(canal, null));
+  return pedidas;
+}
 
 class _Pantalla {
   _Pantalla(this.api, this.stt, this.tts, this.router);
@@ -47,11 +79,13 @@ Future<_Pantalla> _abrir(
   Size? tamano,
   String? preguntaInicial,
   Brightness brillo = Brightness.light,
+  TuTurnoApi? base,
+  Map<String, Object?>? entrada = perfilDePrueba,
 }) async {
   // Tamaño de un móvil Android normal (Pixel 7), salvo que el test pida otro.
   tester.view.physicalSize = (tamano ?? const Size(412, 915)) * tester.view.devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
-  final api = ApiGrabadora();
+  final api = ApiGrabadora(base: base);
   final vozATexto = stt ?? FakeStt();
   final textoAVoz = tts ?? FakeTts();
   final router = GoRouter(
@@ -77,7 +111,16 @@ Future<_Pantalla> _abrir(
   addTearDown(router.dispose);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: await overridesDePrueba(api: api, stt: vozATexto, tts: textoAVoz, vozActivada: vozActivada),
+      overrides: [
+        ...await overridesDePrueba(
+          api: api,
+          stt: vozATexto,
+          tts: textoAVoz,
+          vozActivada: vozActivada,
+          entrada: entrada,
+        ),
+        respuestasEjemploProvider.overrideWithValue(RespuestasDeEjemplo.desdeJson(ejemplosPreguntaJson())),
+      ],
       child: MaterialApp.router(
         theme: temaTuTurno(brillo),
         locale: const Locale('es', 'ES'),
@@ -725,5 +768,216 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(tester.binding.transientCallbackCount, 0);
     expect(tester.binding.hasScheduledFrame, isFalse);
+  });
+
+  group('B1: modo texto real, ejemplos y textos ciertos', () {
+    testWidgets('arriba, para quién se explica: «Te explico para: …» y «Cambiar»; el perfil viaja en la pregunta', (
+      tester,
+    ) async {
+      final p = await _abrir(tester);
+      expect(find.text('Te explico para: 13 años · Penal · Víctima · Durante'), findsOneWidget);
+      expect(find.text(tituloHojaPerfil), findsNothing, reason: 'en el modo texto la hoja no sale sola');
+
+      await tester.tap(find.byKey(const Key('cambiar-perfil')));
+      await tester.pumpAndSettle();
+      final testigo = find.descendant(of: find.byType(ChoiceChip), matching: find.text('Testigo'));
+      await tester.ensureVisible(testigo);
+      await tester.pumpAndSettle();
+      await tester.tap(testigo);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('perfil-listo')));
+      await tester.pumpAndSettle();
+      expect(find.text('Te explico para: 13 años · Penal · Testigo · Durante'), findsOneWidget);
+
+      await _escribirYEnviar(tester, '¿Qué es la Sala Gesell?');
+      expect(p.api.peticiones.single.perfil, {
+        'edad': '13',
+        'procedimiento': 'penal',
+        'rol': 'testigo',
+        'fase': 'durante',
+      });
+    });
+
+    testWidgets('sin perfil: «Elegir», y la pregunta va con las cuatro variables vacías', (tester) async {
+      final p = await _abrir(tester, entrada: null);
+      expect(find.text('Si me dices tu edad y tu situación, te lo explico mejor.'), findsOneWidget);
+      expect(find.text('Elegir'), findsOneWidget);
+
+      await _escribirYEnviar(tester, '¿Qué es la Sala Gesell?');
+      expect(p.api.peticiones.single.perfil, {'edad': '', 'procedimiento': '', 'rol': '', 'fase': ''});
+    });
+
+    testWidgets(
+      'si el backend no responde: «Ver una respuesta de ejemplo», marcada (insignia, etiqueta y lector) y con '
+      'la banda «Sin conexión con el asistente»',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        final p = await _abrir(tester);
+        p.api.errores.add(errorApi);
+        await _escribirYEnviar(tester, '¿Qué puedo hacer si difunden fotos mías sin permiso?');
+        expect(find.text(errorApi.mensaje), findsOneWidget);
+        expect(find.text('Reintentar'), findsOneWidget);
+
+        await _pulsar(tester, find.byKey(const Key('ver-ejemplo')));
+
+        expect(find.text(errorApi.mensaje), findsNothing);
+        expect(find.byKey(const Key('insignia-ejemplo')), findsOneWidget);
+        expect(find.text(insigniaEjemplo), findsOneWidget);
+        expect(find.text(etiquetaEjemplo), findsOneWidget);
+        expect(find.bySemanticsLabel(RegExp(semanticaEjemplo)), findsOneWidget);
+        expect(find.text(tituloEjemplo), findsOneWidget);
+        expect(find.text(detalleEjemplo), findsOneWidget);
+        expect(find.textContaining('Canal prioritario', findRichText: true), findsWidgets);
+
+        await _pulsar(tester, find.text(accionVolverATuTurno));
+        expect(find.text(tituloEjemplo), findsNothing);
+        await _escribirYEnviar(tester, '¿Qué es la Sala Gesell?');
+        expect(p.api.peticiones, hasLength(2), reason: 'vuelve a preguntar al backend');
+        semantica.dispose();
+      },
+    );
+
+    testWidgets('respuesta del backend real: párrafos separados y fuentes que abren el artículo en el BOE', (
+      tester,
+    ) async {
+      final pedidas = _simularLanzador(tester);
+      const url = 'https://www.boe.es/buscar/act.php?id=BOE-A-2000-641#a3';
+      await _abrir(
+        tester,
+        base: const _ApiFija(
+          AskResponse(
+            tipo: TipoRespuesta.normal,
+            respuesta:
+                'Antes de los 14 años no te pueden juzgar en el juzgado de menores.\n\n'
+                'Si tienes 14 o más, se aplica la ley de menores.',
+            fuentes: [
+              Fuente(
+                id: 'LORPM-3',
+                titulo: 'Régimen de los menores de catorce años',
+                norma: 'LO 5/2000',
+                articulo: '3',
+                url: url,
+              ),
+            ],
+          ),
+        ),
+      );
+      await _escribirYEnviar(tester, '¿Me pueden juzgar?');
+
+      final parrafos = tester.widgetList<TextoConTerminos>(find.byType(TextoConTerminos)).map((t) => t.texto);
+      expect(parrafos, [
+        'Antes de los 14 años no te pueden juzgar en el juzgado de menores.',
+        'Si tienes 14 o más, se aplica la ley de menores.',
+      ]);
+
+      await _pulsar(tester, find.text('LO 5/2000 · art. 3'));
+      expect(find.text('Régimen de los menores de catorce años'), findsOneWidget);
+      expect(find.text('Ley de responsabilidad penal de los menores'), findsOneWidget);
+      await _pulsar(tester, find.text('Leer la ley en el BOE'));
+      expect(pedidas.single, url);
+    });
+
+    testWidgets('«hechos» sobre fotos o vídeos: el 017 con su horario y «Quitar fotos o vídeos de internet»', (
+      tester,
+    ) async {
+      final pedidas = _simularLanzador(tester);
+      await _abrir(
+        tester,
+        base: const _ApiFija(AskResponse(tipo: TipoRespuesta.hechos, respuesta: MockTuTurnoApi.plantillaHechosAgente)),
+      );
+      await _escribirYEnviar(tester, 'Han pasado un vídeo mío por el grupo de clase');
+
+      expect(find.text('Ver teléfonos de ayuda'), findsOneWidget);
+      await _desplazarHasta(tester, find.byKey(const Key('quitar-imagenes')));
+      expect(find.text('Llamar al 017 · Ciberseguridad (INCIBE)'), findsOneWidget);
+      expect(find.text('Todos los días, de 8:00 a 23:00'), findsOneWidget);
+      expect(find.text('INCIBE · 017'), findsOneWidget);
+      expect(find.text('AEPD · Canal prioritario'), findsOneWidget);
+      await _pulsar(tester, find.byKey(const Key('quitar-imagenes')));
+      expect(pedidas.single, 'https://www.aepd.es/canalprioritario');
+    });
+
+    testWidgets('crisis: «Salir rápido» dentro de la tarjeta de Ayuda, debajo de los teléfonos', (tester) async {
+      await _abrir(tester);
+      await _escribirYEnviar(tester, 'A veces pienso que no quiero vivir');
+
+      final tarjeta = find.byKey(const Key('tarjeta-crisis'));
+      final salir = find.descendant(of: tarjeta, matching: find.text('Salir rápido'));
+      expect(salir, findsOneWidget);
+      expect(tester.getTopLeft(salir).dy, greaterThan(tester.getTopLeft(find.text(_llamarAnar)).dy));
+    });
+
+    testWidgets('a los 8 s sin respuesta, «Sigo buscando en las leyes…» (en el modo texto, sin enlace)', (
+      tester,
+    ) async {
+      final p = await _abrir(tester);
+      p.api.pausa = Completer<void>();
+      await tester.enterText(find.byKey(_campo), _preguntaDemo);
+      await tester.pump();
+      await tester.tap(find.byKey(_enviar));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 7));
+      expect(find.text('$textoSigoBuscando…'), findsNothing);
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.text('$textoSigoBuscando…'), findsOneWidget);
+      expect(find.byKey(const Key('contestar-por-escrito')), findsNothing);
+
+      p.api.pausa!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(IndicadorEscribiendo), findsNothing);
+    });
+
+    testWidgets('el título no se corta con letra a 1,3 en 360×640, y nada se desborda', (tester) async {
+      await _abrir(tester, escalaTexto: 1.3, tamano: const Size(360, 640));
+      expect(tester.takeException(), isNull);
+
+      void tituloEntero() {
+        final titulo = find.descendant(of: find.byType(AppBar), matching: find.text('Pregunta'));
+        expect(titulo, findsOneWidget);
+        final parrafo = tester.renderObject<RenderParagraph>(titulo);
+        expect(parrafo.didExceedMaxLines, isFalse);
+        final caja = tester.getRect(titulo);
+        expect(caja.left, greaterThanOrEqualTo(0));
+        expect(caja.right, lessThanOrEqualTo(360));
+      }
+
+      tituloEntero();
+      await _escribirYEnviar(tester, _preguntaDemo);
+      expect(tester.takeException(), isNull);
+      tituloEntero();
+      await _escribirYEnviar(tester, 'A veces pienso que no quiero vivir');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ningún texto de Pregunta promete que la conversación se borra o que no se guarda', (tester) async {
+      expect(
+        textoPresentacion,
+        'Soy una IA. Pregúntame sobre tus derechos o sobre cómo funciona un juicio. '
+        'No me cuentes tu nombre ni lo que ha pasado.',
+      );
+      const prohibidos = ['se borra', 'no guardo', 'no la guarda', 'no se guarda nada', 'nadie lo ve'];
+      for (final texto in [
+        textoPresentacion,
+        textoPresentacionAgente,
+        textoBorrar,
+        textoBorrarAgente,
+        textoHojaPerfil,
+        textoAvisoVozAlta,
+        textoAvisoIa,
+      ]) {
+        for (final prohibido in prohibidos) {
+          expect(texto.toLowerCase(), isNot(contains(prohibido)), reason: texto);
+        }
+      }
+
+      await _abrir(tester);
+      await _escribirYEnviar(tester, '¿Qué derechos tengo?');
+      await tester.tap(find.byTooltip('Empezar una conversación nueva'));
+      await tester.pumpAndSettle();
+      expect(find.text(textoBorrar), findsOneWidget);
+      for (final prohibido in ['Se borra', 'No guardo', 'no la guarda']) {
+        expect(find.textContaining(prohibido), findsNothing);
+      }
+    });
   });
 }

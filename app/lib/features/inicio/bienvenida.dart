@@ -3,25 +3,49 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api/models.dart' show Fuente;
 import '../../core/providers.dart';
 import '../../tema.dart';
 import '../../widgets/animaciones.dart';
+import '../../widgets/fuente_chip.dart';
 import '../../widgets/iconos/iconos.dart';
+import '../../widgets/justicia/fondo_justicia.dart';
 import '../../widgets/marca/marca.dart';
 import '../../widgets/modulos.dart';
 import '../../widgets/movimiento/movimiento.dart';
 import '../../widgets/tuturno_scaffold.dart';
+import 'turno_del_dia.dart';
 import 'widgets/bocadillo.dart';
 
 const _paginas = 2;
 const _anchoPuntoActivo = Espacio.l;
 
-/// Lo que dice Tut en la segunda pantalla de la bienvenida (sección 4.1).
-const mensajeIA = 'Soy una IA. No te pido tu nombre y lo que hablamos se borra. Si estás en peligro, pulsa Ayuda.';
+/// Lo que dice Tut en la segunda pantalla de la bienvenida (sección 4.1), y al pie del inicio. Solo lo que es cierto
+/// hoy (auditoría P1-4): con el agente de voz, lo que se pregunta pasa por un servicio externo, así que no se promete
+/// que «se borre».
+const mensajeIA = 'Soy una IA. No te pido tu nombre ni crear una cuenta. Si estás en peligro, pulsa Ayuda.';
+
+/// Lo que se cuenta en «Sin nombre ni cuenta»: el móvil no guarda el chat (chatProvider vive solo en memoria). Dice
+/// «la conversación de Pregunta», no «lo que preguntas»: lo que apuntas en «Mis preguntas» sí se queda en el móvil.
+const textoSinCuenta =
+    'No hace falta registrarte. Tu móvil no guarda la conversación de Pregunta: al salir, desaparece de la pantalla.';
+
+/// El derecho a que te escuchen, en la primera pantalla (tema-justicia.md, §8), con su fuente: LO 1/1996, art. 9.1
+/// (docs/MARCO_LEGAL.md: «sin discriminación alguna por edad»).
+const textoDerechoASerOido =
+    'Cuando algo te afecta, tienes derecho a que te escuchen, tengas la edad que tengas. TuTurno te ayuda a entender '
+    'para que puedas hablar en tu turno.';
+const fuenteDerechoASerOido = Fuente(
+  id: 'ML-LO1-1996-9',
+  titulo: 'Derecho a que te escuchen',
+  norma: 'LO 1/1996',
+  articulo: '9.1',
+);
 
 /// Bienvenida de la primera vez (sección 4.1), en dos pantallas: «¿Qué es TuTurno?», que empieza con el logotipo
-/// pegándose letra a letra, y «Antes de empezar», donde Tut cuenta que es una IA y dónde está Ayuda. Ayuda y Glosario
-/// siguen arriba a la derecha; en la segunda pantalla el botón de Ayuda late un par de veces para que se vea.
+/// pegándose letra a letra y sigue con el palacio de justicia de papel, y «Antes de empezar», donde Tut cuenta que es
+/// una IA y dónde está Ayuda. Ayuda y Glosario siguen arriba a la derecha; en la segunda pantalla el botón de Ayuda
+/// late un par de veces para que se vea. Si una pantalla no cabe, se desplaza, y un degradado abajo lo avisa.
 class Bienvenida extends ConsumerStatefulWidget {
   const Bienvenida({super.key});
 
@@ -32,6 +56,13 @@ class Bienvenida extends ConsumerStatefulWidget {
 class _BienvenidaState extends ConsumerState<Bienvenida> {
   final _controlador = PageController();
   int _pagina = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // El palacio en silueta del inicio, listo para cuando se arranque la bienvenida.
+    FondoJusticia.precargar(context, VarianteFondoJusticia.silueta);
+  }
 
   @override
   void dispose() {
@@ -201,25 +232,85 @@ class _Puntos extends StatelessWidget {
   }
 }
 
-/// Estructura común de las dos pantallas: centradas en vertical si caben y desplazables si no (letra grande).
-class _Pagina extends StatelessWidget {
+/// Estructura común de las dos pantallas: centradas en vertical si caben y desplazables si no (letra grande o móvil
+/// pequeño). Mientras queda algo por debajo, un degradado del color del fondo lo avisa (auditoría P2-5); al llegar al
+/// final, se va.
+class _Pagina extends StatefulWidget {
   const _Pagina({required this.children});
 
   final List<Widget> children;
 
+  /// Margen de los lados (lo que el palacio de la primera pantalla se sale para ir de lado a lado).
+  static const margen = Espacio.l;
+
+  /// Alto del degradado de abajo.
+  static const altoDegradado = Espacio.xl + Espacio.s;
+
+  @override
+  State<_Pagina> createState() => _PaginaState();
+}
+
+class _PaginaState extends State<_Pagina> {
+  bool _hayMas = false;
+
+  bool _alDesplazar(Notification aviso) {
+    final metricas = switch (aviso) {
+      ScrollMetricsNotification(:final metrics) => metrics,
+      ScrollNotification(:final metrics) => metrics,
+      _ => null,
+    };
+    if (metricas != null && metricas.axis == Axis.vertical) {
+      final hayMas = metricas.extentAfter > 1;
+      if (hayMas != _hayMas) setState(() => _hayMas = hayMas);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final fondo = Theme.of(context).scaffoldBackgroundColor;
     return LayoutBuilder(
-      builder: (context, restricciones) => SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: Espacio.l, vertical: Espacio.m),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: math.max(0, restricciones.maxHeight - 2 * Espacio.m)),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
+      builder: (context, restricciones) => Stack(
+        children: [
+          NotificationListener<Notification>(
+            onNotification: _alDesplazar,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: _Pagina.margen, vertical: Espacio.m),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: math.max(0, restricciones.maxHeight - 2 * Espacio.m)),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: widget.children,
+                ),
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: _Pagina.altoDegradado,
+            child: IgnorePointer(
+              child: ExcludeSemantics(
+                child: AnimatedOpacity(
+                  key: const ValueKey('degradado-hay-mas'),
+                  opacity: _hayMas ? 1 : 0,
+                  duration: duracion(context, Duracion.corta),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [fondo.withValues(alpha: 0), fondo],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -248,7 +339,11 @@ class _QueEsTuTurnoState extends State<_QueEsTuTurno> with AutomaticKeepAliveCli
     return _Pagina(
       children: [
         const _PortadaMarca(),
-        const SizedBox(height: Espacio.l + Espacio.xs),
+        // El palacio de justicia de papel, de lado a lado, con tu número de turno en el panel de encima de la puerta.
+        // Arriba tiene su cielo: va casi pegado a la portada, y Tut asoma por encima.
+        const SizedBox(height: Espacio.xs),
+        Entrada(orden: orden++, retraso: _trasLogo, child: const _Palacio()),
+        const SizedBox(height: Espacio.s + Espacio.xs),
         Entrada(
           orden: orden++,
           retraso: _trasLogo,
@@ -263,6 +358,8 @@ class _QueEsTuTurnoState extends State<_QueEsTuTurno> with AutomaticKeepAliveCli
             style: tema.textTheme.bodyLarge?.copyWith(color: tema.colorScheme.onSurfaceVariant),
           ),
         ),
+        const SizedBox(height: Espacio.m),
+        Entrada(orden: orden++, retraso: _trasLogo, child: const _DerechoASerOido()),
         const SizedBox(height: Espacio.l - Espacio.xs),
         for (final (i, modulo) in Modulo.values.indexed) ...[
           Entrada(
@@ -344,6 +441,118 @@ class _PortadaMarcaState extends State<_PortadaMarca> {
               semanticLabel: 'Tut, la mascota de TuTurno, te saluda',
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// El palacio de justicia de papel en color, de lado a lado de la pantalla (se sale del margen de la página), con tu
+/// número de turno en el panel de encima de la puerta. Es decorativo.
+class _Palacio extends StatelessWidget {
+  const _Palacio();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, restricciones) {
+        final ancho = restricciones.maxWidth + 2 * _Pagina.margen;
+        final tamano = FondoJusticia.tamanoDibujo;
+        return SizedBox(
+          height: ancho * tamano.height / tamano.width,
+          child: OverflowBox(
+            minWidth: ancho,
+            maxWidth: ancho,
+            child: const FondoJusticia(variante: VarianteFondoJusticia.color, panel: _PanelDelPalacio()),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Las paletas del panel de turnos del palacio: tu turno del día (dos cifras), en papel con tinta azul noche como las
+/// del dibujo. Giran hasta tu número cuando el palacio ya se ve; con «reducir animaciones», el número ya está puesto.
+class _PanelDelPalacio extends ConsumerStatefulWidget {
+  const _PanelDelPalacio();
+
+  /// Lo que espera para girar: que el logotipo se haya pegado y el palacio haya entrado.
+  static const espera = Duration(milliseconds: 1300);
+
+  @override
+  ConsumerState<_PanelDelPalacio> createState() => _PanelDelPalacioState();
+}
+
+class _PanelDelPalacioState extends ConsumerState<_PanelDelPalacio> with SingleTickerProviderStateMixin {
+  late final AnimationController _espera = AnimationController(vsync: this, duration: _PanelDelPalacio.espera);
+  bool _iniciado = false;
+  bool _girado = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_iniciado) return;
+    _iniciado = true;
+    if (duracion(context, _PanelDelPalacio.espera) == Duration.zero) {
+      _girado = true;
+    } else {
+      _espera.forward().whenComplete(() {
+        if (mounted) setState(() => _girado = true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _espera.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final numero = ref.watch(turnoDelDiaProvider.select((turno) => turno.numero));
+    // Como el ticket del día: la primera vez da la vuelta desde unos números antes (98, 99, 00… hasta el 01).
+    final texto = (_girado ? numero : numero + 97) % 100;
+    return PanelFlip(
+      texto: texto.toString().padLeft(2, '0'),
+      estilo: Theme.of(context).textTheme.titleMedium,
+      fondo: ColoresMarca.papel,
+      color: ColoresMarca.azulNoche,
+      separacion: 2,
+    );
+  }
+}
+
+/// «Cuando algo te afecta, tienes derecho a que te escuchen…», con el micrófono de «Tu turno de palabra» y de dónde
+/// sale (LO 1/1996, art. 9.1). Con la letra grande, la fuente usa todo el ancho para que se lea entera.
+class _DerechoASerOido extends StatelessWidget {
+  const _DerechoASerOido();
+
+  static const _icono = 36.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const IconoTuTurno(TuIcono.turnoPalabra, size: _icono, decorativo: true),
+            const SizedBox(width: Espacio.m),
+            Expanded(
+              child: Text(
+                textoDerechoASerOido,
+                style: tema.textTheme.bodyLarge?.copyWith(color: tema.colorScheme.onSurface, height: 1.4),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Espacio.xs),
+        Padding(
+          padding: EdgeInsets.only(left: letraGrande(context) ? 0 : _icono + Espacio.m),
+          child: const FuenteChip(fuente: fuenteDerechoASerOido),
+        ),
       ],
     );
   }
@@ -439,11 +648,7 @@ class _AntesDeEmpezar extends StatelessWidget {
         const SizedBox(height: Espacio.m),
         Entrada(
           orden: orden++,
-          child: const _Fila(
-            icono: TuIcono.candado,
-            titulo: 'Sin nombre ni cuenta',
-            texto: 'No hace falta registrarte. Lo que hablamos en Pregunta se borra al salir.',
-          ),
+          child: const _Fila(icono: TuIcono.candado, titulo: 'Sin nombre ni cuenta', texto: textoSinCuenta),
         ),
         const SizedBox(height: Espacio.m),
         Entrada(

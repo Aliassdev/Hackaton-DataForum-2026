@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import 'comunes.dart';
 
@@ -43,11 +44,11 @@ class TarjetaOpcion extends StatelessWidget {
     final elegida = colorElegida ?? esquema.primary;
     // Una respuesta fallada no va en rojo (el rojo es de Ayuda): fallar es parte de aprender, así que lleva el color
     // terciario y una bombilla, como en Vive el caso.
-    final (Color? acento, IconData? icono) = switch (estado) {
+    final (Color? acento, TuIcono? icono) = switch (estado) {
       EstadoOpcion.normal || EstadoOpcion.apagada => (null, null),
       EstadoOpcion.elegida => (elegida, null),
-      EstadoOpcion.correcta => (exito, Icons.check_rounded),
-      EstadoOpcion.incorrecta => (esquema.tertiary, Icons.lightbulb_rounded),
+      EstadoOpcion.correcta => (exito, TuIcono.check),
+      EstadoOpcion.incorrecta => (esquema.tertiary, TuIcono.idea),
     };
     // Tinta encima del acento: la del tema para acierto y fallo; para «elegida», la que contraste con su color.
     final Color? sobreAcento = switch (estado) {
@@ -115,7 +116,14 @@ class TarjetaOpcion extends StatelessWidget {
                             duration: rapida,
                             transitionBuilder: (hijo, animacion) => ScaleTransition(scale: animacion, child: hijo),
                             child: icono != null
-                                ? Icon(icono, key: ValueKey(icono), size: Espacio.l - 2, color: sobreAcento)
+                                ? IconoTuTurno(
+                                    icono,
+                                    key: ValueKey(icono),
+                                    estilo: EstiloIcono.mono,
+                                    size: Espacio.l - 2,
+                                    color: sobreAcento,
+                                    decorativo: true,
+                                  )
                                 : Text(
                                     chapa!,
                                     key: ValueKey('chapa-$chapa'),

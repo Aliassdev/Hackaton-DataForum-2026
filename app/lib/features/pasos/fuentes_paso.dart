@@ -132,11 +132,12 @@ String? nombreFacilDeNorma(String norma) {
   if (empieza('rgpd')) return 'Reglamento General de Protección de Datos';
   if (empieza('cp') || tiene('codigo penal') || tiene('lo 10/1995')) return 'Código Penal';
   if (empieza('cdn') || tiene('derechos del nino')) return 'Convención sobre los Derechos del Niño';
+  if (empieza('ce') || tiene('constitucion')) return 'Constitución Española';
   return null;
 }
 
 /// Etiqueta pequeña de una fuente («LECrim · art. 449 ter»), sin icono para que quepan varias por línea (el título
-/// «De dónde sale» ya lleva el mazo). Se ve pequeña, pero la zona táctil sigue siendo de 48 px. Al tocarla,
+/// «De dónde sale» ya lleva el libro de la ley). Se ve pequeña, pero la zona táctil sigue siendo de 48 px. Al tocarla,
 /// [mostrarFuentePaso].
 class ChipFuentePaso extends StatelessWidget {
   const ChipFuentePaso({super.key, required this.cita, this.paso});
@@ -264,7 +265,7 @@ class _HojaFuentePaso extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.menu_book_rounded, color: esquema.primary),
+                IconoTuTurno(TuIcono.fuente, estilo: EstiloIcono.mono, color: esquema.primary, decorativo: true),
                 const SizedBox(width: Espacio.m),
                 Expanded(
                   child: Column(

@@ -115,7 +115,8 @@ void main() {
     p.conexion.llegaAudio(pcm(1000), id: 0);
     await tester.pump();
     await tester.pump();
-    expect(find.text(saludoAgente), findsOneWidget);
+    // (Con la letra de las pruebas, más ancha que la real, el saludo queda justo debajo de lo que se ve.)
+    expect(find.text(saludoAgente, skipOffstage: false), findsOneWidget);
     expect(find.byType(BurbujaAsistente), findsNothing, reason: 'el saludo no es un mensaje');
     expect(find.text(tituloHablando), findsOneWidget);
     await tester.tap(find.byKey(const Key('boton-micro')));
@@ -141,7 +142,7 @@ void main() {
   });
 
   testWidgets(
-    'corte a mitad de pregunta: el error sale enseguida; «Reintentar» usa la sesión que se ha reabierto sola',
+    'corte a mitad de pregunta: esa pregunta la contesta el modo texto; la siguiente usa la sesión que se ha reabierto sola',
     (tester) async {
       final p = await _abrir(tester);
       p.conexion.llegaRespuesta(saludoAgente, id: 0);
@@ -149,9 +150,13 @@ void main() {
 
       await _escribirYEnviar(tester, '¿Qué es la Sala Gesell?');
       p.conexion.seCae();
+      // El corte, la pregunta al modo texto (el mock contesta tras un temporizador de 0 ms, que solo salta si pasa algo de
+      // tiempo; la reconexión sola llega a los 300 ms) y el fotograma con la respuesta.
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 10));
       await tester.pump();
-      expect(find.text(textoCortado), findsOneWidget);
+      expect(find.byType(BurbujaError), findsNothing);
+      expect(find.byType(BurbujaAsistente), findsOneWidget, reason: 'contestada por escrito (POST /api/agent/ask)');
       expect(find.text(tituloSinConexion), findsOneWidget);
       expect(p.lineas, contains('TUTURNO_LAT corte motivo=red'));
 
@@ -164,16 +169,14 @@ void main() {
       await tester.pump();
       expect(p.reproductor.trozos, isEmpty);
 
-      await tester.tap(find.text('Reintentar'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await _escribirYEnviar(tester, '¿Quién puede acompañarme?');
       expect(p.servidor.conexiones, hasLength(2), reason: 'no hace falta conectar otra vez');
-      expect(p.conexion.deTipo('user_message').single['text'], '¿Qué es la Sala Gesell?');
-      p.conexion.llegaRespuesta('Es una sala especial.', id: 2);
+      expect(p.conexion.deTipo('user_message').single['text'], '¿Quién puede acompañarme?');
+      p.conexion.llegaRespuesta('Puede acompañarte una persona de confianza.', id: 2);
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Es una sala especial.', findRichText: true), findsOneWidget);
+      expect(find.textContaining('Puede acompañarte una persona de confianza.', findRichText: true), findsOneWidget);
       expect(find.byType(BurbujaError), findsNothing);
       expect(find.textContaining(detalleConversacionNueva), findsOneWidget);
     },

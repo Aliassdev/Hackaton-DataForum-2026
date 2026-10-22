@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,11 +10,13 @@ import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/modulos.dart';
 import '../../../widgets/movimiento/movimiento.dart';
 import '../nivel.dart';
+import '../tu_camino.dart';
 import '../turno_del_dia.dart';
 import 'bocadillo.dart';
 
 /// Saludo del inicio: Tut te saluda con un bocadillo. Si le tocas, se sorprende y dice otra cosa; cuando cae el sello
-/// del turno del día, lo celebra un momento.
+/// del turno del día, lo celebra un momento. Si el ticket de Pregunta tiene tu papel, te recuerda tu camino en Mi
+/// situación (sin decir cuál es: eso va en el ticket de Mi situación, más abajo).
 class SaludoTut extends ConsumerStatefulWidget {
   const SaludoTut({super.key});
 
@@ -24,6 +27,9 @@ class SaludoTut extends ConsumerStatefulWidget {
     < 21 => '¡Buenas tardes!',
     _ => '¡Buenas noches!',
   };
+
+  /// Lo que dice Tut si el ticket de Pregunta tiene tu papel ([tuCaminoProvider]): una invitación, sin prisa.
+  static const fraseCamino = 'Cuando quieras, repasamos tu camino.';
 
   /// Lo que dice Tut cuando le tocas (sin contenido jurídico: solo para jugar).
   static const frasesAlTocar = [
@@ -75,11 +81,14 @@ class _SaludoTutState extends ConsumerState<SaludoTut> {
     final turno = ref.watch(turnoDelDiaProvider);
     final progreso = ref.watch(progresoProvider);
     final hora = ref.watch(relojProvider)().hour;
+    final conCamino = ref.watch(tuCaminoProvider) != null;
     final primeraVez = progreso.xp == 0 && progreso.leccionesCompletadas.isEmpty && progreso.cartas.isEmpty;
     final frase =
         _frase ??
         (turno.cumplida
             ? '¡Turno cumplido! Sigue a tu ritmo.'
+            : conCamino
+            ? SaludoTut.fraseCamino
             : primeraVez
             ? 'Soy Tut. ¿Empezamos por tu turno del día?'
             : '¿Qué te toca hoy?');
@@ -134,13 +143,21 @@ class _SaludoTutState extends ConsumerState<SaludoTut> {
 }
 
 /// Tu pase: la racha y el nivel en un ticket de papel de dos partes, con la línea de puntos en medio. Al tocarlo, se
-/// explica cómo funcionan (sin letra pequeña).
+/// explica cómo funcionan (sin letra pequeña). La racha es la amable ([estadoRacha]): sin racha en marcha, en vez de
+/// «0 días» invita a empezar («¡Empieza hoy!»), sin reñir.
 class PaseProgreso extends ConsumerWidget {
   const PaseProgreso({super.key});
+
+  /// Lo que se ve en el sitio de la racha cuando no hay ninguna en marcha.
+  static const empiezaHoy = '¡Empieza hoy!';
 
   /// Ancho de la parte de la racha: cabe «12 días» incluso con la letra grande (crece solo un poco, para dejar sitio
   /// al nivel).
   static const _anchoRacha = 98.0;
+
+  /// Icono de la racha y su separación del texto.
+  static const _icono = 30.0;
+  static const _separacion = Espacio.xs + 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -152,32 +169,39 @@ class PaseProgreso extends ConsumerWidget {
     final textos = tema.textTheme;
     final colores = context.colores;
     final tinta = colores.tintaTicket;
-    final escala = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
+    final escalaTexto = MediaQuery.textScalerOf(context);
+    final escala = escalaTexto.scale(1).clamp(1.0, 1.5);
     final dias = racha == 1 ? 'día' : 'días';
     final semantica =
         '${racha == 0 ? 'Racha: empieza hoy con una lección' : 'Racha: $racha $dias seguidos con una lección'}. '
         'Nivel ${nivel.numero}, ${nivel.titulo}. ${progreso.xp} puntos de experiencia.';
+    final estiloEmpieza = textos.labelLarge?.copyWith(color: tinta, fontWeight: FontWeight.w800, height: 1.15);
 
     Widget parteRacha({required bool centrada}) => Row(
       mainAxisAlignment: centrada ? MainAxisAlignment.center : MainAxisAlignment.start,
       mainAxisSize: centrada ? MainAxisSize.max : MainAxisSize.min,
       children: [
-        const IconoTuTurno(TuIcono.racha, size: 30, decorativo: true),
-        const SizedBox(width: Espacio.xs + 2),
+        const IconoTuTurno(TuIcono.racha, size: _icono, decorativo: true),
+        const SizedBox(width: _separacion),
         Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PopPegatina(
-                clave: racha,
-                animar: false,
-                inclinacion: 0,
-                child: Text('$racha', style: estiloCifras(textos.headlineSmall)?.copyWith(color: tinta, height: 1)),
-              ),
-              Text(dias, style: textos.labelMedium?.copyWith(color: tinta)),
-            ],
-          ),
+          child: racha == 0
+              ? Text(empiezaHoy, style: estiloEmpieza)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PopPegatina(
+                      clave: racha,
+                      animar: false,
+                      inclinacion: 0,
+                      child: Text(
+                        '$racha',
+                        style: estiloCifras(textos.headlineSmall)?.copyWith(color: tinta, height: 1),
+                      ),
+                    ),
+                    Text(dias, style: textos.labelMedium?.copyWith(color: tinta)),
+                  ],
+                ),
         ),
       ],
     );
@@ -261,7 +285,11 @@ class PaseProgreso extends ConsumerWidget {
     } else {
       contenido = LayoutBuilder(
         builder: (context, restricciones) {
-          final izquierda = (_anchoRacha + 16 * (escala - 1)).roundToDouble();
+          // Sin racha, la parte de la racha se ensancha lo justo para que «¡Empieza» quepa entero en su línea.
+          final empieza = racha == 0
+              ? Espacio.s * 2 + _icono + _separacion + _anchoPalabraMasLarga(empiezaHoy, estiloEmpieza, escalaTexto)
+              : 0.0;
+          final izquierda = math.max(_anchoRacha + 16 * (escala - 1), empieza).roundToDouble();
           final forma = TicketBorder(
             radio: Radios.m - 2,
             radioMuesca: 8,
@@ -311,6 +339,22 @@ class PaseProgreso extends ConsumerWidget {
   static void _abrir(BuildContext context) {
     Hapticos.seleccion();
     mostrarProgreso(context);
+  }
+
+  /// Lo que ocupa la palabra más larga de [texto] (más un pelín, por el redondeo).
+  static double _anchoPalabraMasLarga(String texto, TextStyle? estilo, TextScaler escala) {
+    var ancho = 0.0;
+    for (final palabra in texto.split(' ')) {
+      final pintor = TextPainter(
+        text: TextSpan(text: palabra, style: estilo),
+        textDirection: TextDirection.ltr,
+        textScaler: escala,
+        maxLines: 1,
+      )..layout();
+      ancho = math.max(ancho, pintor.width);
+      pintor.dispose();
+    }
+    return ancho.ceilToDouble() + 2;
   }
 }
 
@@ -378,7 +422,7 @@ class _HojaProgreso extends ConsumerWidget {
     final siguiente = nivel.siguiente;
     // Pasado el último título, los niveles se cuentan por número.
     final meta = siguiente.titulo == nivel.titulo ? 'el nivel ${siguiente.numero}' : '«${siguiente.titulo}»';
-    final racha = rachaViva(progreso, soloDia(ref.watch(relojProvider)()));
+    final racha = estadoRacha(progreso, soloDia(ref.watch(relojProvider)()));
     final niveles = [for (var n = 1; n <= Nivel.titulosNivel.length; n++) Nivel.numero(n)];
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
@@ -425,12 +469,7 @@ class _HojaProgreso extends ConsumerWidget {
               icono: TuIcono.idea,
               texto: '+5 XP en «Dilo con tus palabras» si explicas al menos la mitad de la idea.',
             ),
-            _Explicacion(
-              icono: TuIcono.racha,
-              texto:
-                  '${racha == 0 ? 'La racha' : 'Tu racha de $racha ${racha == 1 ? 'día' : 'días'}'} suma un día cada '
-                  'día que completas una lección. Si un día no puedes, no pasa nada: empiezas otra cuando quieras.',
-            ),
+            _Explicacion(icono: TuIcono.racha, texto: textoRacha(racha)),
             const _Explicacion(
               icono: TuIcono.candado,
               texto: 'Tus puntos se guardan solo en este móvil. No hay cuentas ni rankings.',
@@ -440,6 +479,16 @@ class _HojaProgreso extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// «Cómo se ganan», la racha (producto.md, §5.5): suma un día por cada día con una lección y hay un día de descanso
+/// cada semana. Sin racha en marcha, la mejor que has hecho. Sin reñir: los puntos solo suben.
+String textoRacha(EstadoRacha racha) {
+  String dias(int n) => n == 1 ? 'día' : 'días';
+  final quien = racha.dias == 0 ? 'La racha' : 'Tu racha de ${racha.dias} ${dias(racha.dias)}';
+  final mejor = racha.dias == 0 && racha.mejor > 0 ? ' Tu mejor racha: ${racha.mejor} ${dias(racha.mejor)}.' : '';
+  return '$quien suma un día cada día que completas una lección. Si un día no puedes, no pasa nada: tienes un día de '
+      'descanso cada semana. Y tus puntos nunca bajan.$mejor';
 }
 
 class _FilaNivel extends StatelessWidget {

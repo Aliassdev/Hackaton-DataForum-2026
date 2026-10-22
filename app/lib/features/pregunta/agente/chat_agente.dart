@@ -6,38 +6,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/agente/agente_provider.dart';
 import '../../../core/agente/agente_voz.dart';
 import '../../../core/agente/respuesta_agente.dart';
-import '../../../core/api/mock_api.dart';
 import '../../../core/api/tuturno_api.dart';
 import '../../../core/entrada.dart';
 import '../../../core/providers.dart';
-import '../../../core/seguridad.dart';
 import '../../../core/texto.dart';
 import '../../../core/voz/stt.dart';
 import '../chat_controller.dart';
 import 'textos_agente.dart';
 
+export '../ejemplos.dart' show respuestasEjemploProvider;
+
 // «Pregunta» en modo agente (docs/ARQUITECTURA.md, sección 5.0, fase 1): las preguntas van al agente de voz de
 // ElevenLabs, que contesta con su voz y con texto. Es el mismo chat que el modo texto (ChatNotifier): solo cambia de
 // dónde sale la respuesta. La sesión no usa el micrófono: la voz del menor se transcribe en el móvil (sttProvider) y se
-// envía como texto. Por eso se puede dictar con la sesión abierta.
+// envía como texto.
 //
+// - Con voz solo si se puede: con «Sin voz» o con lector de pantalla se contesta por escrito y no se abre la sesión,
+//   porque el agente siempre habla en alto. Lo mismo con los ejemplos.
 // - La sesión se abre al entrar (después de la hoja del perfil, agente/capa_agente.dart), se cierra al salir y al pasar
-//   a segundo plano, y se vuelve a abrir al preguntar. Si se cae sola, el agente reconecta por su cuenta.
+//   a segundo plano, y se vuelve a abrir al preguntar. No reconecta sola al volver.
 // - El primer mensaje de cada sesión es el saludo fijo del agente: no es una respuesta y no entra en el chat (se enseña
 //   arriba).
-// - Si en 30 s no llega respuesta (el backend o su túnel están caídos: ElevenLabs no avisa), «TuTurno no responde
-//   ahora mismo», con «Reintentar» y la opción de ver respuestas de ejemplo (la API simulada), marcadas como ejemplo.
+// - Respaldo automático: si la voz no conecta (10 s y un reintento), no contesta en 20 s o se pide «Contestar por
+//   escrito» (a los 8 s), la pregunta va al modo texto real (POST /api/agent/ask) y se sigue por escrito hasta «Probar
+//   con voz». Si la sesión se corta, hay un error o el backend da su respuesta segura, esa pregunta se contesta por
+//   escrito y la voz sigue. Los ejemplos solo salen si tampoco responde el modo texto (y se piden).
 // - Lo que se enseña pasa por core/agente/respuesta_agente.dart: sin etiquetas de voz, teléfonos en cifras y las
 //   plantillas fijas del backend reconocidas (crisis → tarjeta de ayuda; hechos → derivación; fuera de ámbito →
-//   sugerencias; respuesta segura → «Reintentar»).
+//   sugerencias).
 
 /// Un chat por cada forma de entrar, como [chatProvider], pero con el agente de voz. Crea un [ChatAgenteNotifier].
 final chatAgenteProvider = NotifierProvider.autoDispose.family<ChatNotifier, EstadoChat, RolProceso?>(
   ChatAgenteNotifier.new,
 );
-
-/// Respuestas de ejemplo cuando el agente no responde: la API simulada (sección 9.7). Nunca se presentan como reales.
-final respuestasEjemploProvider = Provider<TuTurnoApi>((ref) => MockTuTurnoApi());
 
 /// En qué punto está la conversación con el agente.
 enum FaseAgente {
@@ -46,14 +47,18 @@ enum FaseAgente {
   conectando,
   conectado,
 
-  /// No se ha podido conectar o se ha cortado. [SesionAgente.aviso] dice por qué.
+  /// Se ha cortado sin pregunta pendiente. [SesionAgente.aviso] dice por qué. Se vuelve a abrir al preguntar.
   sinConexion,
 
   /// La app ha pasado a segundo plano y se ha cerrado la sesión. Se vuelve a abrir al preguntar.
   pausado,
 
-  /// Se ha elegido ver respuestas de ejemplo: no hay sesión con el agente.
-  ejemplo,
+  /// Por escrito porque así se ha elegido («Sin voz» o lector de pantalla). Sin sesión de voz.
+  texto,
+
+  /// Por escrito porque la voz no responde (no conecta, no contesta a tiempo o se ha pedido «Contestar por escrito»).
+  /// Sin sesión de voz hasta «Probar con voz».
+  sinVoz,
 }
 
 /// Lo que enseña la banda de estado de arriba (agente/banda_agente.dart).
@@ -64,7 +69,6 @@ class SesionAgente {
     this.saludo,
     this.antesDePreguntar = const [],
     this.aviso,
-    this.sinRespuesta = false,
     this.conversacionNueva = false,
   });
 
@@ -80,9 +84,6 @@ class SesionAgente {
   /// Por qué no hay conexión, para el usuario.
   final String? aviso;
 
-  /// La última pregunta se quedó sin respuesta.
-  final bool sinRespuesta;
-
   /// Se ha vuelto a conectar a mitad de una conversación: el agente no recuerda lo anterior.
   final bool conversacionNueva;
 
@@ -91,26 +92,39 @@ class SesionAgente {
     String? Function()? saludo,
     List<String>? antesDePreguntar,
     String? Function()? aviso,
-    bool? sinRespuesta,
     bool? conversacionNueva,
   }) => SesionAgente(
     fase: fase ?? this.fase,
     saludo: saludo != null ? saludo() : this.saludo,
     antesDePreguntar: antesDePreguntar ?? this.antesDePreguntar,
     aviso: aviso != null ? aviso() : this.aviso,
-    sinRespuesta: sinRespuesta ?? this.sinRespuesta,
     conversacionNueva: conversacionNueva ?? this.conversacionNueva,
   );
+}
+
+/// Por qué se ha dejado de esperar la respuesta del agente.
+enum _FinEspera {
+  /// Se ha acabado el tiempo ([ChatAgenteNotifier.tiempoRespuesta]).
+  tiempo,
+
+  /// Se ha pedido «Contestar por escrito».
+  porEscrito,
+
+  /// Se ha cerrado o cortado la sesión.
+  corte,
+
+  /// El agente ha avisado de un error.
+  error,
 }
 
 class ChatAgenteNotifier extends ChatNotifier {
   ChatAgenteNotifier(super.situacionInicial);
 
-  /// Lo que se espera a la respuesta del agente antes de decir que no responde.
-  static const tiempoRespuesta = Duration(seconds: 30);
+  /// Lo que se espera a la respuesta del agente antes de pasar al modo texto (en la prueba real tarda unos 2 s).
+  static const tiempoRespuesta = Duration(seconds: 20);
 
-  /// Lo que se espera a que se abra la sesión.
-  static const tiempoConexion = Duration(seconds: 20);
+  /// Lo que se espera a que se abra la sesión. Si no se abre, se reintenta una vez.
+  static const tiempoConexion = Duration(seconds: 10);
 
   /// En una sesión recién abierta, lo que se espera al saludo antes de enviar la pregunta.
   static const esperaSaludo = Duration(seconds: 3);
@@ -136,6 +150,13 @@ class ChatAgenteNotifier extends ChatNotifier {
   var _conversacion = 0;
   var _cerrado = false;
 
+  /// La pantalla ya ha pasado la hoja del perfil ([empezar]): hasta entonces no se abre la sesión.
+  var _empezado = false;
+  var _lectorDePantalla = false;
+
+  /// La voz no ha respondido: se sigue por escrito hasta [probarConVoz] o [volverATuTurno].
+  var _vozCaida = false;
+
   /// El saludo de la sesión actual todavía no ha llegado.
   var _saludoPendiente = false;
   Completer<void>? _saludo;
@@ -144,18 +165,25 @@ class ChatAgenteNotifier extends ChatNotifier {
   var _enviadoEnSesion = false;
   Map<String, String> _variablesDeSesion = const {};
 
-  /// La pregunta enviada que espera respuesta: se completa con el mensaje del agente, o con null si se corta.
+  /// La pregunta enviada que espera respuesta: se completa con el mensaje del agente, o con null si no llega.
   Completer<MensajeAgente?>? _espera;
-  String? _errorEspera;
+  _FinEspera? _finEspera;
 
   /// Texto tal como llegó de cada respuesta del agente que está en el chat: para aplicar las correcciones.
   final _originales = <int, String>{};
 
-  /// El aviso de «no responde» que se sustituye si la respuesta llega tarde.
-  int? _idSinRespuesta;
-
   @override
   bool get conAgente => true;
+
+  /// Se contesta con la voz del agente: hay agente, la voz está permitida («Voz» y sin lector de pantalla), no se ha
+  /// caído y no se está con los ejemplos.
+  bool get usaVoz =>
+      !_cerrado &&
+      _agente != null &&
+      ref.read(ajustesProvider).vozActivada &&
+      !_lectorDePantalla &&
+      !_vozCaida &&
+      !state.ejemplos;
 
   @override
   EstadoChat build() {
@@ -167,12 +195,18 @@ class ChatAgenteNotifier extends ChatNotifier {
     final subErrores = agente?.errores.listen(_alError);
     agente?.estado.addListener(_alCambiarEstado);
     agente?.hablando.addListener(_alCambiarHablando);
+    // «Voz / Sin voz» decide si se contesta con la voz del agente o por escrito. Quitar la voz a propósito olvida que
+    // había fallado: si se vuelve a poner, se intenta otra vez.
+    ref.listen(ajustesProvider.select((a) => a.vozActivada), (_, activada) {
+      if (!activada) _vozCaida = false;
+      _actualizarModo();
+    });
     // Para subrayar en las respuestas los términos del glosario.
     ref.read(glosarioProvider);
     ref.onDispose(() {
       _cerrado = true;
       _generacion++;
-      _completarEspera(null);
+      _completarEspera(null, _FinEspera.corte);
       unawaited(subMensajes?.cancel());
       unawaited(subErrores?.cancel());
       agente?.estado.removeListener(_alCambiarEstado);
@@ -182,15 +216,47 @@ class ChatAgenteNotifier extends ChatNotifier {
     return estado;
   }
 
-  /// Abre la sesión con el agente si no está abierta. Devuelve false si no se ha podido. La llama la pantalla al
-  /// entrar (después de la hoja del perfil), el botón «Conectar» y [preguntar] cuando hace falta.
-  Future<bool> abrirSesion() {
-    if (_cerrado || _sesion.value.fase == FaseAgente.ejemplo) return Future.value(false);
-    final agente = _agente;
-    if (agente == null) {
-      _ponerSesion(fase: FaseAgente.sinConexion, aviso: TextosAgente.sinConfigurar);
-      return Future.value(false);
+  @override
+  void empezar({required bool lectorDePantalla}) {
+    if (_cerrado) return;
+    _lectorDePantalla = lectorDePantalla;
+    _empezado = true;
+    _actualizarModo();
+  }
+
+  @override
+  void ponerLectorDePantalla(bool activo) {
+    if (_cerrado || _lectorDePantalla == activo) return;
+    _lectorDePantalla = activo;
+    _actualizarModo();
+  }
+
+  /// Pone la conversación en el modo que toca: con voz (abre la sesión si estaba por escrito o sin empezar; si está en
+  /// pausa, espera a la siguiente pregunta) o por escrito (cierra la sesión si la hay).
+  void _actualizarModo() {
+    if (_cerrado || !_empezado) return;
+    final fase = _sesion.value.fase;
+    if (usaVoz) {
+      if (fase == FaseAgente.preparando || fase == FaseAgente.texto || fase == FaseAgente.sinVoz) {
+        unawaited(abrirSesion());
+      }
+      return;
     }
+    final porEscrito = _vozCaida ? FaseAgente.sinVoz : FaseAgente.texto;
+    final agente = _agente;
+    final abierta = agente != null && (agente.estado.value != EstadoAgente.desconectado || _abriendo != null);
+    if (abierta) {
+      unawaited(_cerrarSesion(porEscrito));
+    } else if (fase != porEscrito) {
+      _ponerSesion(fase: porEscrito, saludo: null, aviso: null, conversacionNueva: false);
+    }
+  }
+
+  /// Abre la sesión con el agente si no está abierta. Devuelve false si no se ha podido o si ahora no toca la voz. La
+  /// llaman [empezar], «Conectar», «Probar con voz» y [preguntar] cuando hace falta.
+  Future<bool> abrirSesion() {
+    if (!usaVoz) return Future.value(false);
+    final agente = _agente!;
     if (agente.estado.value == EstadoAgente.conectado && _sesion.value.fase == FaseAgente.conectado) {
       return Future.value(true);
     }
@@ -218,7 +284,6 @@ class ChatAgenteNotifier extends ChatNotifier {
     );
     final variables = _variablesActuales();
     for (var intento = 0; ; intento++) {
-      String mensaje;
       var reintentable = true;
       try {
         await agente.iniciar(variables: variables).timeout(tiempoConexion);
@@ -228,13 +293,13 @@ class ChatAgenteNotifier extends ChatNotifier {
         _ponerSesion(fase: FaseAgente.conectado, conversacionNueva: aMitad);
         return true;
       } on ErrorAgente catch (e) {
-        mensaje = e.mensaje;
         reintentable = e.mensaje == TextosAgente.sinConexion;
       } on TimeoutException {
-        unawaited(agente.terminar());
-        mensaje = TextosAgente.sinConexion;
+        // Solo si este intento sigue siendo el de ahora: si mientras conectaba se ha abierto otra sesión (otro perfil,
+        // «Empezar de nuevo»…), el agente es el mismo y terminar() cortaría la nueva.
+        if (_vigente(generacion)) unawaited(agente.terminar());
       } catch (_) {
-        mensaje = TextosAgente.sinConexion;
+        // Cualquier otro fallo al conectar cuenta como «no conecta».
       }
       if (!_vigente(generacion)) return false;
       if (reintentable && intento == 0) {
@@ -242,66 +307,68 @@ class ChatAgenteNotifier extends ChatNotifier {
         if (!_vigente(generacion)) return false;
         continue;
       }
-      _ponerSesion(fase: FaseAgente.sinConexion, aviso: mensaje);
+      // No conecta: se sigue por escrito (modo texto real) hasta «Probar con voz».
+      _vozCaida = true;
+      _ponerSesion(fase: FaseAgente.sinVoz, saludo: null, aviso: null, conversacionNueva: false);
       return false;
     }
   }
 
   @override
   Future<void> preguntar(String pregunta, List<Mensaje> historial, {required bool vozAutomatica}) async {
-    final conversacion = _conversacion;
-    _ponerSesion(sinRespuesta: false);
-    if (_sesion.value.fase == FaseAgente.ejemplo) return _responderConEjemplo(pregunta, historial);
+    // Por escrito (o con los ejemplos): el chat de siempre.
+    if (!usaVoz) return super.preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
 
-    final agente = _agente;
+    final conversacion = _conversacion;
+    final agente = _agente!;
     // Las variables se leen al abrir la sesión: si han cambiado (se ha quitado «Mi situación» o se ha cambiado el
     // perfil), se empieza otra.
-    if (agente != null &&
-        agente.estado.value != EstadoAgente.desconectado &&
-        !mapEquals(_variablesDeSesion, _variablesActuales())) {
+    if (agente.estado.value != EstadoAgente.desconectado && !mapEquals(_variablesDeSesion, _variablesActuales())) {
       await _cerrarSesion(FaseAgente.preparando);
     }
     final abierta = await abrirSesion();
     if (!_vigenteConversacion(conversacion)) return;
-    if (!abierta || agente == null) {
-      _terminarEspera(
-        MensajeChat.error(
-          nuevoId(),
-          _sesion.value.aviso ?? TextosAgente.sinConexion,
-          pregunta: pregunta,
-          historial: historial,
-        ),
-      );
-      return;
-    }
+    // No conecta (ya se ha pasado a «sin voz») o se ha quitado la voz mientras conectaba: por escrito.
+    if (!abierta || !usaVoz) return super.preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
 
     // En una sesión recién abierta se espera un momento al saludo, para no tomarlo por la respuesta.
     final saludo = _saludo;
     if (_saludoPendiente && saludo != null && !_enviadoEnSesion) {
       await saludo.future.timeout(esperaSaludo, onTimeout: () {});
       if (!_vigenteConversacion(conversacion)) return;
+      if (!usaVoz) return super.preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
     }
 
     final espera = _espera = Completer<MensajeAgente?>();
-    _errorEspera = null;
+    _finEspera = null;
     _enviadoEnSesion = true;
+    state = state.copyWith(esperandoVoz: true);
     agente.enviarTexto(pregunta);
     final respuesta = await _esperarRespuesta(espera);
     if (identical(_espera, espera)) _espera = null;
+    if (!_cerrado && ref.mounted) state = state.copyWith(esperandoVoz: false);
     if (!_vigenteConversacion(conversacion)) return;
 
-    if (respuesta == null) {
-      final conectado = agente.estado.value == EstadoAgente.conectado;
-      final id = nuevoId();
-      final texto = _errorEspera ?? (conectado ? textoSinRespuesta : textoCortado);
-      if (conectado && _errorEspera == null) {
-        _idSinRespuesta = id;
-        _ponerSesion(sinRespuesta: true);
+    if (respuesta != null) {
+      final preparada = prepararRespuestaAgente(respuesta.texto);
+      // Una respuesta sin palabras («...») o la respuesta segura del backend (su modelo de lenguaje ha fallado): esta
+      // pregunta, por escrito. La voz sigue.
+      if (tieneContenido(preparada.texto) && preparada.tipo != TipoTextoAgente.respuestaSegura) {
+        _anadirRespuesta(respuesta.texto, pregunta: pregunta);
+        return;
       }
-      _terminarEspera(MensajeChat.error(id, texto, pregunta: pregunta, historial: historial));
-      return;
+      return super.preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
     }
-    _anadirRespuesta(respuesta.texto, pregunta: pregunta, historial: historial);
+
+    // Sin respuesta. Si se acabó el tiempo o se pidió por escrito, se sigue por escrito hasta «Probar con voz»; si se
+    // cortó o hubo un error, solo esta pregunta.
+    final fin = _finEspera ?? _FinEspera.tiempo;
+    if (fin == _FinEspera.tiempo || fin == _FinEspera.porEscrito) {
+      _vozCaida = true;
+      await _cerrarSesion(FaseAgente.sinVoz);
+      if (!_vigenteConversacion(conversacion)) return;
+    }
+    return super.preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
   }
 
   /// Espera la respuesta. Si se acaba el tiempo mientras el agente habla (el texto suele llegar antes que la voz,
@@ -316,13 +383,21 @@ class ChatAgenteNotifier extends ChatNotifier {
           limite = const Duration(seconds: 10);
           continue;
         }
+        _finEspera ??= _FinEspera.tiempo;
         return null;
       }
     }
   }
 
+  /// «Contestar por escrito» (a los 8 s sin respuesta): deja de esperar al agente y pregunta al modo texto.
+  void contestarPorEscrito() => _completarEspera(null, _FinEspera.porEscrito);
+
   void _alMensaje(MensajeAgente mensaje) {
     if (_cerrado || !mensaje.deAgente) return;
+    // Sin sesión a propósito (por escrito, con la voz caída o en pausa): lo que llegue tarde de la sesión cerrada no se
+    // enseña (ya se ha contestado por escrito).
+    final fase = _sesion.value.fase;
+    if (fase == FaseAgente.texto || fase == FaseAgente.sinVoz || fase == FaseAgente.pausado) return;
     if (mensaje.esCorreccion) {
       _corregir(mensaje);
       return;
@@ -346,17 +421,13 @@ class ChatAgenteNotifier extends ChatNotifier {
 
   void _alError(String texto) {
     if (_cerrado) return;
-    final espera = _espera;
-    if (espera != null && !espera.isCompleted) {
-      _errorEspera = texto;
-      espera.complete(null);
-    }
+    _completarEspera(null, _FinEspera.error);
   }
 
   void _alCambiarEstado() {
     final agente = _agente;
     if (_cerrado || agente == null || agente.estado.value != EstadoAgente.desconectado) return;
-    _completarEspera(null);
+    _completarEspera(null, _FinEspera.corte);
     // Si se ha cerrado sin pedirlo (el agente ha colgado o se ha cortado la red), se vuelve a abrir al preguntar.
     if (_sesion.value.fase == FaseAgente.conectado) {
       _ponerSesion(fase: FaseAgente.sinConexion, aviso: textoCerrado);
@@ -378,13 +449,10 @@ class ChatAgenteNotifier extends ChatNotifier {
   }
 
   /// Añade una respuesta del agente. Con [pregunta], es la respuesta de esa pregunta y termina la espera; sin ella,
-  /// el agente ha hablado por su cuenta (o ha llegado tarde).
-  void _anadirRespuesta(String bruto, {String? pregunta, List<Mensaje> historial = const []}) {
+  /// el agente ha hablado por su cuenta.
+  void _anadirRespuesta(String bruto, {String? pregunta}) {
     final espera = pregunta != null;
-    var mensajes = state.mensajes;
-    var preguntaDeLaRespuesta = pregunta;
-    var historialDeLaRespuesta = historial;
-    MensajeChat? sustituido;
+    final mensajes = state.mensajes;
     if (!espera && mensajes.isEmpty && !state.esperando) {
       // Antes de la primera pregunta no hay conversación que seguir: se lee en la vista inicial, bajo el saludo.
       final texto = prepararRespuestaAgente(bruto).texto;
@@ -392,54 +460,22 @@ class ChatAgenteNotifier extends ChatNotifier {
       if (tieneContenido(texto) && dichos.lastOrNull != texto) _ponerSesion(antesDePreguntar: [...dichos, texto]);
       return;
     }
-    if (!espera) {
-      final ultimo = mensajes.lastOrNull;
-      // Respuesta que llega tarde: ocupa el sitio del aviso de «no responde» si sigue siendo lo último.
-      if (ultimo != null && ultimo.id == _idSinRespuesta && ultimo.esError) {
-        sustituido = ultimo;
-        preguntaDeLaRespuesta = ultimo.preguntaOriginal;
-        historialDeLaRespuesta = ultimo.historialOriginal;
-      }
-    }
-    final mensaje = _mensajeDeRespuesta(bruto, pregunta: preguntaDeLaRespuesta, historial: historialDeLaRespuesta);
-    if (mensaje == null) {
-      // Una respuesta sin palabras («...»): para quien pregunta es como si no hubiera respondido.
-      if (espera) {
-        _terminarEspera(MensajeChat.error(nuevoId(), textoSinRespuesta, pregunta: pregunta, historial: historial));
-      }
-      return;
-    }
-    if (sustituido != null) {
-      _idSinRespuesta = null;
-      _ponerSesion(sinRespuesta: false);
-      mensajes = [for (final m in mensajes) m.id == sustituido.id ? mensaje : m];
-    } else {
-      // Lo mismo que el último mensaje del agente (una plantilla repetida) no se enseña dos veces.
-      final ultimo = mensajes.lastOrNull;
-      if (!espera && ultimo != null && !ultimo.esUsuario && ultimo.texto == mensaje.texto) return;
-      mensajes = [...mensajes, mensaje];
-    }
-    state = state.copyWith(mensajes: mensajes, esperando: espera ? false : null);
-  }
-
-  MensajeChat? _mensajeDeRespuesta(String bruto, {String? pregunta, List<Mensaje> historial = const []}) {
-    final respuesta = prepararRespuestaAgente(bruto);
-    if (!tieneContenido(respuesta.texto)) return null;
-    var tipo = respuesta.tipo;
-    // Red de seguridad (sección 10.2): si la pregunta suena a peligro, la tarjeta de ayuda sale siempre.
-    if (pregunta != null && tipo != TipoTextoAgente.respuestaSegura && pareceCrisis(pregunta)) {
-      tipo = TipoTextoAgente.crisis;
-    }
-    final id = nuevoId();
-    if (tipo == TipoTextoAgente.respuestaSegura && pregunta != null) {
-      return MensajeChat.error(id, respuesta.texto, pregunta: pregunta, historial: historial);
-    }
-    _originales[id] = bruto;
-    return MensajeChat.asistente(
-      id,
-      AskResponse(tipo: _tipoRespuesta(tipo), respuesta: respuesta.texto, terminos: _terminosEn(respuesta.texto)),
-      telefonos: respuesta.telefonos,
+    final preparada = prepararRespuestaAgente(bruto);
+    if (!tieneContenido(preparada.texto)) return;
+    // Lo mismo que el último mensaje del agente (una plantilla repetida) no se enseña dos veces.
+    final ultimo = mensajes.lastOrNull;
+    if (!espera && ultimo != null && !ultimo.esUsuario && ultimo.texto == preparada.texto) return;
+    final mensaje = mensajeAsistente(
+      AskResponse(
+        tipo: _tipoRespuesta(preparada.tipo),
+        respuesta: preparada.texto,
+        terminos: _terminosEn(preparada.texto),
+      ),
+      pregunta: pregunta,
+      telefonos: preparada.telefonos,
     );
+    _originales[mensaje.id] = bruto;
+    state = state.copyWith(mensajes: [...mensajes, mensaje], esperando: espera ? false : null);
   }
 
   /// El agente se ha interrumpido (se ha enviado otra pregunta mientras hablaba): el mensaje se queda con lo que llegó
@@ -456,76 +492,43 @@ class ChatAgenteNotifier extends ChatNotifier {
       if (bruto == null || respuesta == null || comparable(quitarEtiquetas(bruto)) != buscado) continue;
       var texto = prepararRespuestaAgente(correccion.texto).texto;
       if (!RegExp(r'[.!?…]$').hasMatch(texto)) texto = '$texto…';
+      final telefonos = telefonosDeRespuesta(texto);
       final corregido = MensajeChat.asistente(
         mensaje.id,
-        AskResponse(tipo: respuesta.tipo, respuesta: texto, terminos: _terminosEn(texto)),
-        telefonos: telefonosEn(texto),
+        respuesta.copyWith(respuesta: texto, terminos: _terminosEn(texto)),
+        telefonos: [...telefonos, if (mensaje.ayudaImagenes && !telefonos.contains('017')) '017'],
         ejemplo: mensaje.ejemplo,
+        ayudaImagenes: mensaje.ayudaImagenes,
       );
       state = state.copyWith(mensajes: [...mensajes]..[i] = corregido);
       return;
     }
   }
 
-  Future<void> _responderConEjemplo(String pregunta, List<Mensaje> historial) async {
-    final conversacion = _conversacion;
-    final situacion = state.situacion;
-    MensajeChat mensaje;
-    try {
-      var respuesta = await ref
-          .read(respuestasEjemploProvider)
-          .ask(
-            AskRequest(
-              pregunta: pregunta,
-              modo: situacion == null ? ModoPregunta.libre : ModoPregunta.situacion,
-              situacion: situacion,
-              historial: historial,
-            ),
-          );
-      // La misma red de seguridad que con el agente (sección 10.2, como en _mensajeDeRespuesta): si la pregunta suena a
-      // peligro, la tarjeta de ayuda sale siempre, diga lo que diga el ejemplo.
-      if (respuesta.tipo != TipoRespuesta.crisis && pareceCrisis(pregunta)) {
-        respuesta = AskResponse(
-          tipo: TipoRespuesta.crisis,
-          respuesta: MockTuTurnoApi.plantillas[TipoRespuesta.crisis]!,
-          latenciaMs: respuesta.latenciaMs,
-        );
-      }
-      mensaje = MensajeChat.asistente(nuevoId(), respuesta, ejemplo: true);
-    } catch (_) {
-      mensaje = MensajeChat.error(nuevoId(), ApiException.mensajeSeguro, pregunta: pregunta, historial: historial);
+  @override
+  Future<void> alPasarAEjemplos() => _cerrarSesion(FaseAgente.texto);
+
+  @override
+  void volverATuTurno() {
+    super.volverATuTurno();
+    _vozCaida = false;
+    _actualizarModo();
+  }
+
+  /// «Probar con voz»: la voz no respondía; se intenta otra vez la sesión.
+  Future<bool> probarConVoz() {
+    if (_cerrado) return Future.value(false);
+    _vozCaida = false;
+    if (!usaVoz) {
+      _actualizarModo();
+      return Future.value(false);
     }
-    if (!_vigenteConversacion(conversacion)) return;
-    _terminarEspera(mensaje);
-  }
-
-  /// «Ver una respuesta de ejemplo»: el agente no responde, así que a partir de ahora se contesta con ejemplos
-  /// (marcados como ejemplo). La pregunta que se quedó sin respuesta se contesta ya.
-  Future<void> usarEjemplos() async {
-    if (_cerrado || state.esperando) return;
-    await _cerrarSesion(FaseAgente.ejemplo);
-    _ponerSesion(sinRespuesta: false, aviso: null);
-    final ultimo = state.mensajes.lastOrNull;
-    final pregunta = ultimo?.preguntaOriginal;
-    if (ultimo == null || !ultimo.esError || pregunta == null) return;
-    _idSinRespuesta = null;
-    state = state.copyWith(
-      mensajes: [
-        for (final m in state.mensajes)
-          if (m.id != ultimo.id) m,
-      ],
-      esperando: true,
-    );
-    await _responderConEjemplo(pregunta, ultimo.historialOriginal);
-  }
-
-  /// Deja los ejemplos y vuelve a conectar con el agente.
-  Future<bool> volverAlAgente() {
-    if (_sesion.value.fase == FaseAgente.ejemplo) _ponerSesion(fase: FaseAgente.preparando);
+    _ponerSesion(fase: FaseAgente.preparando, aviso: null);
     return abrirSesion();
   }
 
   /// La app pasa a segundo plano: se cierra la sesión (el agente se calla). Se vuelve a abrir al preguntar.
+  @override
   void pausar() {
     final fase = _sesion.value.fase;
     // Solo si hay sesión (o se está abriendo). onHide y onPause llegan seguidos: la segunda vez ya está en pausa.
@@ -534,9 +537,9 @@ class ChatAgenteNotifier extends ChatNotifier {
   }
 
   /// Ha cambiado el perfil (edad, proceso, papel o momento): las variables solo se leen al abrir la sesión.
+  @override
   Future<void> cambiarPerfil() async {
-    final fase = _sesion.value.fase;
-    if (_cerrado || fase == FaseAgente.ejemplo || fase == FaseAgente.preparando || state.esperando) return;
+    if (_cerrado || !_empezado || state.esperando || !usaVoz) return;
     await _cerrarSesion(FaseAgente.preparando);
     await abrirSesion();
   }
@@ -552,21 +555,24 @@ class ChatAgenteNotifier extends ChatNotifier {
   void borrar() {
     super.borrar();
     _conversacion++;
-    _completarEspera(null);
+    _completarEspera(null, _FinEspera.corte);
     _originales.clear();
-    _idSinRespuesta = null;
-    state = state.copyWith(agenteHablando: _agente?.hablando.value ?? false);
-    _ponerSesion(sinRespuesta: false, antesDePreguntar: const []);
+    state = state.copyWith(
+      agenteHablando: _agente?.hablando.value ?? false,
+      conectandoVoz: _sesion.value.fase == FaseAgente.conectando,
+    );
+    _ponerSesion(antesDePreguntar: const []);
     final fase = _sesion.value.fase;
-    if (fase == FaseAgente.ejemplo || fase == FaseAgente.preparando) return;
+    if (!usaVoz || !_empezado || fase == FaseAgente.preparando) return;
     // Conversación nueva de verdad: otra sesión, que no recuerda la anterior.
     unawaited(_cerrarSesion(FaseAgente.preparando).then((_) => abrirSesion()));
   }
 
   @override
   Future<void> empezarEscucha() async {
-    // Nunca se escucha mientras suena el agente: se transcribiría su voz. La sesión sigue abierta: no usa el micrófono.
-    if (state.agenteHablando || state.esperando || state.escuchando) return;
+    // Nunca se escucha mientras suena el agente (se transcribiría su voz) ni mientras conecta (el saludo cortaría el
+    // dictado). La sesión no usa el micrófono.
+    if (state.agenteHablando || state.conectandoVoz || state.esperando || state.escuchando) return;
     await super.empezarEscucha();
   }
 
@@ -587,7 +593,7 @@ class ChatAgenteNotifier extends ChatNotifier {
     _generacion++;
     _abriendo = null;
     _saludoPendiente = false;
-    _ponerSesion(fase: fase, saludo: null, conversacionNueva: false);
+    _ponerSesion(fase: fase, saludo: null, aviso: null, conversacionNueva: false);
     await _agente?.terminar();
   }
 
@@ -611,14 +617,11 @@ class ChatAgenteNotifier extends ChatNotifier {
     TipoTextoAgente.normal || TipoTextoAgente.respuestaSegura => TipoRespuesta.normal,
   };
 
-  void _terminarEspera(MensajeChat mensaje) {
-    if (_cerrado) return;
-    state = state.copyWith(mensajes: [...state.mensajes, mensaje], esperando: false);
-  }
-
-  void _completarEspera(MensajeAgente? mensaje) {
+  void _completarEspera(MensajeAgente? mensaje, _FinEspera fin) {
     final espera = _espera;
-    if (espera != null && !espera.isCompleted) espera.complete(mensaje);
+    if (espera == null || espera.isCompleted) return;
+    _finEspera ??= fin;
+    espera.complete(mensaje);
   }
 
   bool _vigente(int generacion) => !_cerrado && generacion == _generacion;
@@ -630,7 +633,6 @@ class ChatAgenteNotifier extends ChatNotifier {
     Object? saludo = _sinCambio,
     List<String>? antesDePreguntar,
     Object? aviso = _sinCambio,
-    bool? sinRespuesta,
     bool? conversacionNueva,
   }) {
     if (_cerrado) return;
@@ -639,9 +641,11 @@ class ChatAgenteNotifier extends ChatNotifier {
       saludo: identical(saludo, _sinCambio) ? null : () => saludo as String?,
       antesDePreguntar: antesDePreguntar,
       aviso: identical(aviso, _sinCambio) ? null : () => aviso as String?,
-      sinRespuesta: sinRespuesta,
       conversacionNueva: conversacionNueva,
     );
+    // El micrófono espera mientras conecta.
+    final conectando = _sesion.value.fase == FaseAgente.conectando;
+    if (ref.mounted && state.conectandoVoz != conectando) state = state.copyWith(conectandoVoz: conectando);
   }
 }
 

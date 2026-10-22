@@ -3,11 +3,29 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/core/api/tuturno_api.dart';
+import 'package:tuturno/core/demo.dart';
 import 'package:tuturno/core/providers.dart';
 import 'package:tuturno/core/voz/stt.dart';
 import 'package:tuturno/features/pregunta/chat_controller.dart';
+import 'package:tuturno/features/pregunta/ejemplos.dart';
 
 import 'fakes.dart';
+
+/// API que siempre contesta lo mismo.
+class _ApiFija implements TuTurnoApi {
+  const _ApiFija(this.respuesta);
+
+  final AskResponse respuesta;
+
+  @override
+  Future<AskResponse> ask(AskRequest request) async => respuesta;
+
+  @override
+  Future<GradeResponse> grade(GradeRequest request) => throw UnimplementedError();
+
+  @override
+  Future<HealthResponse> health() => throw UnimplementedError();
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,10 +42,18 @@ void main() {
     tts = FakeTts(registro: registro);
   });
 
-  Future<ProviderContainer> contenedor({bool vozActivada = true, RolProceso? situacion}) async {
+  Future<ProviderContainer> contenedor({
+    bool vozActivada = true,
+    RolProceso? situacion,
+    bool usarEjemplo = false,
+  }) async {
     final c = ProviderContainer.test(
-      overrides: await overridesDePrueba(api: api, stt: stt, tts: tts, vozActivada: vozActivada),
+      overrides: [
+        ...await overridesDePrueba(api: api, stt: stt, tts: tts, vozActivada: vozActivada),
+        respuestasEjemploProvider.overrideWithValue(RespuestasDeEjemplo.desdeJson(ejemplosPreguntaJson())),
+      ],
     );
+    if (usarEjemplo) c.read(usarEjemploPreguntaProvider.notifier).cambiar(true);
     // El chat se borra si nadie lo escucha: se mantiene vivo durante el test.
     c.listen(chatProvider(situacion), (_, _) {});
     return c;
@@ -137,6 +163,139 @@ void main() {
       // Las plantillas del asistente sí van, para no perder el hilo.
       expect(historial.where((m) => m.autor == Autor.asistente), isNotEmpty);
       expect(historial.map((m) => m.texto).join(' '), isNot(contains('miedo de volver')));
+    });
+  });
+
+  group('modo texto real (POST /api/agent/ask)', () {
+    test('la petición lleva el perfil de la hoja (las variables de la sesión de voz)', () async {
+      final c = await contenedor(situacion: RolProceso.testigo);
+      await chat(c, RolProceso.testigo).enviar('¿Qué pasa después de declarar?');
+
+      final peticion = api.peticiones.single;
+      expect(peticion.perfil, {'edad': '13', 'procedimiento': 'penal', 'rol': 'victima', 'fase': 'durante'});
+      expect(peticion.situacion, RolProceso.testigo);
+      expect(peticion.toJson()['perfil'], peticion.perfil);
+    });
+
+    test('los teléfonos de la respuesta, en orden, para enseñarlos como botones', () async {
+      final c = await contenedor();
+      await chat(c).enviar('Me pegaron en el recreo');
+      expect(estado(c).mensajes.last.telefonos, ['900 20 20 10']);
+    });
+
+    test('una referencia a una fuente ([A-017], [ML-INCIBE-017]) no es el teléfono 017', () async {
+      final c = await contenedor();
+      await chat(c).enviar('Si tengo 13 años y hago algo malo, ¿me pueden juzgar?');
+      expect(estado(c).mensajes.last.respuesta!.respuesta, contains('[A-017]'));
+      expect(estado(c).mensajes.last.telefonos, isEmpty);
+      expect(telefonosDeRespuesta('Te ayudan de 8:00 a 23:00 [ML-INCIBE-017]. Llama al 017.'), ['017']);
+      expect(telefonosDeRespuesta('Lo dice la ley [A-017, ML-CE-24.2].'), isEmpty);
+    });
+
+    test(
+      'red de seguridad: si la pregunta suena a peligro, sale como crisis aunque el backend diga otra cosa',
+      () async {
+        api = ApiGrabadora(
+          base: const _ApiFija(AskResponse(tipo: TipoRespuesta.normal, respuesta: 'Te lo explico.')),
+        );
+        final c = await contenedor();
+        await chat(c).enviar('A veces pienso que no quiero vivir');
+
+        final respuesta = estado(c).mensajes.last.respuesta!;
+        expect(respuesta.tipo, TipoRespuesta.crisis);
+        expect(respuesta.respuesta, 'Te lo explico.');
+        // Y no se vuelve a enviar en el historial.
+        await chat(c).enviar('¿Qué es la Fiscalía de Menores?');
+        expect(
+          api.peticiones.last.historial.map((m) => m.texto),
+          isNot(contains('A veces pienso que no quiero vivir')),
+        );
+      },
+    );
+
+    test(
+      '«hechos» sobre fotos o vídeos (regla local): además el 017 y el Canal prioritario, con sus fuentes',
+      () async {
+        api = ApiGrabadora(
+          base: const _ApiFija(
+            AskResponse(
+              tipo: TipoRespuesta.hechos,
+              respuesta: 'Gracias por contármelo. En ANAR te escuchan: 900 20 20 10.',
+            ),
+          ),
+        );
+        final c = await contenedor();
+        await chat(c).enviar('Han pasado un vídeo mío por el grupo de clase');
+
+        final m = estado(c).mensajes.last;
+        expect(m.ayudaImagenes, isTrue);
+        expect(m.telefonos, ['900 20 20 10', '017']);
+        expect(m.respuesta!.fuentes.map((f) => f.norma), ['INCIBE · 017', 'AEPD · Canal prioritario']);
+        expect(m.respuesta!.fuentes.map((f) => f.url), everyElement(startsWith('https://')));
+        expect(api.peticiones.single.pregunta, 'Han pasado un vídeo mío por el grupo de clase');
+      },
+    );
+
+    test('«hechos» sin fotos, o una respuesta normal sobre fotos, no añaden nada', () async {
+      api = ApiGrabadora(
+        base: const _ApiFija(AskResponse(tipo: TipoRespuesta.hechos, respuesta: 'Gracias.')),
+      );
+      final c = await contenedor();
+      await chat(c).enviar('El que me insultaba era mi compañero de mesa.');
+      expect(estado(c).mensajes.last.ayudaImagenes, isFalse);
+      expect(estado(c).mensajes.last.telefonos, isEmpty);
+      expect(hablaDeImagenes('¿Qué hago si difunden fotos mías?'), isTrue);
+      expect(hablaDeImagenes('Una IMAGEN mía'), isTrue);
+      expect(hablaDeImagenes('Me han grabado en vídeo'), isTrue);
+      expect(hablaDeImagenes('Me fotografiaron'), isFalse);
+      expect(hablaDeImagenes('¿Qué es la Sala Gesell?'), isFalse);
+    });
+  });
+
+  group('ejemplos (si no responde nadie)', () {
+    test(
+      '«Ver una respuesta de ejemplo» contesta la pregunta del error con un ejemplo marcado; «Volver a TuTurno»',
+      () async {
+        final c = await contenedor();
+        api.errores.add(errorApi);
+        await chat(c).enviar('¿Qué puedo hacer si difunden fotos mías sin permiso?');
+        expect(estado(c).mensajes.last.esError, isTrue);
+
+        await chat(c).usarEjemplos();
+        var s = estado(c);
+        expect(s.ejemplos, isTrue);
+        expect(s.mensajes.where((m) => m.esError), isEmpty);
+        expect(s.mensajes.last.ejemplo, isTrue);
+        expect(s.mensajes.last.respuesta!.fuentes.map((f) => f.id), contains('ML-AEPD-CP'));
+        expect(s.mensajes.last.telefonos, ['017']);
+
+        // Las siguientes también, sin preguntar al backend.
+        await chat(c).enviar('¿Qué es el 017?');
+        expect(api.peticiones, hasLength(1));
+        expect(estado(c).mensajes.last.ejemplo, isTrue);
+
+        // «Nueva» sigue con los ejemplos; «Volver a TuTurno», no.
+        chat(c).borrar();
+        expect(estado(c).ejemplos, isTrue);
+        chat(c).volverATuTurno();
+        await chat(c).enviar('¿Qué es la Sala Gesell?');
+        s = estado(c);
+        expect(api.peticiones, hasLength(2));
+        expect(s.ejemplos, isFalse);
+        expect(s.mensajes.last.ejemplo, isFalse);
+      },
+    );
+
+    test('con «Usar siempre el ejemplo en Pregunta» (modo demo), todo es de ejemplo desde el principio', () async {
+      final c = await contenedor(usarEjemplo: true);
+      expect(estado(c).ejemplos, isTrue);
+      await chat(c).enviar('El que me insultaba era mi compañero de mesa.');
+
+      expect(api.peticiones, isEmpty);
+      final m = estado(c).mensajes.last;
+      expect(m.ejemplo, isTrue);
+      expect(m.tipo, TipoRespuesta.hechos);
+      expect(m.telefonos, ['900 20 20 10']);
     });
   });
 

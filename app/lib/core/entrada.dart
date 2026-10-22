@@ -52,6 +52,17 @@ enum RolEntrada {
   final String explicacion;
 }
 
+/// «Investigado» solo se puede elegir desde los 14 años: la ley penal de menores se aplica de 14 a 17 (LO 5/2000, arts.
+/// 1.1 y 3). Con la edad sin decir, también. La usan los dos formularios que escriben el ticket (la hoja del perfil de
+/// Pregunta y «Tu ticket» de Mi situación), para que no se separen.
+bool puedeSerInvestigado(int? edad) => edad == null || edad >= 14;
+
+/// Los papeles que se pueden elegir con [edad], en su orden de siempre ([puedeSerInvestigado]).
+List<RolEntrada> rolesPara(int? edad) => [
+  for (final rol in RolEntrada.values)
+    if (rol != RolEntrada.investigado || puedeSerInvestigado(edad)) rol,
+];
+
 enum Fase {
   antes('antes', 'Antes', 'Todavía no ha empezado'),
   durante('durante', 'Durante', 'Ya está pasando'),

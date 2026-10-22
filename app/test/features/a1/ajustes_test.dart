@@ -6,8 +6,12 @@ import 'package:tuturno/features/ajustes/ajustes_screen.dart';
 import 'package:tuturno/widgets/iconos/iconos.dart';
 import 'package:tuturno/widgets/marca/marca.dart';
 
+import '../ajustes/ayudas_ajustes.dart' show revelarEquipo;
 import '../pregunta/fakes.dart' show FakeTts;
 import 'helpers.dart';
+
+/// El servidor está en «Para el equipo (demo)», que solo sale tras la pulsación larga en el pie (auditoría P1-6).
+const _servidor = 'Servidor (API_URL)';
 
 void main() {
   group('Ajustes', () {
@@ -56,8 +60,10 @@ void main() {
       await irA(tester, router, '/ajustes');
       final prefs = await SharedPreferences.getInstance();
 
+      expect(find.text(_servidor), findsNothing);
+      await revelarEquipo(tester);
       expect(find.text('sin configurar'), findsOneWidget);
-      await pulsar(tester, find.text('Servidor (solo para la demo)'));
+      await pulsar(tester, find.text(_servidor));
       // Con USE_MOCK se explica que las respuestas son simuladas.
       expect(find.textContaining('las respuestas son simuladas'), findsOneWidget);
 
@@ -106,7 +112,8 @@ void main() {
     testWidgets('«Probar la conexión» dice si el servidor responde', (tester) async {
       final router = await arrancarApp(tester);
       await irA(tester, router, '/ajustes');
-      await pulsar(tester, find.text('Servidor (solo para la demo)'));
+      await revelarEquipo(tester);
+      await pulsar(tester, find.text(_servidor));
 
       await pulsar(tester, find.text('Probar la conexión'));
       expect(find.text('Conectado: el servidor responde (respuestas simuladas).'), findsOneWidget);
@@ -115,7 +122,8 @@ void main() {
     testWidgets('sin mock y sin dirección, «Probar la conexión» explica qué falta', (tester) async {
       final router = await arrancarApp(tester, useMock: false);
       await irA(tester, router, '/ajustes');
-      await pulsar(tester, find.text('Servidor (solo para la demo)'));
+      await revelarEquipo(tester);
+      await pulsar(tester, find.text(_servidor));
 
       await pulsar(tester, find.text('Probar la conexión'));
       expect(find.text(pistaConexion('SIN_API_URL')), findsOneWidget);
@@ -124,7 +132,8 @@ void main() {
     testWidgets('sin mock no sale el aviso de respuestas simuladas', (tester) async {
       final router = await arrancarApp(tester, useMock: false);
       await irA(tester, router, '/ajustes');
-      await pulsar(tester, find.text('Servidor (solo para la demo)'));
+      await revelarEquipo(tester);
+      await pulsar(tester, find.text(_servidor));
       expect(find.textContaining('las respuestas son simuladas'), findsNothing);
     });
 
@@ -142,10 +151,13 @@ void main() {
 
       final segmentos = tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
       expect(segmentos.selected, {1.3});
-      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+      final voz = find.widgetWithText(SwitchListTile, 'Leer las respuestas en voz alta');
+      expect(tester.widget<SwitchListTile>(voz).value, isFalse);
       expect(tester.widget<Slider>(find.byType(Slider)).value, closeTo(0.6, 0.0001));
+      expect(find.text(textoPieAjustes, skipOffstage: false), findsOneWidget);
+      // La dirección puesta a mano se ve en «Para el equipo (demo)».
+      await revelarEquipo(tester);
       expect(find.text('https://otra.dev'), findsOneWidget);
-      expect(find.text('Todo esto se guarda solo en tu móvil.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
@@ -196,9 +208,13 @@ void main() {
       semantica.dispose();
     });
 
-    testWidgets('en depuración, la galería de iconos y de Tut se abre desde Ajustes', (tester) async {
+    testWidgets('tras la pulsación larga en el pie, la galería de iconos y de Tut se abre desde Ajustes', (
+      tester,
+    ) async {
       final router = await arrancarApp(tester);
       await irA(tester, router, '/ajustes');
+      expect(find.text('Ver los iconos y a Tut', skipOffstage: false), findsNothing);
+      await revelarEquipo(tester);
       await pulsar(tester, find.text('Ver los iconos y a Tut'));
       expect(find.byType(GaleriaIconos), findsOneWidget);
       expect(find.text('Iconos de TuTurno'), findsOneWidget);
@@ -207,7 +223,8 @@ void main() {
     testWidgets('el resultado de «Probar la conexión» lleva el icono de acierto o de error', (tester) async {
       final router = await arrancarApp(tester);
       await irA(tester, router, '/ajustes');
-      await pulsar(tester, find.text('Servidor (solo para la demo)'));
+      await revelarEquipo(tester);
+      await pulsar(tester, find.text(_servidor));
       await pulsar(tester, find.text('Probar la conexión'));
       // El del botón «Usar este servidor» es de un color; el del resultado, a dos tintas.
       expect(

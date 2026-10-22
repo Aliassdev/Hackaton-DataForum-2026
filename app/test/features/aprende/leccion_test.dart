@@ -8,9 +8,11 @@ import 'package:tuturno/core/api/tuturno_api.dart';
 import 'package:tuturno/features/aprende/aprende_screen.dart';
 import 'package:tuturno/features/aprende/bkt.dart';
 import 'package:tuturno/features/aprende/curso.dart' show prefijoDilo;
-import 'package:tuturno/features/aprende/leccion_screen.dart' show textoParaLeer, xpAcierto, xpDilo;
+import 'package:tuturno/features/aprende/leccion_screen.dart'
+    show esperaCorreccionDilo, textoParaLeer, xpAcierto, xpDilo;
 import 'package:tuturno/features/aprende/modelos.dart';
 import 'package:tuturno/features/aprende/textos.dart';
+import 'package:tuturno/widgets/justicia/justicia.dart';
 
 import 'ayudantes.dart';
 
@@ -59,6 +61,7 @@ List<String> _enlacesDe(InlineSpan span) {
 
 void main() {
   testWidgets('lección entera: +10 por acierto, +5 en «Dilo», racha, dominio y celebración', (tester) async {
+    final semantica = tester.ensureSemantics();
     final m = await montar(
       tester,
       ruta: '/aprende/leccion/U1-L1',
@@ -76,9 +79,12 @@ void main() {
       await responderYComprobar(tester, e, bien: true);
       expect(find.byKey(const ValueKey('panel-correccion')), findsOneWidget, reason: e.id);
       if (e is EjercicioDilo) {
+        // Sin servidor (API simulada), corregido en el móvil: depende de lo escrito y se avisa de que es aproximada.
         expect(find.text('+$xpDilo XP'), findsOneWidget);
         expect(find.text('Has explicado 2 de 3 ideas'), findsOneWidget);
+        expect(find.text(textoIdeasQueFaltan(1)), findsOneWidget);
         expect(find.text('Tu opinión se tiene en cuenta según tu edad y madurez'), findsOneWidget);
+        expect(find.text(textoDiloAproximada), findsOneWidget);
       } else {
         expect(find.text('+$xpAcierto XP'), findsOneWidget, reason: e.id);
       }
@@ -86,8 +92,10 @@ void main() {
       await _continuar(tester);
     }
 
-    expect(find.text('¡Lección completada!'), findsOneWidget);
-    expect(find.text('+55'), findsOneWidget);
+    expect(find.text(textoLeccionSuperada), findsOneWidget);
+    expect(find.text(textoSelloConseguido), findsOneWidget);
+    expect(find.byType(SelloJusticia), findsOneWidget);
+    expect(find.bySemanticsLabel('Has ganado 55 puntos de experiencia'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('+1'), findsOneWidget, reason: 'la racha ha subido hoy');
     expect(find.text('6/6'), findsOneWidget);
@@ -100,13 +108,13 @@ void main() {
     expect(progreso.leccionesCompletadas, {'U1-L1'});
     expect(Bkt.dominado(progreso.dominio['C-ser-oido']!), isTrue);
     expect(progreso.ultimaPractica['C-ser-oido'], hoy);
-    expect(m.api.notas.single.conceptoId, 'C-ser-oido');
-    expect(m.api.notas.single.texto, respuestaDilo);
+    expect(m.api.notas, isEmpty, reason: 'la API simulada siempre corrige igual: no se le pregunta');
 
     // «Siguiente» abre la lección que se acaba de desbloquear.
     await pulsar(tester, find.byKey(const ValueKey('boton-siguiente')));
     expect(find.text('Fiscalía y Defensor del Pueblo'), findsOneWidget);
     expect(find.text(_identificador(_deLeccion('U1-L2').first)), findsOneWidget);
+    semantica.dispose();
   });
 
   testWidgets('al fallar: respuesta correcta, explicación y fuente; sin puntos y el dominio baja', (tester) async {
@@ -136,9 +144,9 @@ void main() {
     );
   });
 
-  testWidgets('«Dilo»: mientras revisa enseña que está revisando y luego las ideas', (tester) async {
+  testWidgets('«Dilo» con servidor: mientras revisa enseña que está comprobando y luego las ideas', (tester) async {
     final api = ApiDePrueba()..pausa = Completer<void>();
-    final m = await montar(tester, ruta: '/aprende/leccion/U1-L1', api: api);
+    final m = await montar(tester, ruta: '/aprende/leccion/U1-L1', api: api, servidor: true);
     final lista = _deLeccion('U1-L1');
     for (final e in lista.take(5)) {
       await responderYComprobar(tester, e, bien: true);
@@ -147,15 +155,18 @@ void main() {
     await responder(tester, lista.last, bien: true);
     await tester.tap(botonComprobar);
     await tester.pump();
-    expect(find.text('Revisando tu respuesta…'), findsOneWidget);
+    expect(find.text(textoDiloComprobando), findsOneWidget);
     expect(tester.widget<TextField>(campoDilo).readOnly, isTrue);
 
     api.pausa!.complete();
     await tester.pumpAndSettle();
-    // 2 de 3 ideas: suma puntos, pero aún falta una. La que falta va aparte, destacada.
+    expect(m.api.notas.single.conceptoId, 'C-ser-oido');
+    expect(m.api.notas.single.texto, respuestaDilo);
+    // 2 de 3 ideas: suma puntos, pero aún falta una. La que falta va aparte, destacada (y sin veredictos).
     expect(find.text('¡Ya casi!'), findsOneWidget);
-    expect(find.text(textoDiloTeFalta), findsOneWidget);
+    expect(find.text(textoIdeasQueFaltan(1)), findsOneWidget);
     expect(find.text('Tu opinión se tiene en cuenta según tu edad y madurez'), findsOneWidget);
+    expect(find.text(textoDiloAproximada), findsNothing, reason: 'la ha corregido el servidor');
     // El comentario del evaluador solo repetía el «¡Muy bien!» y la idea que falta: no se enseña dos veces.
     expect(find.text(MockGrade.feedback), findsNothing);
     expect(find.text('¡Muy bien!'), findsNothing);
@@ -163,14 +174,17 @@ void main() {
     // La corrección también se puede escuchar: las ideas explicadas y las que faltan, sin repetir nada.
     await pulsar(tester, find.byKey(const ValueKey('boton-escuchar-correccion')));
     expect(m.tts.leidos.last, startsWith('¡Ya casi! Has explicado: '));
-    expect(m.tts.leidos.last, contains('Te falta: Tu opinión se tiene en cuenta según tu edad y madurez.'));
+    expect(
+      m.tts.leidos.last,
+      contains('${textoIdeasQueFaltan(1)}: Tu opinión se tiene en cuenta según tu edad y madurez.'),
+    );
     expect(m.tts.leidos.last, isNot(contains('¡Muy bien!')));
   });
 
   testWidgets('mientras revisa «Dilo», el botón no parece apagado y el lector de pantalla lo anuncia', (tester) async {
     final semantica = tester.ensureSemantics();
     final api = ApiDePrueba()..pausa = Completer<void>();
-    await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true, api: api);
+    await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true, api: api, servidor: true);
     await responder(tester, _deLeccion('U1-L1').last, bien: true);
     await tester.tap(botonComprobar);
     await tester.pump();
@@ -180,66 +194,131 @@ void main() {
     expect(boton.onPressed, isNull);
     expect(boton.style?.backgroundColor?.resolve({WidgetState.disabled}), esquema.primary);
     expect(boton.style?.foregroundColor?.resolve({WidgetState.disabled}), esquema.onPrimary);
-    expect(find.bySemanticsLabel('Revisando tu respuesta'), findsOneWidget);
+    expect(find.bySemanticsLabel('Comprobando tus ideas clave'), findsOneWidget);
 
     api.pausa!.complete();
     await tester.pumpAndSettle();
     semantica.dispose();
   });
 
-  testWidgets('«Dilo» sin conexión: lo explica sin mandar a Ayuda, enseña las ideas clave y deja seguir sin puntos', (
-    tester,
-  ) async {
+  testWidgets('«Dilo» sin conexión: corrige en el móvil, lo dice y no manda a Ayuda', (tester) async {
     const error = ApiException('LLM_NO_DISPONIBLE', ApiException.mensajeSeguro);
     final m = await montar(
       tester,
       ruta: '/aprende/leccion/U1-L1',
       api: ApiDePrueba(error: error),
+      servidor: true,
     );
     final lista = _deLeccion('U1-L1');
     for (final e in lista.take(5)) {
       await responderYComprobar(tester, e, bien: true);
       await _continuar(tester);
     }
-    final dominioAntes = m.progreso.dominio['C-ser-oido'];
+    final dominioAntes = m.progreso.dominio['C-ser-oido']!;
     await responderYComprobar(tester, lista.last, bien: true);
-    expect(find.text(textoDiloSinRevisar), findsOneWidget);
-    // Un fallo técnico no manda a Ayuda (los teléfonos son para pedir ayuda) ni dice dos veces «No he podido».
+    expect(m.api.notas, hasLength(1), reason: 'primero se intenta con el servidor');
+    // Un fallo técnico no manda a Ayuda (los teléfonos son para pedir ayuda): se corrige igual, en el móvil.
     expect(find.text(error.mensaje), findsNothing);
-    expect(find.text(textoDiloSinConexion), findsOneWidget);
-    expect(find.text(textoVolverAIntentar), findsOneWidget);
-    expect(find.text(textoDiloIdeasClave), findsOneWidget);
-    for (final idea in (lista.last as EjercicioDilo).proposiciones) {
-      expect(find.text(idea), findsOneWidget);
-    }
-    expect(m.progreso.dominio['C-ser-oido'], dominioAntes, reason: 'sin corrección no cambia el dominio');
+    expect(find.text(textoDiloAproximada), findsOneWidget);
+    expect(find.text('Has explicado 2 de 3 ideas'), findsOneWidget);
+    expect(find.text('Tu opinión se tiene en cuenta según tu edad y madurez'), findsOneWidget);
+    expect(find.text('+$xpDilo XP'), findsOneWidget);
+    expect(m.progreso.dominio['C-ser-oido'], greaterThan(dominioAntes), reason: 'llega a la mitad: suma');
 
     await pulsar(tester, find.text('Terminar'));
-    expect(find.text('¡Lección completada!'), findsOneWidget);
-    expect(m.progreso.xp, 5 * xpAcierto);
+    expect(find.text(textoLeccionSuperada), findsOneWidget);
+    expect(m.progreso.xp, 5 * xpAcierto + xpDilo);
     expect(m.progreso.leccionesCompletadas, contains('U1-L1'));
   });
 
-  testWidgets('«Dilo» sin conexión: «Volver a intentarlo» envía el mismo texto y, si ya hay red, corrige', (
-    tester,
-  ) async {
-    final api = ApiDePrueba(error: const ApiException('HTTP_502', ApiException.mensajeSeguro));
-    final m = await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true, api: api);
-    final dilo = _deLeccion('U1-L1').last as EjercicioDilo;
-    await responderYComprobar(tester, dilo, bien: true);
-    expect(find.text(textoDiloSinRevisar), findsOneWidget);
-    expect(m.progreso.xp, 0);
+  testWidgets('«Dilo» sin conexión y sin ideas clave: las enseña, sin puntos y sin bajar el dominio', (tester) async {
+    final m = await montar(
+      tester,
+      ruta: '/aprende/leccion/${prefijoDilo}U1-L1',
+      demo: true,
+      api: ApiDePrueba(error: const ApiException('SIN_CONEXION', ApiException.mensajeSeguro)),
+      servidor: true,
+    );
+    await responderYComprobar(tester, _deLeccion('U1-L1').last, bien: false);
+    expect(find.text('Mira las ideas clave'), findsOneWidget);
+    expect(find.text('Has explicado 0 de 3 ideas'), findsOneWidget);
+    expect(find.text(textoIdeasQueFaltan(3)), findsOneWidget);
+    expect(find.text(textoDiloAproximada), findsOneWidget);
+    expect(find.textContaining('XP'), findsNothing);
+    expect(m.progreso.dominio['C-ser-oido'], isNull, reason: 'una corrección aproximada nunca resta');
+  });
 
-    api.error = null;
-    await pulsar(tester, find.text(textoVolverAIntentar));
-    expect(api.notas, hasLength(2));
-    expect(api.notas.last.texto, respuestaDilo);
+  testWidgets('«Dilo» con un servidor que no conoce el ejercicio (404): corrige en el móvil', (tester) async {
+    final m = await montar(
+      tester,
+      ruta: '/aprende/leccion/${prefijoDilo}U1-L1',
+      demo: true,
+      api: ApiDePrueba(error: const ApiException('CONCEPTO_DESCONOCIDO', 'No he podido corregir este ejercicio.')),
+      servidor: true,
+    );
+    await responderYComprobar(tester, _deLeccion('U1-L1').last, bien: true);
+    expect(m.api.notas, hasLength(1));
+    expect(find.text('No he podido corregir este ejercicio.'), findsNothing);
+    expect(find.text(textoDiloAproximada), findsOneWidget);
     expect(find.text('Has explicado 2 de 3 ideas'), findsOneWidget);
-    expect(find.text('+$xpDilo XP'), findsOneWidget);
-    expect(find.text(textoVolverAIntentar), findsNothing);
+  });
 
+  testWidgets('«Dilo» con un servidor que tarda demasiado: a los 10 s corrige en el móvil', (tester) async {
+    final api = ApiDePrueba()..pausa = Completer<void>();
+    final m = await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true, api: api, servidor: true);
+    await responder(tester, _deLeccion('U1-L1').last, bien: true);
+    await tester.tap(botonComprobar);
+    await tester.pump();
+    expect(find.text(textoDiloComprobando), findsOneWidget);
+    await tester.pump(esperaCorreccionDilo + const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+    expect(find.text(textoDiloAproximada), findsOneWidget);
+    expect(find.text('Has explicado 2 de 3 ideas'), findsOneWidget);
+
+    // Si la respuesta llega tarde, ya no cambia nada.
+    api.pausa!.complete();
+    await tester.pumpAndSettle();
+    expect(find.text(textoDiloAproximada), findsOneWidget);
     await pulsar(tester, find.text('Terminar'));
     expect(m.progreso.xp, xpDilo, reason: 'los puntos de «Dilo», una sola vez');
+  });
+
+  testWidgets('«Dilo» con la API simulada (USE_MOCK): no le pregunta y la nota depende de lo escrito', (tester) async {
+    final m = await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true);
+    final dilo = _deLeccion('U1-L1').last as EjercicioDilo;
+    await tester.enterText(campoDilo, 'Tienes derecho a que te escuchen en lo que te afecta');
+    await tester.pumpAndSettle();
+    await pulsar(tester, botonComprobar);
+    expect(m.api.notas, isEmpty);
+    expect(find.text(textoDiloAproximada), findsOneWidget);
+    expect(find.text('Has explicado 1 de 3 ideas'), findsOneWidget);
+    expect(find.text(textoIdeasQueFaltan(2)), findsOneWidget);
+    for (final idea in dilo.proposiciones.skip(1)) {
+      expect(find.text(idea), findsOneWidget);
+    }
+  });
+
+  testWidgets('«Dilo»: si el servidor ve peligro (tipo crisis), enseña los teléfonos sin puntos ni dominio', (
+    tester,
+  ) async {
+    final api = ApiDePrueba(
+      respuesta: const GradeResponse(
+        puntuacion: 0,
+        cubiertas: [],
+        faltan: [],
+        feedback: 'Siento que estés pasando por esto. No estás solo ni sola. Llama al 900 20 20 10.',
+      ),
+    );
+    final m = await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true, api: api, servidor: true);
+    await tester.enterText(campoDilo, 'Últimamente en casa lo paso muy mal y no sé a quién decírselo');
+    await tester.pumpAndSettle();
+    await pulsar(tester, botonComprobar);
+    expect(api.notas, hasLength(1));
+    expect(find.text(textoAyudaDiloTitulo), findsOneWidget);
+    expect(find.byKey(const ValueKey('tarjeta-crisis-dilo')), findsOneWidget);
+    expect(find.textContaining('XP'), findsNothing);
+    expect(find.textContaining('Has explicado'), findsNothing);
+    expect(m.progreso.dominio['C-ser-oido'], isNull);
   });
 
   group('«Dilo» con algo que suena a peligro (sección 10.2)', () {
@@ -266,7 +345,7 @@ void main() {
         await pulsar(tester, find.byKey(const ValueKey('boton-escuchar-correccion')));
         expect(m.tts.leidos.last, textoAyudaDiloVoz);
         await pulsar(tester, find.text('Terminar'));
-        expect(find.text('¡Lección completada!'), findsOneWidget);
+        expect(find.text(textoLeccionSuperada), findsOneWidget);
         expect(m.progreso.xp, 0);
       });
     }
@@ -408,7 +487,7 @@ void main() {
       await responderYComprobar(tester, dilo, bien: true);
       expect(find.text('Has explicado 2 de 3 ideas'), findsOneWidget);
       await pulsar(tester, find.text('Terminar'));
-      expect(find.text('¡Lección completada!'), findsOneWidget);
+      expect(find.text(textoLeccionSuperada), findsOneWidget);
       expect(m.progreso.xp, xpDilo);
     });
 
@@ -490,7 +569,7 @@ void main() {
     });
 
     testWidgets('mientras se dicta no se puede comprobar: se corrige el texto final', (tester) async {
-      final m = await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true);
+      final m = await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true, servidor: true);
       await tester.tap(find.byKey(const ValueKey('micro-dilo')));
       await tester.pump();
       m.stt.oir('que el juez me tiene que escuchar');
@@ -531,7 +610,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 40));
       await tester.tapAt(centro);
       await tester.pumpAndSettle();
-      expect(find.text('¡Lección completada!'), findsOneWidget);
+      expect(find.text(textoLeccionSuperada), findsOneWidget);
       expect(m.progreso.xp, xpDilo);
     });
   });
@@ -553,7 +632,8 @@ void main() {
         await _continuar(tester);
       }
       expect(vistos, hasLength(6));
-      expect(find.text('¡Práctica terminada!'), findsOneWidget);
+      expect(find.text(textoRepasoHecho), findsOneWidget);
+      expect(tester.widget<SelloJusticia>(find.byType(SelloJusticia)).tipo, TipoSello.practica);
       expect(m.progreso.leccionesCompletadas, isEmpty);
       expect(m.progreso.racha, 0);
       expect(m.progreso.xp, greaterThan(0));
@@ -600,11 +680,32 @@ void main() {
         await _continuar(tester);
         expect(tester.takeException(), isNull, reason: '$leccion ${e.id}');
       }
-      expect(find.text('¡Lección completada!'), findsOneWidget);
+      expect(find.text(textoLeccionSuperada), findsOneWidget);
       await tester.drag(find.byType(Scrollable).first, const Offset(0, -3000));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: '$leccion celebración');
     }
+  });
+
+  testWidgets('Tut da la corrección: contento si aciertas, animándote si no (nunca triste)', (tester) async {
+    await montar(tester, ruta: '/aprende/leccion/U1-L1');
+    final lista = _deLeccion('U1-L1');
+    await responderYComprobar(tester, lista.first, bien: true);
+    expect(find.byKey(const ValueKey('tut-feliz')), findsOneWidget);
+    await _continuar(tester);
+    await responderYComprobar(tester, lista[1], bien: false);
+    expect(find.byKey(const ValueKey('tut-animo')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tut-triste')), findsNothing);
+  });
+
+  testWidgets('«Dilo con tus palabras» lleva «Tu turno de palabra» y una ayuda tranquila', (tester) async {
+    await montar(tester, ruta: '/aprende/leccion/${prefijoDilo}U1-L1', demo: true);
+    final aviso = tester.widget<AvisoTurnoPalabra>(find.byType(AvisoTurnoPalabra));
+    expect(aviso.activo, isTrue);
+    expect(find.text('Tu turno de palabra'), findsOneWidget);
+    expect(find.text(textoDiloAyuda), findsOneWidget);
+    expect(find.text(textoDiloComprueba), findsOneWidget);
+    expect(find.textContaining('IA'), findsNothing);
   });
 
   testWidgets('accesible: zonas táctiles, etiquetas y contraste en claro y en oscuro', (tester) async {

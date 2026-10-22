@@ -3,12 +3,15 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../modelos.dart';
+import '../textos.dart';
 import 'comunes.dart';
 
 /// Ordena los pasos: se arrastran (desde el asa o manteniendo pulsada la tarjeta) o se mueven con las flechas,
-/// que son la alternativa accesible. Empieza siempre desordenado.
+/// que son la alternativa accesible. Empieza siempre desordenado y, hasta que se mueve algo, explica por qué
+/// «Comprobar» no se puede pulsar todavía.
 class VistaOrdenar extends StatefulWidget {
   const VistaOrdenar({super.key, required this.ejercicio, required this.revisado, required this.onRespuesta});
 
@@ -29,10 +32,16 @@ class _VistaOrdenarState extends State<VistaOrdenar> {
     evitarIdentidad: true,
   );
 
+  /// Ya se ha movido alguna tarjeta (hasta entonces no hay respuesta que comprobar).
+  var _movido = false;
+
   void _mover(int desde, int hasta) {
     if (widget.revisado || desde == hasta || hasta < 0 || hasta >= _orden.length) return;
     Hapticos.seleccion();
-    setState(() => _orden.insert(hasta, _orden.removeAt(desde)));
+    setState(() {
+      _orden.insert(hasta, _orden.removeAt(desde));
+      _movido = true;
+    });
     widget.onRespuesta(List.unmodifiable(_orden));
   }
 
@@ -59,6 +68,23 @@ class _VistaOrdenarState extends State<VistaOrdenar> {
               ),
             ),
           ],
+        ),
+        AnimatedSize(
+          duration: duracionTamano(context, Duracion.corta),
+          alignment: Alignment.topCenter,
+          child: !_movido && !widget.revisado
+              ? Padding(
+                  key: const ValueKey('aviso-mueve'),
+                  padding: const EdgeInsets.only(top: Espacio.xs),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      textoMueveUnaTarjeta,
+                      style: tema.textTheme.bodyMedium?.copyWith(color: esquema.primary, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
         ),
         const SizedBox(height: Espacio.m),
         ReorderableListView(
@@ -164,11 +190,15 @@ class _TarjetaPaso extends StatelessWidget {
               margin: EdgeInsets.only(left: revisado ? Espacio.s : 0),
               decoration: BoxDecoration(shape: BoxShape.circle, color: acento ?? esquema.primary),
               child: revisado
-                  ? Icon(
-                      bienColocado ? Icons.check_rounded : Icons.swap_vert_rounded,
-                      size: Espacio.m + Espacio.xs,
-                      color: bienColocado ? context.colores.sobreExito : esquema.onTertiary,
-                    )
+                  ? (bienColocado
+                        ? IconoTuTurno(
+                            TuIcono.check,
+                            estilo: EstiloIcono.mono,
+                            size: Espacio.m + Espacio.xs,
+                            color: context.colores.sobreExito,
+                            decorativo: true,
+                          )
+                        : Icon(Icons.swap_vert_rounded, size: Espacio.m + Espacio.xs, color: esquema.onTertiary))
                   : Text(
                       '$numero',
                       style: tema.textTheme.titleSmall?.copyWith(color: esquema.onPrimary, fontWeight: FontWeight.w700),

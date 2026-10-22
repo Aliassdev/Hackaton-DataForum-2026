@@ -1,5 +1,6 @@
-// Capturas de Ayuda (abierto y cerrado el 017, claro y oscuro, letra grande) y del glosario de ejemplo, con las
-// fuentes reales, para revisar el diseño y los textos y para los PR. No se ejecuta por defecto:
+// Capturas de Ayuda (abierto y cerrado el 017, claro y oscuro, letra grande, «Salir rápido» y «¿No sabes qué
+// decir?») y del glosario de ejemplo (chips de caso, filtro de Sara y el detalle con «Escuchar» y «Mis palabras»), con
+// las fuentes reales, para revisar el diseño y los textos y para los PR. No se ejecuta por defecto:
 //
 //   CAPTURAS=build/capturas-ayuda flutter test test/features/a1/capturas_ayuda_test.dart
 //
@@ -12,8 +13,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/core/content_repo.dart';
 import 'package:tuturno/core/progreso.dart';
+import 'package:tuturno/features/ayuda/ayuda_screen.dart' show tituloNoSabesQueDecir;
+import 'package:tuturno/features/glosario/favoritos.dart';
+import 'package:tuturno/features/juego/juego_providers.dart';
 
 import 'helpers.dart';
+import '../glosario/ayudantes.dart';
 import '../../fuentes_reales.dart';
 
 final _destino = Platform.environment['CAPTURAS'];
@@ -23,7 +28,7 @@ final _mediodia = DateTime.utc(2026, 10, 21, 10);
 final _noche = DateTime.utc(2026, 10, 21, 21, 30);
 
 /// Tan alta que cabe toda la pantalla: una sola imagen por estado.
-const _paginaEntera = Size(390, 2900);
+const _paginaEntera = Size(390, 3300);
 
 /// Las fuentes de la app (Nunito, MaryKate, Atkinson Hyperlegible, Pixelify Sans y los iconos de Material).
 Future<void> _cargarFuentes() => cargarFuentesReales();
@@ -78,14 +83,54 @@ void main() {
     await _capturar(tester, '04-ayuda-letra-grande');
   }, skip: _destino == null);
 
-  testWidgets('glosario de ejemplo: la lista y un término', (tester) async {
+  testWidgets('Ayuda: «¿No sabes qué decir?» abierto, en un móvil', (tester) async {
+    final router = await arrancarApp(tester, overrides: [relojProvider.overrideWithValue(() => _mediodia)]);
+    await irA(tester, router, '/ayuda');
+    await pulsar(tester, find.text(tituloNoSabesQueDecir));
+    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, 300));
+    await _capturar(tester, '07-ayuda-no-sabes-que-decir');
+  }, skip: _destino == null);
+
+  testWidgets('glosario de ejemplo: la lista con los chips de caso, el filtro de Sara y un término', (tester) async {
     final glosario = File('${ContentRepo.raizEjemplos}/glosario.json').readAsStringSync();
-    final lista = await arrancarApp(tester, glosario: glosario, tamano: const Size(390, 2400));
+    final casos = casosDeEjemplo();
+    final conCasos = [casosProvider.overrideWith((ref) async => casos)];
+    final lista = await arrancarApp(
+      tester,
+      glosario: glosario,
+      tamano: const Size(390, 2400),
+      preferencias: {FavoritosNotifier.clave: '["G-canal-prioritario", "G-sala-gesell"]'},
+      overrides: conCasos,
+    );
     await irA(tester, lista, '/glosario');
     await _capturar(tester, '05-glosario-ejemplo');
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Sara'));
+    await _capturar(tester, '08-glosario-sara');
     await tester.pumpWidget(const SizedBox.shrink());
-    final detalle = await arrancarApp(tester, glosario: glosario);
+    final detalle = await arrancarApp(tester, glosario: glosario, overrides: conCasos);
     await irA(tester, detalle, '/glosario?q=prueba preconstituida');
     await _capturar(tester, '06-glosario-termino');
+    await tester.tap(find.text('Guardar en mis palabras'));
+    await _capturar(tester, '09-glosario-termino-guardado');
+  }, skip: _destino == null);
+
+  testWidgets('glosario en oscuro con letra grande: chips y detalle', (tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final glosario = File('${ContentRepo.raizEjemplos}/glosario.json').readAsStringSync();
+    final casos = casosDeEjemplo();
+    final router = await arrancarApp(
+      tester,
+      glosario: glosario,
+      tamano: const Size(360, 740),
+      preferencias: {'ajustes.tamano_texto': 1.3},
+      overrides: [casosProvider.overrideWith((ref) async => casos)],
+    );
+    await irA(tester, router, '/glosario');
+    await _capturar(tester, '10-glosario-oscuro-letra-grande');
+    await tester.tap(find.text('Abogado de oficio'));
+    await _capturar(tester, '11-glosario-termino-oscuro-letra-grande');
   }, skip: _destino == null);
 }

@@ -4,25 +4,45 @@ import 'dart:ui' show PathMetric;
 import 'package:flutter/material.dart';
 
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
+import '../../../widgets/justicia/justicia.dart';
 import '../../../widgets/movimiento/hapticos.dart';
+import '../../../widgets/movimiento/pop_pegatina.dart';
+import '../../../widgets/movimiento/ticket.dart';
 import '../bkt.dart';
 import '../curso.dart';
 import '../modelos.dart';
 import '../textos.dart';
 import 'comunes.dart';
 
-// Mapa de Aprende: cada unidad es un camino de nodos en zigzag unidos por un trazo. Los nodos tienen relieve
-// (se hunden al pulsarlos), la lección que toca lleva un aviso que bota y una lección recién desbloqueada
-// da un pequeño salto cuando vuelves al mapa.
+// Mapa de Aprende: cada unidad es una sala del palacio de justicia de papel (con su cartel «SALA n») y sus lecciones,
+// tickets de turno en zigzag unidos por un trazo. Los tickets tienen relieve (se hunden al pulsarlos), la lección que
+// toca lleva un aviso que bota, las hechas llevan su sello y una lección recién desbloqueada da un pequeño salto
+// cuando vuelves al mapa.
 
 /// Posición horizontal de cada nodo (de -1, izquierda, a 1, derecha), en zigzag.
 const _zigzag = [0.0, 0.55, 0.0, -0.55];
 
-/// Ancho de la columna de cada nodo (nodo y título debajo).
+/// Ancho de la columna de cada nodo (ticket y título debajo).
 const _anchoColumna = 172.0;
-const _diametro = 76.0;
+
+/// El ticket de cada lección: cuerpo con el icono y, a la derecha, el talón con el número.
+const _anchoTicket = 108.0;
+const _altoTicket = 72.0;
+const _talon = 34.0;
 const _relieve = 6.0;
 const _altoTramo = 46.0;
+
+/// Forma del ticket de una lección.
+TicketBorder _formaTicket({Color? talon, Color? perforado, BorderSide lado = BorderSide.none}) => TicketBorder(
+  side: lado,
+  radio: Radios.s + 2,
+  radioMuesca: Espacio.s,
+  talon: _talon,
+  colorTalon: talon,
+  colorPerforado: perforado,
+  perforado: perforado != null,
+);
 
 double alineacionNodo(int i) => _zigzag[i % _zigzag.length];
 
@@ -168,7 +188,8 @@ class _PintorTramo extends CustomPainter {
       anterior.discontinuo != discontinuo;
 }
 
-/// Nodo de una lección: un botón redondo con relieve y el título debajo.
+/// Nodo de una lección: un ticket de turno con relieve (el número en el talón) y el título debajo. Las hechas llevan su
+/// sello; las cerradas, un candado.
 class NodoLeccion extends StatefulWidget {
   const NodoLeccion({
     super.key,
@@ -265,20 +286,44 @@ class _NodoLeccionState extends State<NodoLeccion> with TickerProviderStateMixin
     final colores = context.colores.aprende;
     final estado = widget.estado;
     final bloqueada = estado == EstadoLeccion.bloqueada;
-    final arriba = bloqueada ? esquema.surfaceContainerHighest : null;
     final base = bloqueada ? esquema.outlineVariant : Color.lerp(colores.last, esquema.shadow, 0.35)!;
-    final colorIcono = bloqueada ? esquema.onSurfaceVariant : sobreColor(colores.first);
-    final icono = switch (estado) {
-      EstadoLeccion.completada => Icons.check_rounded,
-      EstadoLeccion.disponible => Icons.play_arrow_rounded,
-      EstadoLeccion.bloqueada => Icons.lock_rounded,
+    // El talón: amarillo de la marca con el número en azul noche (como el ticket del día); apagado si está cerrada.
+    final fondoTalon = bloqueada
+        ? Color.lerp(esquema.surfaceContainerHighest, esquema.onSurfaceVariant, 0.12)!
+        : ColoresMarca.amarillo;
+    final tintaTalon = bloqueada ? esquema.onSurfaceVariant : ColoresMarca.azulNoche;
+    final forma = _formaTicket(
+      talon: fondoTalon,
+      perforado: (bloqueada ? esquema.onSurfaceVariant : ColoresMarca.azulNoche).withValues(alpha: 0.45),
+      lado: widget.actual ? BorderSide(color: esquema.surface, width: 3) : BorderSide.none,
+    );
+    final Widget icono = switch (estado) {
+      // Hecha: su sello, como pegatina para que se vea sobre el azul.
+      EstadoLeccion.completada => const IconoTuTurno(
+        TuIcono.selloConseguido,
+        size: 42,
+        pegatina: true,
+        decorativo: true,
+      ),
+      EstadoLeccion.disponible => Icon(
+        Icons.play_arrow_rounded,
+        size: Espacio.xl + Espacio.s,
+        color: sobreColor(colores.first),
+      ),
+      EstadoLeccion.bloqueada => IconoTuTurno(
+        TuIcono.candado,
+        estilo: EstiloIcono.mono,
+        size: Espacio.xl,
+        color: esquema.onSurfaceVariant,
+        decorativo: true,
+      ),
     };
     final aviso = widget.textoAviso;
     final hundido = _pulsado ? _relieve - 2 : 0.0;
 
     final boton = SizedBox(
-      width: _diametro + Espacio.l,
-      height: _diametro + _relieve + Espacio.l,
+      width: _anchoTicket + Espacio.l,
+      height: _altoTicket + _relieve + Espacio.l,
       child: Stack(
         alignment: Alignment.topCenter,
         clipBehavior: Clip.none,
@@ -292,12 +337,12 @@ class _NodoLeccionState extends State<NodoLeccion> with TickerProviderStateMixin
                 builder: (context, _) {
                   final t = _halo.isAnimating ? Curves.easeOut.transform(_halo.value) : 0.0;
                   return Transform.scale(
-                    scale: 1 + t * 0.3,
+                    scale: 1 + t * 0.22,
                     child: Container(
-                      width: _diametro + Espacio.m,
-                      height: _diametro + Espacio.m,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
+                      width: _anchoTicket + Espacio.m,
+                      height: _altoTicket + Espacio.m,
+                      decoration: ShapeDecoration(
+                        shape: _formaTicket(),
                         color: colores.first.withValues(alpha: _halo.isAnimating ? 0.22 * (1 - t) + 0.06 : 0.16),
                       ),
                     ),
@@ -309,12 +354,12 @@ class _NodoLeccionState extends State<NodoLeccion> with TickerProviderStateMixin
           Positioned(
             top: Espacio.l / 2 + _relieve,
             child: Container(
-              width: _diametro,
-              height: _diametro,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: base),
+              width: _anchoTicket,
+              height: _altoTicket,
+              decoration: ShapeDecoration(shape: _formaTicket(), color: base),
             ),
           ),
-          // Cara del botón.
+          // Cara del ticket.
           AnimatedPositioned(
             duration: duracion(context, const Duration(milliseconds: 90)),
             top: Espacio.l / 2 + hundido,
@@ -326,33 +371,53 @@ class _NodoLeccionState extends State<NodoLeccion> with TickerProviderStateMixin
                 return Transform.scale(scale: escala, child: hijo);
               },
               child: Container(
-                width: _diametro,
-                height: _diametro,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: arriba,
+                width: _anchoTicket,
+                height: _altoTicket,
+                decoration: ShapeDecoration(
+                  shape: forma,
+                  color: bloqueada ? esquema.surfaceContainerHighest : null,
                   gradient: bloqueada
                       ? null
                       : LinearGradient(colors: colores, begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  border: widget.actual ? Border.all(color: esquema.surface, width: 4) : null,
                 ),
+                // La forma solo recorta la onda: el talón y el borde ya los pinta la decoración (si los pintara el
+                // Material, irían por encima del número).
                 child: Material(
                   type: MaterialType.transparency,
-                  shape: const CircleBorder(),
+                  shape: _formaTicket(),
+                  borderOnForeground: false,
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
+                    customBorder: _formaTicket(),
                     onTap: _tocar,
                     onLongPress: widget.onLongPress == null ? null : _mantener,
                     onHighlightChanged: (valor) => setState(() => _pulsado = valor),
-                    child: Center(
-                      child: AnimatedSwitcher(
-                        duration: duracion(context, Duracion.media),
-                        transitionBuilder: (hijo, animacion) => RotationTransition(
-                          turns: Tween(begin: -0.15, end: 0.0).animate(animacion),
-                          child: ScaleTransition(scale: animacion, child: hijo),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: AnimatedSwitcher(
+                              duration: duracion(context, Duracion.media),
+                              transitionBuilder: (hijo, animacion) => RotationTransition(
+                                turns: Tween(begin: -0.15, end: 0.0).animate(animacion),
+                                child: ScaleTransition(scale: animacion, child: hijo),
+                              ),
+                              child: KeyedSubtree(key: ValueKey(estado), child: icono),
+                            ),
+                          ),
                         ),
-                        child: Icon(icono, key: ValueKey(icono), size: Espacio.xl + Espacio.s, color: colorIcono),
-                      ),
+                        SizedBox(
+                          width: _talon,
+                          child: Center(
+                            child: Text(
+                              '${widget.numero}',
+                              maxLines: 1,
+                              textScaler: MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3),
+                              style: estiloCifras(tema.textTheme.titleMedium)?.copyWith(color: tintaTalon, height: 1),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -506,7 +571,9 @@ class _PintorPico extends CustomPainter {
   bool shouldRepaint(_PintorPico anterior) => anterior.relleno != relleno || anterior.borde != borde;
 }
 
-/// Cabecera de una unidad: número, título, lecciones hechas y «Practicar».
+/// Cabecera de una unidad: el cartel de su sala («SALA 1 · Tus derechos»), las lecciones hechas y «Practicar» (solo
+/// cuando ya hay alguna lección hecha: practicar lo que aún no has visto no tiene sentido). Una sala terminada lleva
+/// su sello; una cerrada, un texto amable.
 class BannerUnidad extends StatelessWidget {
   const BannerUnidad({
     super.key,
@@ -527,9 +594,8 @@ class BannerUnidad extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
-    final colores = context.colores.aprende;
     final total = unidad.lecciones.length;
-    final terminada = completadas >= total;
+    final terminada = total > 0 && completadas >= total;
     return Container(
       padding: const EdgeInsets.all(Espacio.l - Espacio.xs),
       decoration: decoracionPapel(context),
@@ -538,51 +604,25 @@ class BannerUnidad extends StatelessWidget {
         children: [
           Row(
             children: [
-              ExcludeSemantics(
-                child: Container(
-                  width: Espacio.xxl,
-                  height: Espacio.xxl,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: colores, begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  ),
-                  child: terminada
-                      ? Icon(Icons.emoji_events_rounded, color: sobreColor(colores.first))
-                      : Text(
-                          '$numero',
-                          style: tema.textTheme.titleLarge?.copyWith(
-                            color: sobreColor(colores.first),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(width: Espacio.m - 4),
               Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Unidad $numero',
-                        style: tema.textTheme.labelLarge?.copyWith(
-                          color: esquema.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        unidad.titulo,
-                        style: tema.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: esquema.onSurface,
-                        ),
-                      ),
-                    ],
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Semantics(
+                    header: true,
+                    child: CartelSala(texto: cartelSala(numero), detalle: unidad.titulo),
                   ),
                 ),
               ),
+              if (terminada) ...[
+                const SizedBox(width: Espacio.s),
+                PopPegatina(
+                  child: IconoTuTurno(
+                    TuIcono.selloConseguido,
+                    size: Espacio.xl + Espacio.s,
+                    semanticLabel: 'Sala terminada',
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: Espacio.m),
@@ -592,7 +632,7 @@ class BannerUnidad extends StatelessWidget {
                 child: BarraProgreso(
                   valor: total == 0 ? 0 : completadas / total,
                   alto: Espacio.s + 2,
-                  etiqueta: 'Lecciones completadas de la unidad $numero',
+                  etiqueta: 'Lecciones completadas de la sala $numero',
                   valorTexto: '$completadas de $total',
                 ),
               ),
@@ -600,13 +640,13 @@ class BannerUnidad extends StatelessWidget {
               ExcludeSemantics(
                 child: Text(
                   '$completadas/$total',
-                  style: tema.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: esquema.onSurface),
+                  style: estiloCifras(tema.textTheme.labelLarge)?.copyWith(color: esquema.onSurface),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: Espacio.m - 4),
-          if (abierta)
+          if (abierta && completadas > 0) ...[
+            const SizedBox(height: Espacio.m - 4),
             Align(
               alignment: AlignmentDirectional.centerStart,
               // Secundario: la acción principal (la lección que toca) es la pegatina amarilla de la cabecera.
@@ -615,27 +655,35 @@ class BannerUnidad extends StatelessWidget {
                 icon: const Icon(Icons.fitness_center_rounded),
                 label: Text(terminada ? 'Repasar' : 'Practicar'),
               ),
-            )
-          else
+            ),
+          ] else if (!abierta) ...[
+            const SizedBox(height: Espacio.m - 4),
             Row(
               children: [
-                Icon(Icons.lock_rounded, size: Espacio.m + 2, color: esquema.onSurfaceVariant),
+                IconoTuTurno(
+                  TuIcono.candado,
+                  estilo: EstiloIcono.mono,
+                  size: Espacio.m + 4,
+                  color: esquema.onSurfaceVariant,
+                  decorativo: true,
+                ),
                 const SizedBox(width: Espacio.s),
                 Expanded(
                   child: Text(
-                    'Se abre al terminar la unidad anterior.',
+                    textoSalaCerrada,
                     style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant),
                   ),
                 ),
               ],
             ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Barras de dominio de los conceptos de una unidad (probabilidad BKT).
+/// Lo que dominas de una unidad: una balanza por concepto (BKT), que se equilibra cuando lo dominas.
 class TarjetaDominio extends StatelessWidget {
   const TarjetaDominio({super.key, required this.conceptos, required this.dominio});
 
@@ -655,7 +703,7 @@ class TarjetaDominio extends StatelessWidget {
         children: [
           Row(
             children: [
-              ExcludeSemantics(child: Icon(Icons.insights_rounded, color: esquema.primary)),
+              const IconoTuTurno(TuIcono.balanza, size: Espacio.l + Espacio.xs, decorativo: true),
               const SizedBox(width: Espacio.s),
               Expanded(
                 child: Semantics(
@@ -668,13 +716,12 @@ class TarjetaDominio extends StatelessWidget {
               ),
               Text(
                 '$dominados de ${conceptos.length}',
-                style: tema.textTheme.labelLarge?.copyWith(
-                  color: esquema.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: estiloCifras(tema.textTheme.labelLarge)?.copyWith(color: esquema.onSurfaceVariant),
               ),
             ],
           ),
+          const SizedBox(height: Espacio.xs),
+          Text(textoBalanza, style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant)),
           const SizedBox(height: Espacio.m),
           for (final c in conceptos) ...[
             BarraDominio(nombre: nombreConcepto(c), p: dominioDe(dominio, c), compacta: true),

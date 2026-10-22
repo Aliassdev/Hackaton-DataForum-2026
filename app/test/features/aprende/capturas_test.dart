@@ -61,6 +61,8 @@ void main() {
     await _capturar(tester, '02-mapa-progreso$sufijo');
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
     await _capturar(tester, '03-mapa-abajo$sufijo');
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
+    await _capturar(tester, '03b-mapa-sala-2$sufijo');
 
     await montar(tester, repo: repoDeEjemplo(glosario: true), brillo: brillo, ruta: '/aprende/leccion/U1-L1');
     final e101 = ejercicios['E-101'] as EjercicioEleccion;
@@ -101,9 +103,13 @@ void main() {
     await _capturar(tester, '10-dilo-ideas$sufijo');
     await tester.tap(botonContinuar);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 650));
+    await tester.pump(const Duration(milliseconds: 420));
+    await _capturar(tester, '11a-celebracion-sello-cayendo$sufijo', esperar: false);
+    await tester.pump(const Duration(milliseconds: 300));
     await _capturar(tester, '11-celebracion-confeti$sufijo', esperar: false);
     await _capturar(tester, '12-celebracion$sufijo');
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+    await _capturar(tester, '12b-celebracion-abajo$sufijo');
 
     await montar(
       tester,
@@ -121,17 +127,20 @@ void main() {
     await responderYComprobar(tester, ejercicios['E-116']!, bien: false);
     await _capturar(tester, '14-ordenar-fallo$sufijo');
 
-    // «Dilo»: mientras revisa, sin conexión (con «Volver a intentarlo») y con algo que suena a peligro.
+    // «Dilo»: mientras comprueba (con servidor), sin conexión (corregido en el móvil) y con algo que suena a peligro.
     final api = ApiDePrueba()..pausa = Completer<void>();
     await montar(
       tester,
       repo: repoDeEjemplo(glosario: true),
       brillo: brillo,
-      ruta: '/aprende/leccion/dilo-U1-L1',
+      ruta: '/aprende/leccion/dilo-U2-L2',
       demo: true,
       api: api,
+      servidor: true,
     );
-    await responder(tester, ejercicios['E-106']!, bien: true);
+    await tester.enterText(campoDilo, 'Que te graban la entrevista y ese vídeo sirve para el juicio');
+    await tester.pumpAndSettle();
+    await _capturar(tester, '15a-dilo-e212$sufijo');
     await tester.tap(botonComprobar);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));

@@ -13,9 +13,13 @@ import '../../core/voz/stt.dart';
 import '../../core/voz/tts.dart';
 import '../../tema.dart';
 import '../../widgets/estados.dart';
+import '../../widgets/iconos/iconos.dart';
+import '../../widgets/justicia/justicia.dart';
+import '../../widgets/movimiento/contador_flip.dart';
 import '../../widgets/movimiento/hapticos.dart';
 import '../../widgets/tuturno_scaffold.dart';
 import 'bkt.dart';
+import 'correccion_local.dart';
 import 'curso.dart';
 import 'modelos.dart';
 import 'seleccion.dart';
@@ -29,10 +33,14 @@ import 'widgets/ejercicio_emparejar.dart';
 import 'widgets/ejercicio_ordenar.dart';
 
 // Reproductor de lecciones (sección 4.3): los 6 ejercicios uno a uno con barra de progreso, «Comprobar», panel de
-// corrección con la explicación y la fuente, y al final una celebración con los XP, la racha y los conceptos que
+// corrección con la explicación y la fuente, y al final el sello «SUPERADA» con los XP, la racha y los conceptos que
 // han mejorado. +10 XP por acierto y +5 en «Dilo» si cubre al menos la mitad; el dominio (BKT) se actualiza
 // después de cada respuesta. Con /aprende/leccion/practica-<unidad>, practica esa unidad (política de 10.6).
 // En modo DEMO, /aprende/leccion/dilo-<lección> empieza la lección en su «Dilo con tus palabras».
+//
+// «Dilo» nunca se queda sin corregir: con servidor, POST /api/learn/grade; si no hay servidor, si falla, si no conoce
+// el ejercicio o si tarda más de [esperaCorreccionDilo], se corrige en el móvil (correccion_local.dart) y se avisa
+// de que es una corrección aproximada. Con la API simulada (USE_MOCK) no se le pregunta: devolvería siempre lo mismo.
 //
 // La voz: «Escuchar» lee el ejercicio o la corrección. La lectura se calla al comprobar, al seguir, al salir, al tapar
 // la lección con otra pantalla (Ayuda, Glosario, una hoja…) y si la app pasa a segundo plano. Nunca se escucha
@@ -43,6 +51,9 @@ const xpAcierto = 10;
 
 /// XP en «Dilo con tus palabras» si cubre al menos la mitad de las ideas.
 const xpDilo = 5;
+
+/// Lo que se espera al servidor para corregir «Dilo». Si tarda más, se corrige en el móvil.
+const esperaCorreccionDilo = Duration(seconds: 10);
 
 class LeccionScreen extends ConsumerWidget {
   const LeccionScreen({super.key, required this.leccionId});
@@ -98,8 +109,8 @@ class LeccionScreen extends ConsumerWidget {
 
 enum _Fase { respondiendo, comprobando, revisado, terminada }
 
-/// Resumen para la celebración.
-typedef _Resumen = ({int racha, bool rachaSube, List<Mejora> mejoras});
+/// Resumen para la celebración. [record] es la nueva mejor racha, si se ha batido hoy (y es de 2 días o más).
+typedef _Resumen = ({int racha, bool rachaSube, int? record, List<Mejora> mejoras});
 
 class _Reproductor extends ConsumerStatefulWidget {
   const _Reproductor({super.key, required this.curso, required this.unidad, this.leccion, this.empezarEnDilo = false});
@@ -141,7 +152,9 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
   // Corrección del ejercicio actual.
   bool? _acierto;
   GradeResponse? _nota;
-  String? _errorNota;
+
+  /// La corrección de «Dilo» se ha hecho en el móvil, sin servidor: es aproximada.
+  var _notaAproximada = false;
 
   /// En «Dilo» se ha escrito algo que suena a peligro: no se corrige y se ofrece ayuda.
   var _crisis = false;
@@ -271,33 +284,35 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
       return;
     }
     setState(() => _fase = _Fase.comprobando);
-    try {
-      final nota = await ref.read(apiProvider).grade(GradeRequest(conceptoId: ejercicio.concepto, texto: texto));
+    GradeResponse? nota;
+    // La API simulada devuelve siempre la misma corrección, se escriba lo que se escriba: con ella no se pregunta.
+    if (!ref.read(configProvider).useMock) {
+      try {
+        nota = await ref
+            .read(apiProvider)
+            .grade(GradeRequest(conceptoId: ejercicio.concepto, texto: texto))
+            .timeout(esperaCorreccionDilo);
+      } catch (_) {
+        // Sin conexión, el servidor caído, un ejercicio que no conoce o que tarda demasiado: se corrige en el móvil.
+        nota = null;
+      }
       if (!mounted) return;
-      _nota = nota;
-      final cubreLaMitad = nota.puntuacion >= 0.5;
-      _registrar(ejercicio, acierto: cubreLaMitad, xp: cubreLaMitad ? xpDilo : 0);
-    } catch (_) {
-      // Sin conexión o con el servidor caído. No se enseña el mensaje de la API (manda a Ayuda, que es para pedir
-      // ayuda, no para un fallo técnico): se explica aquí y se puede volver a intentar.
-      if (!mounted) return;
-      _errorNota = textoDiloSinConexion;
-      _registrar(ejercicio, acierto: null, xp: 0);
     }
-  }
-
-  /// «Volver a intentarlo» cuando no se ha podido corregir «Dilo»: se envía otra vez el mismo texto. Sin corrección no
-  /// se tocaron ni los puntos ni el dominio, así que no hay nada que deshacer.
-  void _reintentarDilo() {
-    if (_fase != _Fase.revisado || _errorNota == null) return;
-    setState(() {
-      _fase = _Fase.respondiendo;
-      _errorNota = null;
-      _nota = null;
-      _acierto = null;
-      _xpUltimo = 0;
-    });
-    unawaited(_comprobar());
+    if (nota != null && esCorreccionDeCrisis(nota)) {
+      // El servidor ha visto peligro donde la app no: tampoco se corrige, se ofrece ayuda.
+      _crisis = true;
+      _registrar(ejercicio, acierto: null, xp: 0);
+      return;
+    }
+    final aproximada = nota == null;
+    final corregida =
+        nota ?? corregirEnElMovil(proposiciones: ejercicio.proposiciones, texto: texto, pregunta: ejercicio.pregunta);
+    _nota = corregida;
+    _notaAproximada = aproximada;
+    final cubreLaMitad = corregida.puntuacion >= 0.5;
+    // Una corrección aproximada nunca resta: si no llega a la mitad, el dominio no cambia (puede que lo hayas dicho
+    // con otras palabras). Si llega, suma como siempre.
+    _registrar(ejercicio, acierto: cubreLaMitad ? true : (aproximada ? null : false), xp: cubreLaMitad ? xpDilo : 0);
   }
 
   /// «Ahora no» en «Dilo»: se enseñan las ideas clave y se sigue, sin puntos y sin tocar el dominio. Si lo escrito
@@ -311,8 +326,8 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
     _registrar(_actual, acierto: null, xp: 0);
   }
 
-  /// Corrige: actualiza el dominio del concepto (BKT) y el marcador. Con [acierto] null no hay corrección
-  /// (sin conexión o saltado) y el dominio no cambia.
+  /// Corrige: actualiza el dominio del concepto (BKT) y el marcador. Con [acierto] null no cuenta (saltado, ayuda o
+  /// una corrección aproximada que no llega a la mitad) y el dominio no cambia.
   void _registrar(Ejercicio ejercicio, {required bool? acierto, required int xp}) {
     if (acierto != null) {
       final concepto = ejercicio.concepto;
@@ -358,7 +373,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
         _respuesta = null;
         _acierto = null;
         _nota = null;
-        _errorNota = null;
+        _notaAproximada = false;
         _crisis = false;
         _xpUltimo = 0;
       });
@@ -371,7 +386,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
   Future<void> _terminar() async {
     final notifier = ref.read(progresoProvider.notifier);
     final ahora = ref.read(relojProvider)();
-    final rachaAntes = rachaVisible(ref.read(progresoProvider), ahora);
+    final antes = estadoRacha(ref.read(progresoProvider), ahora);
     try {
       if (_xp > 0) await notifier.sumarXp(_xp);
       final leccion = widget.leccion;
@@ -380,17 +395,22 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
       // Si no se puede guardar en el móvil, el progreso de esta sesión sigue en memoria: la celebración sale igual.
     }
     if (!mounted) return;
-    final racha = rachaVisible(ref.read(progresoProvider), ahora);
+    final despues = estadoRacha(ref.read(progresoProvider), ahora);
+    final racha = despues.dias;
     final mejoras = <Mejora>[
       for (final MapEntry(key: concepto, value: despues) in _despues.entries)
         if (despues - (_antes[concepto] ?? despues) > 0.001)
           (nombre: nombreConcepto(concepto), antes: _antes[concepto]!, despues: despues),
     ]..sort((a, b) => (b.despues - b.antes).compareTo(a.despues - a.antes));
-    // Lección terminada: es un logro, la vibración más fuerte.
-    Hapticos.sello();
+    // La vibración fuerte la da el sello al caer.
     setState(() {
       _fase = _Fase.terminada;
-      _resumen = (racha: racha, rachaSube: racha > rachaAntes, mejoras: mejoras);
+      _resumen = (
+        racha: racha,
+        rachaSube: racha > antes.dias,
+        record: despues.mejor > antes.mejor && racha >= 2 ? racha : null,
+        mejoras: mejoras,
+      );
     });
   }
 
@@ -439,18 +459,20 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
   }
 
   /// Lo que se lee del panel de corrección: el título, la respuesta correcta si se ha fallado y la explicación;
-  /// en «Dilo», las ideas que ha explicado, las que faltan y el comentario si dice algo más (o las ideas clave si no
-  /// hubo corrección).
+  /// en «Dilo», si la corrección es aproximada, las ideas que ha explicado, las que faltan y el comentario si dice algo
+  /// más (o las ideas clave si se ha saltado).
   String _textoCorreccion(Ejercicio ejercicio, String titulo) {
     final partes = [titulo];
     if (ejercicio is EjercicioDilo) {
       final nota = _nota;
       if (nota != null) {
+        if (_notaAproximada) partes.add('$textoDiloAproximada.');
         if (nota.cubiertas.isNotEmpty) partes.add('Has explicado: ${nota.cubiertas.join('. ')}.');
-        if (nota.faltan.isNotEmpty) partes.add('$textoDiloTeFalta: ${nota.faltan.join('. ')}.');
+        if (nota.faltan.isNotEmpty) {
+          partes.add('${textoIdeasQueFaltan(nota.faltan.length)}: ${nota.faltan.join('. ')}.');
+        }
         if (comentarioDilo(nota) case final comentario?) partes.add(comentario);
       } else {
-        if (_errorNota case final error?) partes.add(error);
         partes.add('$textoDiloIdeasClave ${ejercicio.proposiciones.join('. ')}.');
       }
     } else {
@@ -467,6 +489,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
         titulo: _tituloBarra,
         body: EstadoVacio(
           icono: Icons.hourglass_empty_rounded,
+          tuIcono: TuIcono.reloj,
           titulo: 'Esta lección se está preparando',
           mensaje: 'Aún no tiene ejercicios listos. Vuelve a Aprende y prueba con otra.',
           accion: FilledButton(onPressed: _cerrar, child: const Text('Volver a Aprende')),
@@ -534,11 +557,12 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
                     ),
                     const SizedBox(width: Espacio.s + Espacio.xs),
                     PastillaDato(
-                      icono: Icons.bolt_rounded,
-                      texto: ContadorAnimado(valor: _xp),
+                      key: const ValueKey('pastilla-xp-leccion'),
+                      tuIcono: TuIcono.xp,
+                      // Como el panel de turnos: con cada acierto, las cifras giran.
+                      texto: ContadorFlip(valor: _xp, estilo: tema.textTheme.labelLarge),
                       semantica: '$_xp puntos en esta lección',
                       colorTexto: tema.colorScheme.onSurface,
-                      colorIcono: tema.colorScheme.tertiary,
                       fondo: tema.colorScheme.surfaceContainerHighest,
                     ),
                   ],
@@ -584,6 +608,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
                               _CabeceraEjercicio(
                                 ejercicio: ejercicio,
                                 repaso: _repasos.contains(ejercicio.id),
+                                turnoActivo: _fase == _Fase.respondiendo,
                                 tts: _tts,
                                 onEscuchar: _escuchar,
                               ),
@@ -672,7 +697,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
             FilledButton(
               key: const ValueKey('boton-comprobar'),
               onPressed: listo ? _comprobar : null,
-              // Mientras la IA revisa, el botón no se apaga: conserva su color y lleva una rueda, para que se vea que
+              // Mientras se comprueba, el botón no se apaga: conserva su color y lleva una rueda, para que se vea que
               // está trabajando. El lector de pantalla lo anuncia.
               style: comprobando
                   ? FilledButton.styleFrom(
@@ -683,7 +708,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
               child: comprobando
                   ? Semantics(
                       liveRegion: true,
-                      label: 'Revisando tu respuesta',
+                      label: textoDiloComprobando.replaceAll('…', ''),
                       excludeSemantics: true,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -693,7 +718,7 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
                             child: CircularProgressIndicator(strokeWidth: 2.5, color: esquema.onPrimary),
                           ),
                           const SizedBox(width: Espacio.m - 4),
-                          const Flexible(child: Text('Revisando tu respuesta…')),
+                          const Flexible(child: Text(textoDiloComprobando)),
                         ],
                       ),
                     )
@@ -733,21 +758,33 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
         );
       }
       final nota = _nota;
-      final tipo = acierto == null ? TipoCorreccion.neutra : (acierto ? TipoCorreccion.acierto : TipoCorreccion.fallo);
-      final titulo = switch (tipo) {
-        TipoCorreccion.acierto || TipoCorreccion.fallo => tituloDilo(nota?.puntuacion ?? 0),
-        _ => _errorNota != null ? textoDiloSinRevisar : 'Mira las ideas clave',
-      };
+      if (nota == null) {
+        // «Ahora no puedo»: solo las ideas clave, sin corrección.
+        const titulo = 'Mira las ideas clave';
+        return PanelCorreccion(
+          key: ValueKey('panel-$_indice'),
+          tipo: TipoCorreccion.neutra,
+          titulo: titulo,
+          detalle: IdeasDilo(proposiciones: ejercicio.proposiciones),
+          fuente: ejercicio.fuente,
+          textoBoton: textoBoton,
+          onContinuar: _continuar,
+          onEscuchar: () => _leer(_textoCorreccion(ejercicio, titulo)),
+          hablando: _tts.hablando,
+          altoDisponible: alto,
+        );
+      }
+      final titulo = tituloDilo(nota.puntuacion);
       return PanelCorreccion(
         key: ValueKey('panel-$_indice'),
-        tipo: tipo,
+        tipo: nota.puntuacion >= 0.5 ? TipoCorreccion.acierto : TipoCorreccion.fallo,
         titulo: titulo,
         xp: _xpUltimo,
-        detalle: IdeasDilo(nota: nota, proposiciones: ejercicio.proposiciones, error: _errorNota),
+        aproximada: _notaAproximada,
+        detalle: IdeasDilo(nota: nota, proposiciones: ejercicio.proposiciones),
         fuente: ejercicio.fuente,
         textoBoton: textoBoton,
         onContinuar: _continuar,
-        onReintentar: _errorNota != null ? _reintentarDilo : null,
         onEscuchar: () => _leer(_textoCorreccion(ejercicio, titulo)),
         hablando: _tts.hablando,
         altoDisponible: alto,
@@ -812,11 +849,14 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
     ];
     return Celebracion(
       key: const ValueKey('celebracion'),
-      titulo: widget.esPractica ? '¡Práctica terminada!' : '¡Lección completada!',
-      subtitulo: _titulo,
+      sello: widget.esPractica ? TipoSello.practica : TipoSello.leccion,
+      titulo: widget.esPractica ? textoRepasoHecho : textoLeccionSuperada,
+      subtitulo: textoSelloConseguido,
+      detalle: _titulo,
       xp: _xp,
       racha: resumen.racha,
       rachaSube: resumen.rachaSube,
+      record: resumen.record,
       aciertos: _aciertos,
       respondidas: _respondidas,
       mejoras: resumen.mejoras,
@@ -825,17 +865,20 @@ class _ReproductorState extends ConsumerState<_Reproductor> {
   }
 }
 
-/// Tipo de ejercicio, «Repaso» si toca y el botón para escucharlo.
+/// Tipo de ejercicio, «Repaso» si toca y el botón para escucharlo. En «Dilo con tus palabras», el aviso «Tu turno de
+/// palabra», con la luz del micrófono encendida mientras se responde (tema de justicia, apartado 7.7).
 class _CabeceraEjercicio extends StatelessWidget {
   const _CabeceraEjercicio({
     required this.ejercicio,
     required this.repaso,
+    required this.turnoActivo,
     required this.tts,
     required this.onEscuchar,
   });
 
   final Ejercicio ejercicio;
   final bool repaso;
+  final bool turnoActivo;
   final Tts tts;
   final VoidCallback onEscuchar;
 
@@ -852,21 +895,23 @@ class _CabeceraEjercicio extends StatelessWidget {
             runSpacing: Espacio.xs,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              PastillaDato(
-                icono: iconoTipo(ejercicio.tipo),
-                texto: Text(etiquetaTipo(ejercicio.tipo)),
-                semantica: etiquetaTipo(ejercicio.tipo),
-                colorTexto: esquema.onSurface,
-                colorIcono: esquema.primary,
-                fondo: fondoAcento(context, esquema.primary),
-              ),
+              if (ejercicio is EjercicioDilo)
+                AvisoTurnoPalabra(key: const ValueKey('aviso-turno-palabra'), activo: turnoActivo)
+              else
+                PastillaDato(
+                  icono: iconoTipo(ejercicio.tipo),
+                  texto: Text(etiquetaTipo(ejercicio.tipo)),
+                  semantica: etiquetaTipo(ejercicio.tipo),
+                  colorTexto: esquema.onSurface,
+                  colorIcono: esquema.primary,
+                  fondo: fondoAcento(context, esquema.primary),
+                ),
               if (repaso)
                 PastillaDato(
-                  icono: Icons.history_rounded,
+                  tuIcono: TuIcono.reloj,
                   texto: const Text('Repaso'),
                   semantica: 'Ejercicio de repaso',
                   colorTexto: esquema.onSurface,
-                  colorIcono: esquema.tertiary,
                   fondo: fondoAcento(context, esquema.tertiary),
                 ),
             ],
@@ -879,7 +924,12 @@ class _CabeceraEjercicio extends StatelessWidget {
             key: const ValueKey('boton-escuchar'),
             tooltip: hablando ? 'Parar la lectura' : 'Escuchar el ejercicio',
             onPressed: onEscuchar,
-            icon: Icon(hablando ? Icons.stop_rounded : Icons.volume_up_rounded),
+            icon: IconoTuTurno(
+              hablando ? TuIcono.silencio : TuIcono.altavoz,
+              estilo: EstiloIcono.mono,
+              color: esquema.onSecondaryContainer,
+              decorativo: true,
+            ),
           ),
         ),
       ],
@@ -914,6 +964,7 @@ class _Bloqueada extends StatelessWidget {
       titulo: leccion.titulo,
       body: EstadoVacio(
         icono: Icons.lock_rounded,
+        tuIcono: TuIcono.candado,
         titulo: 'Esta lección aún está cerrada',
         mensaje: 'Se abre cuando completes la anterior. ¡Ya queda menos!',
         accion: siguiente == null
@@ -937,6 +988,7 @@ class _NoEncontrada extends StatelessWidget {
       titulo: 'Aprende',
       body: EstadoVacio(
         icono: Icons.search_off_rounded,
+        tuIcono: TuIcono.buscar,
         titulo: 'No encuentro esta lección',
         mensaje: 'Puede que haya cambiado de sitio. Vuelve al mapa de Aprende.',
         accion: FilledButton(onPressed: () => context.go('/aprende'), child: const Text('Ir a Aprende')),

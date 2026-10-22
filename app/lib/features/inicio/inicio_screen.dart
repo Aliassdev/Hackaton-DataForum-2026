@@ -6,12 +6,15 @@ import '../../core/providers.dart';
 import '../../tema.dart';
 import '../../widgets/animaciones.dart';
 import '../../widgets/iconos/iconos.dart';
+import '../../widgets/justicia/fondo_justicia.dart';
 import '../../widgets/marca/marca.dart';
 import '../../widgets/modulos.dart';
 import '../../widgets/movimiento/movimiento.dart';
 import '../../widgets/tuturno_scaffold.dart';
 import '../situacion/roles.dart';
+import '../situacion/widgets/mi_dia.dart' show TarjetaModoDia;
 import 'bienvenida.dart';
+import 'tu_camino.dart';
 import 'widgets/arranque.dart';
 import 'widgets/palabra_del_dia.dart';
 import 'widgets/saludo.dart';
@@ -34,9 +37,10 @@ class InicioScreen extends ConsumerWidget {
   }
 }
 
-/// La portada: el mostrador de turnos de TuTurno. Tut saluda, la racha y el nivel, el ticket «¡Es tu turno!» del día
-/// saliendo del dispensador, los tres módulos como tickets, Mi situación y la palabra del día. Detrás, papel recortado
-/// que flota despacio y se queda atrás al desplazar (paralaje).
+/// La portada: el vestíbulo del palacio de justicia de papel (tema-justicia.md). Tut saluda, la racha y el nivel, el
+/// ticket «¡Es tu turno!» del día saliendo del panel de turnos, los tres módulos como tickets con el cartel de su sala,
+/// Mi situación («tu guía») y la palabra del día. Detrás del saludo y del pase, el palacio en silueta y unas pocas
+/// formas de papel recortado que flotan despacio; los dos se quedan atrás al desplazar (paralaje).
 class _Portada extends StatefulWidget {
   const _Portada({super.key});
 
@@ -45,7 +49,7 @@ class _Portada extends StatefulWidget {
 }
 
 class _PortadaState extends State<_Portada> {
-  /// Alto del papel recortado del fondo (detrás del saludo, del pase y del ticket del día).
+  /// Alto del fondo (el palacio y el papel recortado, detrás del saludo, del pase y del ticket del día).
   static const _altoFondo = 330.0;
 
   /// Los tickets de los módulos, un poco torcidos, como pegados a mano.
@@ -75,13 +79,21 @@ class _PortadaState extends State<_Portada> {
       ],
       body: Stack(
         children: [
+          // El palacio en silueta, debajo del papel recortado: es lo más lejano (decorativo, no se lee ni se toca).
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: _altoFondo,
+            child: FondoJusticia(scroll: _scroll, alineacion: Alignment.topCenter),
+          ),
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: _altoFondo,
             child: FondoPapel(
-              formas: 5,
+              formas: 3,
               semilla: 5,
               ciclos: 1,
               periodo: const Duration(seconds: 10),
@@ -127,6 +139,12 @@ class _PortadaState extends State<_Portada> {
                       const SizedBox(height: Espacio.m - 2),
                     ],
                     const SizedBox(height: Espacio.s + 2),
+                    // El «modo día» en la portada, solo el día de la cita (sin cuenta atrás los días de antes): «Hoy es
+                    // tu día» y la hora, sin el papel ni dónde es. Sin cita hoy, no ocupa nada.
+                    Entrada(
+                      orden: orden++,
+                      child: const TarjetaModoDia(separacion: EdgeInsets.only(bottom: Espacio.m), soloElDia: true),
+                    ),
                     Entrada(orden: orden++, child: const _EntradaMiSituacion()),
                     const SizedBox(height: Espacio.l),
                     Entrada(orden: orden++, child: const PalabraDelDia()),
@@ -145,22 +163,54 @@ class _PortadaState extends State<_Portada> {
   }
 }
 
-/// «Mi situación: estoy en un proceso» → selector de papel → `/situacion/<rol>`. Un ticket de papel tranquilo: sin
-/// giros ni saltos (va con Pregunta, que no se gamifica).
-class _EntradaMiSituacion extends StatelessWidget {
+/// «Mi situación» («tu guía»): con el papel del ticket de Pregunta ([tuCaminoProvider]), «Tu camino» (sin decir el
+/// papel ni la fase: el móvil puede ser compartido) y directo a su línea de pasos; sin papel, el selector de papel y
+/// luego `/situacion/<rol>`. Un ticket de papel tranquilo: sin giros ni saltos (va con Pregunta, que no se gamifica).
+class _EntradaMiSituacion extends ConsumerWidget {
   const _EntradaMiSituacion();
+
+  /// Lo que dice el ticket sin papel.
+  static const descripcion = 'Me toca ir a la policía o al juzgado y quiero saber qué me espera';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final camino = ref.watch(tuCaminoProvider);
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    return TicketTuTurno(
+      etiqueta: camino == null ? null : 'Mi situación',
+      titulo: camino?.titulo ?? 'Mi situación',
+      descripcion: camino?.descripcion ?? descripcion,
+      icono: const IconoTuTurno(TuIcono.expediente, size: 44, decorativo: true),
+      talon: const _TalonGuia(),
+      tamanoTalon: 64,
+      fondoTalon: oscuro ? Theme.of(context).colorScheme.surfaceContainerHighest : ColoresMarca.azulHielo,
+      onTap: () => camino == null ? mostrarSelectorRol(context) : context.push(camino.ruta),
+    );
+  }
+}
+
+/// El talón de Mi situación: «TU GUÍA» y la flecha (nunca «tu expediente»: en la ley del menor, el expediente es el
+/// procedimiento contra el menor infractor, LO 5/2000, art. 16). Con la tinta del talón.
+class _TalonGuia extends StatelessWidget {
+  const _TalonGuia();
 
   @override
   Widget build(BuildContext context) {
-    final oscuro = Theme.of(context).brightness == Brightness.dark;
-    return TicketTuTurno(
-      titulo: 'Mi situación',
-      descripcion: 'Me toca ir a la policía o al juzgado y quiero saber qué me espera',
-      icono: const IconoTuTurno(TuIcono.miSituacion, size: 44, decorativo: true),
-      talon: const Icon(Icons.chevron_right_rounded, size: 32),
-      tamanoTalon: 52,
-      fondoTalon: oscuro ? Theme.of(context).colorScheme.surfaceContainerHighest : ColoresMarca.azulHielo,
-      onTap: () => mostrarSelectorRol(context),
+    final estilo = DefaultTextStyle.of(context).style;
+    final letras = Theme.of(context).textTheme.labelLarge
+        ?.copyWith(color: estilo.color, fontWeight: FontWeight.w800, letterSpacing: 1.2, height: 1.15);
+    return Semantics(
+      label: 'Tu guía',
+      child: ExcludeSemantics(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('TU', style: letras),
+            Text('GUÍA', style: letras),
+            Icon(Icons.chevron_right_rounded, size: 28, color: estilo.color),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -168,8 +218,8 @@ class _EntradaMiSituacion extends StatelessWidget {
 class _NotaPrivacidad extends StatelessWidget {
   const _NotaPrivacidad();
 
-  /// El mismo mensaje de la bienvenida, sin la parte de Ayuda (Ayuda ya está arriba).
-  static const texto = 'Soy una IA. No te pido tu nombre y lo que hablamos se borra.';
+  /// Lo mismo que dice Tut en la bienvenida (auditoría P1-4: solo lo que es cierto hoy, sin prometer que se borre).
+  static const texto = mensajeIA;
 
   @override
   Widget build(BuildContext context) {

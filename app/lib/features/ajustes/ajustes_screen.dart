@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/ajustes.dart';
-import '../../core/api/tuturno_api.dart';
+import '../../core/entrada.dart' show entradaProvider;
 import '../../core/providers.dart';
 import '../../core/voz/tts.dart';
 import '../../tema.dart';
@@ -15,6 +15,14 @@ import '../../widgets/marca/marca.dart';
 import '../../widgets/modulos.dart';
 import '../../widgets/movimiento/hapticos.dart';
 import '../../widgets/tuturno_scaffold.dart';
+import '../situacion/mi_ticket.dart' show miTicketProvider;
+import '../situacion/textos.dart' show botonCambiarTicket, botonRellenarTicket;
+import '../situacion/ticket_screen.dart' show abrirTuTicket;
+import 'demo.dart';
+import 'para_el_equipo.dart';
+import 'piezas.dart';
+
+export 'demo.dart' show esUrlServidorValida, pistaConexion, soloHttps;
 
 /// Tamaños de letra que se pueden elegir (multiplican el del sistema).
 const tamanosTexto = [(1.0, 'Normal'), (1.15, 'Grande'), (1.3, 'Enorme')];
@@ -22,28 +30,33 @@ const tamanosTexto = [(1.0, 'Normal'), (1.15, 'Grande'), (1.3, 'Enorme')];
 const velocidadMinima = 0.3;
 const velocidadMaxima = 0.7;
 
-/// Solo direcciones http:// o https:// con servidor.
-bool esUrlServidorValida(String texto) {
-  final uri = Uri.tryParse(texto.trim());
-  return uri != null && (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
-}
-
-/// La APK release solo habla HTTPS (el tráfico sin cifrar solo está permitido en debug) y una web servida por
-/// https no puede llamar a http://: en esos casos una dirección http:// no funcionaría.
-bool soloHttps({bool release = kReleaseMode, bool web = kIsWeb, String esquemaPagina = ''}) =>
-    release && (!web || esquemaPagina == 'https');
-
-/// Qué decir cuando falla «Probar la conexión», según el código de [ApiException].
-String pistaConexion(String codigo) => switch (codigo) {
-  'SIN_API_URL' => 'Falta la dirección del servidor. Escríbela arriba.',
-  'URL_INVALIDA' => 'Escribe la dirección completa, empezando por https://',
-  'TIEMPO_AGOTADO' => 'El servidor tarda demasiado en responder. Prueba otra vez.',
-  'SIN_CONEXION' => 'No llego al servidor. Revisa la dirección, el túnel y la conexión del móvil.',
-  'RESPUESTA_INVALIDA' => 'El servidor responde, pero no como espera TuTurno. ¿Es la dirección correcta?',
-  _ => 'No he podido hablar con el servidor ($codigo).',
-};
-
 const fraseProbarVoz = 'Hola. Así sonará la voz de TuTurno cuando te lea las respuestas.';
+
+const textoLecturaFacil = 'Una letra más clara, con más espacio entre líneas.';
+
+/// Para qué sirve el ticket. Se cambia aquí mismo («Cambiar mi ticket» abre «Tu ticket», el de Mi situación, en el
+/// móvil y en la web), en Pregunta («Cambiar» o «Elegir») y en Mi situación.
+const notaTicket = 'Pregunta y Mi situación lo usan para explicártelo mejor.';
+
+/// El pie de Ajustes (su pulsación larga descubre «Para el equipo»). Sin «solo»: el ticket viaja con las preguntas.
+const textoPieAjustes = 'Todo esto se guarda en tu móvil, sin cuentas.';
+const textoReducirAnimaciones = 'Las pantallas cambian sin moverse y no hay confeti.';
+const notaAnimacionesDelSistema = 'Tu móvil ya tiene las animaciones reducidas.';
+
+/// «Tus datos en este móvil» (plan v2, producto §5.3). Sin promesas que no dependan del móvil: lo que se pregunta pasa
+/// por el servidor de TuTurno y, con la voz, por ElevenLabs, que lo guarda según cómo esté configurado el agente.
+const textoQueSeGuarda =
+    'Aquí se guardan tu progreso, tus cartas y sellos, tu ticket (también tu día y lo que te preocupa), tus preguntas '
+    'apuntadas y tus palabras guardadas. No hay cuentas.';
+const textoQueSale =
+    'Lo que preguntas en Pregunta y lo que escribes en «Dilo con tus palabras» se envían, sin tu nombre, para poder '
+    'contestarte; con la voz, pasan también por ElevenLabs, la empresa de la voz. Tu ticket va con tus preguntas. '
+    'Este móvil no guarda la conversación.';
+
+/// El texto del diálogo de «Borrar todo lo de este móvil».
+const textoConfirmarBorrarTodo =
+    'Se borran tu progreso, tus cartas y sellos, tu ticket (también tu día y lo que te preocupa), tus preguntas '
+    'apuntadas y tus palabras guardadas. Los ajustes de letra y voz se quedan. No se puede deshacer.';
 
 String nombreVelocidad(double v) {
   if (v < 0.45) return 'Más lenta';
@@ -51,8 +64,11 @@ String nombreVelocidad(double v) {
   return 'Normal';
 }
 
-/// Ajustes (sección 6.4): tamaño de letra, voz y, para la demo, el servidor; al final, «Acerca de TuTurno». Todo se
-/// queda en el móvil.
+/// Ajustes (sección 6.4): «Leer mejor» (letra, lectura fácil, animaciones y voz), «Tu ticket», «Tus datos en este
+/// móvil» con «Borrar todo» y «Acerca de TuTurno». Todo se queda en el móvil.
+///
+/// «Para el equipo (demo)», con el servidor, solo sale tras una pulsación larga en el pie (auditoría P1-6): ni con DEMO
+/// ni en depuración se ve sin ella. Al volver a entrar en Ajustes, se esconde otra vez.
 class AjustesScreen extends ConsumerStatefulWidget {
   const AjustesScreen({super.key});
 
@@ -61,24 +77,8 @@ class AjustesScreen extends ConsumerStatefulWidget {
 }
 
 class _AjustesScreenState extends ConsumerState<AjustesScreen> {
-  final _url = TextEditingController();
-  String? _errorUrl;
-
-  /// La sección del servidor se ve en debug, en modo DEMO, si ya hay una dirección puesta o si falta la de serie.
-  /// En el resto de casos se descubre con una pulsación larga en el pie.
-  var _servidorRevelado = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _url.text = ref.read(ajustesProvider).apiUrlManual ?? '';
-  }
-
-  @override
-  void dispose() {
-    _url.dispose();
-    super.dispose();
-  }
+  var _equipoRevelado = false;
+  final _claveEquipo = GlobalKey();
 
   void _cambiar(Ajustes Function(Ajustes actuales) cambio) {
     Hapticos.seleccion();
@@ -91,52 +91,59 @@ class _AjustesScreenState extends ConsumerState<AjustesScreen> {
       ..showSnackBar(SnackBar(content: Text(texto)));
   }
 
-  void _usarServidor() {
-    final url = _url.text.trim();
-    if (!esUrlServidorValida(url)) {
-      setState(() => _errorUrl = 'Escribe una dirección que empiece por http:// o https://');
-      return;
-    }
-    if (Uri.parse(url).scheme == 'http' && soloHttps(esquemaPagina: kIsWeb ? Uri.base.scheme : '')) {
-      setState(() => _errorUrl = 'En esta versión solo funciona https://');
-      return;
-    }
-    setState(() => _errorUrl = null);
-    FocusScope.of(context).unfocus();
-    _cambiar((a) => a.copyWith(apiUrlManual: () => url));
-    _avisar('Listo. Ahora uso este servidor.');
-  }
-
-  void _volverAlDeSerie() {
-    _url.clear();
-    setState(() => _errorUrl = null);
-    FocusScope.of(context).unfocus();
-    _cambiar((a) => a.copyWith(apiUrlManual: () => null));
-    _avisar('Vuelvo a usar el servidor de serie.');
-  }
-
   void _probarVoz() {
     Hapticos.seleccion();
     unawaited(ref.read(ttsProvider).hablar(fraseProbarVoz, velocidad: ref.read(ajustesProvider).velocidadVoz));
   }
 
-  void _revelarServidor() {
-    if (_servidorRevelado) return;
+  /// La pulsación larga en el pie: aparece la parte del equipo, debajo, y se baja hasta ella (sin aviso abajo: taparía
+  /// sus botones).
+  void _revelarEquipo() {
+    if (_equipoRevelado) return;
     Hapticos.toque();
-    setState(() => _servidorRevelado = true);
-    _avisar('Opciones del servidor visibles.');
+    setState(() => _equipoRevelado = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final destino = _claveEquipo.currentContext;
+      if (!mounted || destino == null) return;
+      unawaited(
+        Scrollable.ensureVisible(destino, duration: duracion(context, Duracion.media), curve: Curves.easeOutCubic),
+      );
+    });
+  }
+
+  Future<void> _borrarMisRespuestas() async {
+    Hapticos.seleccion();
+    await borrarTicket(ref);
+    if (mounted) _avisar('Hecho. Tu ticket está vacío.');
+  }
+
+  /// «Borrar todo lo de este móvil»: pide confirmación, deja la app como nueva (los ajustes se quedan) y vuelve al
+  /// inicio, que enseña la bienvenida.
+  Future<void> _borrarTodo() async {
+    Hapticos.seleccion();
+    final si = await confirmar(
+      context,
+      titulo: '¿Borrar todo?',
+      texto: textoConfirmarBorrarTodo,
+      accion: 'Borrar todo',
+    );
+    if (!si || !mounted) return;
+    final router = GoRouter.of(context);
+    final mensajero = ScaffoldMessenger.of(context);
+    await reiniciarUso(ref);
+    Hapticos.toque();
+    router.go('/');
+    mensajero
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text(avisoComoNuevo)));
   }
 
   @override
   Widget build(BuildContext context) {
     final ajustes = ref.watch(ajustesProvider);
-    final config = ref.watch(configProvider);
-    final mostrarServidor =
-        _servidorRevelado ||
-        kDebugMode ||
-        config.demo ||
-        ajustes.apiUrlManual != null ||
-        (config.apiUrl.trim().isEmpty && !config.useMock);
+    // «Reducir animaciones» de Ajustes se suma a la del sistema (lib/app.dart): si aquí está apagado y aun así no hay
+    // animaciones, es el sistema.
+    final animacionesDelSistema = MediaQuery.disableAnimationsOf(context) && !ajustes.reducirMovimiento;
     var orden = 0;
     return TuTurnoScaffold(
       titulo: 'Ajustes',
@@ -151,52 +158,38 @@ class _AjustesScreenState extends ConsumerState<AjustesScreen> {
               children: [
                 Entrada(
                   orden: orden++,
-                  child: _Seccion(
+                  child: SeccionAjustes(
                     icono: const _PegatinaLetra(),
-                    titulo: 'Tamaño de la letra',
-                    child: _TamanoLetra(
-                      actual: ajustes.tamanoTexto,
-                      onCambio: (t) => _cambiar((a) => a.copyWith(tamanoTexto: t)),
+                    titulo: 'Leer mejor',
+                    child: _LeerMejor(
+                      ajustes: ajustes,
+                      animacionesDelSistema: animacionesDelSistema,
+                      onCambio: _cambiar,
+                      onProbarVoz: _probarVoz,
                     ),
                   ),
                 ),
                 const SizedBox(height: Espacio.m),
                 Entrada(
                   orden: orden++,
-                  child: _Seccion(
-                    icono: const IconoTuTurno(TuIcono.altavoz, size: Espacio.xl + Espacio.xs, decorativo: true),
-                    titulo: 'Voz',
-                    child: _Voz(
-                      ajustes: ajustes,
-                      onVoz: (v) => _cambiar((a) => a.copyWith(vozActivada: v)),
-                      onVelocidad: (v) => _cambiar((a) => a.copyWith(velocidadVoz: v)),
-                      onProbar: _probarVoz,
-                    ),
-                  ),
+                  child: _TuTicket(onBorrar: _borrarMisRespuestas),
                 ),
-                if (mostrarServidor) ...[
-                  const SizedBox(height: Espacio.m),
-                  Entrada(
-                    orden: orden++,
-                    child: _Servidor(
-                      controlador: _url,
-                      error: _errorUrl,
-                      onUsar: _usarServidor,
-                      onVolver: _volverAlDeSerie,
-                    ),
-                  ),
-                ],
-                if (kDebugMode || config.demo) ...[
-                  const SizedBox(height: Espacio.m),
-                  Entrada(orden: orden++, child: const _ParaElEquipo()),
-                ],
+                const SizedBox(height: Espacio.m),
+                Entrada(
+                  orden: orden++,
+                  child: _TusDatos(onBorrarTodo: _borrarTodo),
+                ),
                 const SizedBox(height: Espacio.m),
                 Entrada(orden: orden++, child: const _AcercaDe()),
                 const SizedBox(height: Espacio.l),
                 Entrada(
                   orden: orden++,
-                  child: _Pie(onPulsacionLarga: _revelarServidor),
+                  child: _Pie(onPulsacionLarga: _revelarEquipo),
                 ),
+                if (_equipoRevelado) ...[
+                  const SizedBox(height: Espacio.xl),
+                  Entrada(child: ParaElEquipo(key: _claveEquipo)),
+                ],
               ],
             ),
           ),
@@ -206,73 +199,7 @@ class _AjustesScreenState extends ConsumerState<AjustesScreen> {
   }
 }
 
-/// Papel de los ajustes: blanco sobre el papel cálido en claro y un azul algo más claro en oscuro, con su borde y su
-/// sombra. Es un Material: las ondas de los interruptores y botones de dentro se ven.
-class _Papel extends StatelessWidget {
-  const _Papel({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final esquinas = BorderRadius.circular(Radios.l);
-    return DecoratedBox(
-      decoration: BoxDecoration(borderRadius: esquinas, boxShadow: sombrasPapel(context, elevacion: 0.8)),
-      child: Material(
-        color: context.colores.ticket,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: esquinas,
-          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-        ),
-        child: child,
-      ),
-    );
-  }
-}
-
-/// Una sección: su pegatina, el título en letras recortadas y el contenido.
-class _Seccion extends StatelessWidget {
-  const _Seccion({required this.icono, required this.titulo, required this.child});
-
-  final Widget icono;
-  final String titulo;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return _Papel(
-      child: Padding(
-        padding: const EdgeInsets.all(Espacio.l),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                ExcludeSemantics(child: icono),
-                const SizedBox(width: Espacio.s + Espacio.xs),
-                Expanded(
-                  child: Semantics(
-                    header: true,
-                    child: Text(
-                      titulo,
-                      style: tema.textTheme.headlineSmall?.copyWith(color: context.colores.tintaTicket),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: Espacio.m),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// «Aa» en una pegatina amarilla, un poco torcida: el icono del tamaño de la letra.
+/// «Aa» en una pegatina amarilla, un poco torcida: el icono de «Leer mejor».
 class _PegatinaLetra extends StatelessWidget {
   const _PegatinaLetra();
 
@@ -310,6 +237,70 @@ class _PegatinaLetra extends StatelessWidget {
   }
 }
 
+/// «Leer mejor» (plan v2, producto §5.8): el tamaño de la letra, «Lectura fácil» con la tarjeta «Así se verá»,
+/// «Reducir animaciones» y la voz, juntos.
+class _LeerMejor extends StatelessWidget {
+  const _LeerMejor({
+    required this.ajustes,
+    required this.animacionesDelSistema,
+    required this.onCambio,
+    required this.onProbarVoz,
+  });
+
+  final Ajustes ajustes;
+
+  /// El sistema ya quita las animaciones: el interruptor sale encendido y desactivado, con una nota.
+  final bool animacionesDelSistema;
+  final void Function(Ajustes Function(Ajustes actuales) cambio) onCambio;
+  final VoidCallback onProbarVoz;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SubtituloAjustes('Tamaño de la letra'),
+        const SizedBox(height: Espacio.s),
+        _TamanoLetra(
+          actual: ajustes.tamanoTexto,
+          onCambio: (t) => onCambio((a) => a.copyWith(tamanoTexto: t)),
+        ),
+        const SizedBox(height: Espacio.s),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Lectura fácil'),
+          subtitle: const Text(textoLecturaFacil),
+          value: ajustes.lecturaFacil,
+          onChanged: (valor) => onCambio((a) => a.copyWith(lecturaFacil: valor)),
+        ),
+        const SizedBox(height: Espacio.xs),
+        const _AsiSeVera(),
+        const SizedBox(height: Espacio.s),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Reducir animaciones'),
+          subtitle: const Text(textoReducirAnimaciones),
+          value: ajustes.reducirMovimiento || animacionesDelSistema,
+          onChanged: animacionesDelSistema ? null : (valor) => onCambio((a) => a.copyWith(reducirMovimiento: valor)),
+        ),
+        if (animacionesDelSistema)
+          const NotaAjustes(
+            icono: IconoTuTurno(TuIcono.info, size: 20, decorativo: true),
+            texto: notaAnimacionesDelSistema,
+          ),
+        const SizedBox(height: Espacio.l),
+        const SubtituloAjustes('Voz'),
+        _Voz(
+          ajustes: ajustes,
+          onVoz: (v) => onCambio((a) => a.copyWith(vozActivada: v)),
+          onVelocidad: (v) => onCambio((a) => a.copyWith(velocidadVoz: v)),
+          onProbar: onProbarVoz,
+        ),
+      ],
+    );
+  }
+}
+
 class _TamanoLetra extends StatelessWidget {
   const _TamanoLetra({required this.actual, required this.onCambio});
 
@@ -322,44 +313,47 @@ class _TamanoLetra extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lo elegido, como una pegatina amarilla (el tema del botón segmentado).
+    return SegmentedButton<double>(
+      showSelectedIcon: false,
+      style: SegmentedButton.styleFrom(minimumSize: const Size.fromHeight(Espacio.xxl)),
+      segments: [
+        for (final (valor, nombre) in tamanosTexto)
+          ButtonSegment(
+            value: valor,
+            label: FittedBox(fit: BoxFit.scaleDown, child: Text(nombre)),
+          ),
+      ],
+      selected: {_seleccionado},
+      onSelectionChanged: (seleccion) => onCambio(seleccion.first),
+    );
+  }
+}
+
+/// «Así se verá»: una frase con la letra y el tamaño elegidos (también con lectura fácil).
+class _AsiSeVera extends StatelessWidget {
+  const _AsiSeVera();
+
+  @override
+  Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Lo elegido, como una pegatina amarilla (el tema del botón segmentado).
-        SegmentedButton<double>(
-          showSelectedIcon: false,
-          style: SegmentedButton.styleFrom(minimumSize: const Size.fromHeight(Espacio.xxl)),
-          segments: [
-            for (final (valor, nombre) in tamanosTexto)
-              ButtonSegment(
-                value: valor,
-                label: FittedBox(fit: BoxFit.scaleDown, child: Text(nombre)),
-              ),
-          ],
-          selected: {_seleccionado},
-          onSelectionChanged: (seleccion) => onCambio(seleccion.first),
-        ),
-        const SizedBox(height: Espacio.m),
-        AnimatedContainer(
-          duration: duracion(context, Duracion.media),
-          padding: const EdgeInsets.all(Espacio.m),
-          decoration: BoxDecoration(
-            color: tinte(context, esquema.primary),
-            border: Border.all(color: bordeTinte(esquema.primary)),
-            borderRadius: BorderRadius.circular(Radios.m),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Así se verá', style: tema.textTheme.labelLarge?.copyWith(color: esquema.onSurfaceVariant)),
-              const SizedBox(height: Espacio.xs),
-              Text('Tienes derecho a que te escuchen y a entender todo lo que pasa.', style: tema.textTheme.bodyLarge),
-            ],
-          ),
-        ),
-      ],
+    return AnimatedContainer(
+      duration: duracion(context, Duracion.media),
+      padding: const EdgeInsets.all(Espacio.m),
+      decoration: BoxDecoration(
+        color: tinte(context, esquema.primary),
+        border: Border.all(color: bordeTinte(esquema.primary)),
+        borderRadius: BorderRadius.circular(Radios.m),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Así se verá', style: tema.textTheme.labelLarge?.copyWith(color: esquema.onSurfaceVariant)),
+          const SizedBox(height: Espacio.xs),
+          Text('Tienes derecho a que te escuchen y a entender todo lo que pasa.', style: tema.textTheme.bodyLarge),
+        ],
+      ),
     );
   }
 }
@@ -427,175 +421,106 @@ class _Voz extends StatelessWidget {
   }
 }
 
-class _Servidor extends ConsumerWidget {
-  const _Servidor({required this.controlador, required this.error, required this.onUsar, required this.onVolver});
+/// «Tu ticket»: lo que se ha contado (edad, proceso, papel y momento; y en Mi situación, con quién irás, qué te
+/// preocupa y cómo prefieres que te lo cuente), cómo cambiarlo y cómo borrarlo. «Cambiar mi ticket» abre «Tu ticket»
+/// (lib/features/situacion/ticket_screen.dart) en todos los modos, también en la web.
+class _TuTicket extends ConsumerWidget {
+  const _TuTicket({required this.onBorrar});
 
-  final TextEditingController controlador;
-  final String? error;
-  final VoidCallback onUsar;
-  final VoidCallback onVolver;
+  final VoidCallback onBorrar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
-    final apiUrl = ref.watch(apiUrlProvider).trim();
-    final simulado = ref.watch(configProvider.select((c) => c.useMock));
-    return _Papel(
-      child: Theme(
-        // Sin las líneas que ExpansionTile pinta al abrirse.
-        data: tema.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(Radios.l))),
-          collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(Radios.l))),
-          tilePadding: const EdgeInsets.symmetric(horizontal: Espacio.l, vertical: Espacio.xs),
-          childrenPadding: const EdgeInsets.fromLTRB(Espacio.l, 0, Espacio.l, Espacio.l),
-          leading: const IconoTuTurno(TuIcono.web, size: Espacio.xl + Espacio.xs, decorativo: true),
-          title: Text(
-            'Servidor (solo para la demo)',
-            style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          subtitle: Text(apiUrl.isEmpty ? 'sin configurar' : apiUrl),
-          expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (simulado) ...[
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: tinte(context, esquema.primary),
-                  border: Border.all(color: bordeTinte(esquema.primary)),
-                  borderRadius: BorderRadius.circular(Radios.s),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(Espacio.s + Espacio.xs),
-                  child: Text(
-                    'Ahora mismo las respuestas son simuladas: la app está en modo de prueba y no usa ningún servidor.',
-                    style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurface),
+    final entrada = ref.watch(entradaProvider);
+    final resumen = resumenTicket(entrada);
+    // Las respuestas de Mi situación también cuentan: se pueden borrar aunque el ticket de la app esté vacío.
+    final hayRespuestas = !entrada.vacia || !ref.watch(miTicketProvider.select((t) => t.sinRespuestas));
+    return SeccionAjustes(
+      icono: const IconoTuTurno(TuIcono.ticket, size: Espacio.xl + Espacio.xs, decorativo: true),
+      titulo: 'Tu ticket',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            label: 'Tu ticket: ${resumen.isEmpty ? 'sin rellenar' : resumen.replaceAll(' · ', ', ')}',
+            excludeSemantics: true,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tinte(context, esquema.primary),
+                border: Border.all(color: bordeTinte(esquema.primary)),
+                borderRadius: BorderRadius.circular(Radios.m),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Espacio.m, vertical: Espacio.s + Espacio.xs),
+                child: Text(
+                  resumen.isEmpty ? 'Sin rellenar' : resumen,
+                  key: const Key('resumen-ticket'),
+                  style: tema.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: resumen.isEmpty ? esquema.onSurfaceVariant : esquema.onSurface,
                   ),
                 ),
               ),
-              const SizedBox(height: Espacio.m),
-            ],
-            TextField(
-              controller: controlador,
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              enableSuggestions: false,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => onUsar(),
-              decoration: InputDecoration(
-                labelText: 'Dirección del servidor',
-                hintText: 'https://…',
-                errorText: error,
-                errorMaxLines: 3,
+            ),
+          ),
+          const SizedBox(height: Espacio.s + Espacio.xs),
+          const NotaAjustes(icono: IconoTuTurno(TuIcono.info, size: 20, decorativo: true), texto: notaTicket),
+          const SizedBox(height: Espacio.s),
+          Wrap(
+            spacing: Espacio.s,
+            runSpacing: Espacio.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  Hapticos.seleccion();
+                  unawaited(abrirTuTicket(context));
+                },
+                icon: const IconoTuTurno(TuIcono.ticket, estilo: EstiloIcono.mono, decorativo: true),
+                label: Text(hayRespuestas ? botonCambiarTicket : botonRellenarTicket),
               ),
-            ),
-            const SizedBox(height: Espacio.m),
-            FilledButton.tonalIcon(
-              onPressed: onUsar,
-              icon: const IconoTuTurno(TuIcono.check, estilo: EstiloIcono.mono, decorativo: true),
-              label: const Text('Usar este servidor'),
-            ),
-            const SizedBox(height: Espacio.s),
-            const _ProbarConexion(),
-            const SizedBox(height: Espacio.s),
-            TextButton.icon(
-              onPressed: onVolver,
-              icon: const Icon(Icons.restart_alt_rounded),
-              label: const Text('Volver al de serie'),
-            ),
-          ],
-        ),
+              if (hayRespuestas)
+                TextButton.icon(
+                  onPressed: onBorrar,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Borrar mis respuestas'),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-/// «Probar la conexión»: llama a /api/health y dice qué pasa con palabras claras (para montar la demo).
-class _ProbarConexion extends ConsumerStatefulWidget {
-  const _ProbarConexion();
+/// «Tus datos en este móvil»: qué se guarda, qué sale del móvil y «Borrar todo lo de este móvil».
+class _TusDatos extends StatelessWidget {
+  const _TusDatos({required this.onBorrarTodo});
 
-  @override
-  ConsumerState<_ProbarConexion> createState() => _ProbarConexionState();
-}
-
-class _ProbarConexionState extends ConsumerState<_ProbarConexion> {
-  var _probando = false;
-  String? _resultado;
-  var _bien = false;
-
-  Future<void> _probar() async {
-    Hapticos.seleccion();
-    setState(() {
-      _probando = true;
-      _resultado = null;
-    });
-    final simulado = ref.read(configProvider).useMock;
-    String texto;
-    var bien = false;
-    try {
-      final salud = await ref.read(apiProvider).health();
-      bien = salud.estado == 'ok';
-      texto = bien
-          ? 'Conectado: el servidor responde${simulado ? ' (respuestas simuladas)' : ''}.'
-          : 'El servidor responde, pero dice «${salud.estado}».';
-    } on ApiException catch (e) {
-      texto = pistaConexion(e.codigo);
-    } catch (_) {
-      texto = pistaConexion('');
-    }
-    if (!mounted) return;
-    Hapticos.toque();
-    setState(() {
-      _probando = false;
-      _resultado = texto;
-      _bien = bien;
-    });
-  }
+  final VoidCallback onBorrarTodo;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final resultado = _resultado;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OutlinedButton.icon(
-          onPressed: _probando ? null : _probar,
-          icon: _probando
-              ? const SizedBox.square(
-                  dimension: Espacio.m + Espacio.xs,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                )
-              : const Icon(Icons.wifi_tethering_rounded),
-          label: Text(_probando ? 'Probando…' : 'Probar la conexión'),
-        ),
-        AnimatedSize(
-          duration: duracionTamano(context, Duracion.media),
-          alignment: Alignment.topCenter,
-          child: resultado == null
-              ? const SizedBox(width: double.infinity)
-              : Padding(
-                  padding: const EdgeInsets.only(top: Espacio.s),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IconoTuTurno(_bien ? TuIcono.check : TuIcono.cruz, decorativo: true),
-                        const SizedBox(width: Espacio.s),
-                        Expanded(
-                          child: Text(
-                            resultado,
-                            key: const Key('resultado-conexion'),
-                            style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurface),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-        ),
-      ],
+    return SeccionAjustes(
+      icono: const IconoTuTurno(TuIcono.candado, size: Espacio.xl + Espacio.xs, decorativo: true),
+      titulo: 'Tus datos en este móvil',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(textoQueSeGuarda, style: tema.textTheme.bodyLarge),
+          const SizedBox(height: Espacio.s),
+          Text(textoQueSale, style: tema.textTheme.bodyLarge),
+          const SizedBox(height: Espacio.m),
+          OutlinedButton.icon(
+            onPressed: onBorrarTodo,
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: const Text('Borrar todo lo de este móvil'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -603,7 +528,7 @@ class _ProbarConexionState extends ConsumerState<_ProbarConexion> {
 class _Pie extends StatelessWidget {
   const _Pie({this.onPulsacionLarga});
 
-  /// Descubre las opciones del servidor (para preparar la demo en una APK release).
+  /// Descubre la parte del equipo (para preparar la demo, también en una APK release).
   final VoidCallback? onPulsacionLarga;
 
   @override
@@ -611,6 +536,7 @@ class _Pie extends StatelessWidget {
     final tema = Theme.of(context);
     final color = tema.colorScheme.onSurfaceVariant;
     return GestureDetector(
+      key: const Key('pie-ajustes'),
       onLongPress: onPulsacionLarga,
       behavior: HitTestBehavior.opaque,
       child: Row(
@@ -619,10 +545,7 @@ class _Pie extends StatelessWidget {
           const IconoTuTurno(TuIcono.candado, size: Espacio.m + Espacio.xs, decorativo: true),
           const SizedBox(width: Espacio.s),
           Flexible(
-            child: Text(
-              'Todo esto se guarda solo en tu móvil.',
-              style: tema.textTheme.bodyMedium?.copyWith(color: color),
-            ),
+            child: Text(textoPieAjustes, style: tema.textTheme.bodyMedium?.copyWith(color: color)),
           ),
         ],
       ),
@@ -639,7 +562,7 @@ class _AcercaDe extends StatelessWidget {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
     final secundario = tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant);
-    return _Papel(
+    return PapelAjustes(
       child: Padding(
         padding: const EdgeInsets.all(Espacio.l),
         child: Column(
@@ -681,51 +604,6 @@ class _AcercaDe extends StatelessWidget {
             ),
             const SizedBox(height: Espacio.s),
             Text('DATAthon DATAfórum Justicia 2026 · Reto 2: infancia y juventud.', style: secundario),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Solo en depuración o con DEMO=true: la galería de iconos y de Tut, para revisarlos en el móvil.
-class _ParaElEquipo extends StatelessWidget {
-  const _ParaElEquipo();
-
-  void _abrirGaleria(BuildContext context) {
-    Hapticos.seleccion();
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => Scaffold(
-          appBar: AppBar(title: const Text('Iconos de TuTurno')),
-          body: const GaleriaIconos(animada: true),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return _Papel(
-      child: Padding(
-        padding: const EdgeInsets.all(Espacio.l),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Semantics(
-              header: true,
-              child: Text(
-                'Para el equipo (demo)',
-                style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-            const SizedBox(height: Espacio.s),
-            OutlinedButton.icon(
-              onPressed: () => _abrirGaleria(context),
-              icon: const IconoTuTurno(TuIcono.estrella, estilo: EstiloIcono.mono, decorativo: true),
-              label: const Text('Ver los iconos y a Tut'),
-            ),
           ],
         ),
       ),

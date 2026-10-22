@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../modelos.dart';
 import 'comunes.dart';
@@ -141,7 +142,7 @@ class _VistaVfState extends State<VistaVf> {
                 child: _BotonVf(
                   key: const ValueKey('vf-verdadero'),
                   texto: 'Verdadero',
-                  icono: Icons.thumb_up_alt_rounded,
+                  icono: TuIcono.check,
                   estado: _estado(true),
                   onTap: widget.revisado ? null : () => _elegir(true),
                 ),
@@ -155,7 +156,7 @@ class _VistaVfState extends State<VistaVf> {
                 child: _BotonVf(
                   key: const ValueKey('vf-falso'),
                   texto: 'Falso',
-                  icono: Icons.thumb_down_alt_rounded,
+                  icono: TuIcono.cruz,
                   estado: _estado(false),
                   onTap: widget.revisado ? null : () => _elegir(false),
                 ),
@@ -172,7 +173,7 @@ class _BotonVf extends StatelessWidget {
   const _BotonVf({super.key, required this.texto, required this.icono, required this.estado, this.onTap});
 
   final String texto;
-  final IconData icono;
+  final TuIcono icono;
   final EstadoOpcion estado;
   final VoidCallback? onTap;
 
@@ -187,9 +188,10 @@ class _BotonVf extends StatelessWidget {
       EstadoOpcion.incorrecta => esquema.tertiary,
       _ => null,
     };
+    // A una tinta (nunca la cruz roja de error): fallar no va en rojo.
     final iconoFinal = switch (estado) {
-      EstadoOpcion.correcta => Icons.check_circle_rounded,
-      EstadoOpcion.incorrecta => Icons.lightbulb_rounded,
+      EstadoOpcion.correcta => TuIcono.check,
+      EstadoOpcion.incorrecta => TuIcono.idea,
       _ => icono,
     };
     final forma = BorderRadius.circular(Radios.l);
@@ -237,11 +239,13 @@ class _BotonVf extends StatelessWidget {
                       AnimatedSwitcher(
                         duration: duracion(context, Duracion.corta),
                         transitionBuilder: (hijo, animacion) => ScaleTransition(scale: animacion, child: hijo),
-                        child: Icon(
+                        child: IconoTuTurno(
                           iconoFinal,
-                          key: ValueKey(iconoFinal),
+                          key: ValueKey('$estado-$iconoFinal'),
+                          estilo: EstiloIcono.mono,
                           size: Espacio.xl + Espacio.xs,
                           color: acento ?? esquema.onSurfaceVariant,
+                          decorativo: true,
                         ),
                       ),
                       const SizedBox(height: Espacio.s),

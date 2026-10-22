@@ -7,10 +7,13 @@ import '../../../tema.dart';
 import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/modulos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
+import '../widgets/compositor.dart' show ProveedorChat;
+import '../widgets/estilo.dart';
 import 'textos_agente.dart';
 
-// Hoja amable para el perfil del agente: edad, tipo de proceso, papel y momento (las variables de la sección 8.6).
-// Es opcional y se puede saltar. Nunca pregunta qué ha pasado. Se guarda en el móvil (entradaProvider).
+// Hoja amable para el perfil: edad, tipo de proceso, papel y momento (las variables de la sección 8.6, que van a la
+// sesión de voz y al modo texto). Es opcional y se puede saltar. Nunca pregunta qué ha pasado. Se guarda en el móvil
+// (entradaProvider) y viaja, sin nombre, con las preguntas.
 
 /// La hoja ya ha salido en esta ejecución de la app (solo en memoria): si se salta, no vuelve a salir hasta la próxima
 /// vez que se abra la app.
@@ -21,6 +24,16 @@ class PerfilPreguntadoNotifier extends Notifier<bool> {
   bool build() => false;
 
   void marcar() => state = true;
+}
+
+/// La primera vez que se entra en Pregunta en esta ejecución de la app, si no hay perfil, la hoja (se puede saltar).
+/// Lo elegido se guarda. Termina cuando se cierra la hoja (o enseguida, si no hace falta).
+Future<void> preguntarPerfilSiHaceFalta(BuildContext context, WidgetRef ref, {RolProceso? situacion}) async {
+  if (!ref.read(entradaProvider).vacia || ref.read(perfilPreguntadoProvider)) return;
+  ref.read(perfilPreguntadoProvider.notifier).marcar();
+  final elegida = await mostrarHojaPerfil(context, situacion: situacion);
+  if (!context.mounted) return;
+  if (elegida != null && !elegida.vacia) await ref.read(entradaProvider.notifier).guardar(elegida);
 }
 
 /// Abre la hoja con [inicial] ya marcado. Devuelve lo elegido con «Listo», o null si se salta o se cierra. Con
@@ -61,8 +74,8 @@ class _HojaPerfilState extends State<HojaPerfil> {
     null => null,
   };
 
-  /// «Investigado» solo a partir de 14 años.
-  bool get _puedeSerInvestigado => _edad == null || _edad! >= 14;
+  /// «Investigado» solo a partir de 14 años ([puedeSerInvestigado], la misma regla que «Tu ticket»).
+  bool get _puedeSerInvestigado => puedeSerInvestigado(_edad);
 
   void _elegirEdad(int? edad, {bool noDecir = false}) {
     setState(() {
@@ -77,10 +90,7 @@ class _HojaPerfilState extends State<HojaPerfil> {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final roles = [
-      for (final rol in RolEntrada.values)
-        if (rol != RolEntrada.investigado || _puedeSerInvestigado) rol,
-    ];
+    final roles = rolesPara(_edad);
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.92),
       child: Center(
@@ -279,6 +289,63 @@ class _Grupo extends StatelessWidget {
               child: Text(ayuda!, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// La línea del perfil arriba de la vista inicial: «Te explico para: 13 años · Penal · Víctima · Durante» y «Cambiar»
+/// (o, sin perfil, «Elegir»). Abre la hoja; con el agente de voz, cambiar el perfil abre otra sesión (las variables
+/// no cambian a mitad).
+class ResumenPerfil extends ConsumerWidget {
+  const ResumenPerfil({super.key, required this.proveedor});
+
+  final ProveedorChat proveedor;
+
+  Future<void> _cambiar(BuildContext context, WidgetRef ref) async {
+    Hapticos.toque();
+    final chat = ref.read(proveedor.notifier);
+    final elegida = await mostrarHojaPerfil(
+      context,
+      inicial: ref.read(entradaProvider),
+      situacion: ref.read(proveedor).situacion,
+    );
+    if (elegida == null || !context.mounted) return;
+    await ref.read(entradaProvider.notifier).guardar(elegida);
+    await chat.cambiarPerfil();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    final resumen = resumenPerfil(ref.watch(entradaProvider));
+    return Material(
+      key: const Key('resumen-perfil'),
+      color: tinteMarca(esquema),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radios.m),
+        side: BorderSide(color: esquema.primary.withValues(alpha: 0.3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(Espacio.m, Espacio.s, Espacio.xs, Espacio.s),
+        child: Row(
+          children: [
+            IconoTuTurno(TuIcono.miSituacion, estilo: EstiloIcono.mono, color: esquema.primary, decorativo: true),
+            const SizedBox(width: Espacio.s + Espacio.xs),
+            Expanded(
+              child: Text(
+                textoResumenPerfil(resumen),
+                style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurface, fontWeight: FontWeight.w700),
+              ),
+            ),
+            TextButton(
+              key: const Key('cambiar-perfil'),
+              onPressed: () => _cambiar(context, ref),
+              child: Text(resumen.isEmpty ? 'Elegir' : 'Cambiar'),
+            ),
+          ],
+        ),
       ),
     );
   }

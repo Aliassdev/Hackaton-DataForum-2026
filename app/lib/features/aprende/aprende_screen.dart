@@ -6,16 +6,20 @@ import '../../core/progreso.dart';
 import '../../core/providers.dart';
 import '../../tema.dart';
 import '../../widgets/estados.dart';
+import '../../widgets/iconos/iconos.dart';
+import '../../widgets/movimiento/contador_flip.dart';
 import '../../widgets/tuturno_scaffold.dart';
 import 'curso.dart';
 import 'modelos.dart';
+import 'textos.dart';
 import 'widgets/comunes.dart';
 import 'widgets/mapa.dart';
 
 export 'leccion_screen.dart' show LeccionScreen;
 
-// Aprende (sección 4.3): mapa de unidades con las lecciones como un camino de nodos, XP y racha arriba,
-// barras de dominio por concepto (BKT) y «Practicar», que elige ejercicios según lo que te cuesta más (10.6).
+// Aprende (sección 4.3): el mapa de salas (unidades) con las lecciones como un camino de tickets de turno, XP y racha
+// arriba, balanzas de dominio por concepto (BKT) y «Practicar», que elige ejercicios según lo que te cuesta más (10.6).
+// La racha es amable (producto, apartado 5.5): un día de descanso cada semana y nunca se habla de perderla.
 
 class AprendeScreen extends ConsumerWidget {
   const AprendeScreen({super.key});
@@ -38,11 +42,12 @@ class AprendeScreen extends ConsumerWidget {
               ? EstadoVacio(
                   key: const ValueKey('vacio'),
                   icono: Icons.auto_stories_rounded,
+                  tuIcono: TuIcono.aprende,
                   titulo: 'Las lecciones están en camino',
                   mensaje: 'Muy pronto podrás aprender aquí tus derechos, paso a paso. Mientras, puedes preguntar tus dudas.',
                   accion: FilledButton.icon(
                     onPressed: () => context.push('/pregunta'),
-                    icon: const Icon(Icons.record_voice_over_rounded),
+                    icon: const IconoTuTurno(TuIcono.pregunta, estilo: EstiloIcono.mono, decorativo: true),
                     label: const Text('Ir a Pregunta'),
                   ),
                 )
@@ -120,8 +125,9 @@ class _MapaState extends ConsumerState<_Mapa> {
                 child: Container(
                   width: Espacio.xxl + Espacio.m,
                   height: Espacio.xxl + Espacio.m,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(shape: BoxShape.circle, color: esquema.surfaceContainerHighest),
-                  child: Icon(Icons.lock_rounded, size: Espacio.xl, color: esquema.onSurfaceVariant),
+                  child: const IconoTuTurno(TuIcono.candado, size: Espacio.xl, decorativo: true),
                 ),
               ),
               const SizedBox(height: Espacio.m),
@@ -197,8 +203,7 @@ class _MapaState extends ConsumerState<_Mapa> {
                 orden: orden++,
                 child: _Cabecera(
                   xp: progreso.xp,
-                  racha: rachaVisible(progreso, ahora),
-                  rachaHoy: rachaDeHoy(progreso, ahora),
+                  racha: estadoRacha(progreso, ahora),
                   hechas: hechas,
                   total: curso.lecciones.length,
                   siguiente: siguiente,
@@ -252,12 +257,12 @@ class _MapaState extends ConsumerState<_Mapa> {
   }
 }
 
-/// Cabecera con el degradado de Aprende: XP, racha, lecciones hechas y el botón para seguir.
+/// Cabecera con el degradado de Aprende: XP (como un panel de turnos), racha amable, lecciones hechas y el botón
+/// «Tu turno», con la lección que toca debajo.
 class _Cabecera extends StatelessWidget {
   const _Cabecera({
     required this.xp,
     required this.racha,
-    required this.rachaHoy,
     required this.hechas,
     required this.total,
     required this.siguiente,
@@ -265,8 +270,7 @@ class _Cabecera extends StatelessWidget {
   });
 
   final int xp;
-  final int racha;
-  final bool rachaHoy;
+  final EstadoRacha racha;
   final int hechas;
   final int total;
   final Leccion? siguiente;
@@ -279,9 +283,7 @@ class _Cabecera extends StatelessWidget {
     final texto = sobreColor(colores.first);
     final pegatina = colorPegatina(context);
     final siguiente = this.siguiente;
-    final mensajeRacha = racha == 0
-        ? 'Completa una lección para empezar tu racha.'
-        : (rachaHoy ? '¡Hoy ya has sumado a tu racha!' : 'Haz una lección hoy para no perder tu racha.');
+    final dias = racha.dias;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: degradadoAprende(context),
@@ -319,17 +321,27 @@ class _Cabecera extends StatelessWidget {
                   Wrap(
                     spacing: Espacio.s,
                     runSpacing: Espacio.s,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       PastillaDato(
-                        icono: Icons.bolt_rounded,
-                        texto: ContadorAnimado(valor: xp, sufijo: ' XP'),
+                        key: const ValueKey('pastilla-xp'),
+                        tuIcono: TuIcono.xp,
+                        // Los puntos, como el panel de turnos: al volver de una lección, las cifras giran.
+                        texto: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ContadorFlip(valor: xp, estilo: tema.textTheme.labelLarge),
+                            const Text(' XP'),
+                          ],
+                        ),
                         semantica: '$xp puntos de experiencia',
                         colorTexto: texto,
                       ),
                       PastillaDato(
-                        icono: Icons.local_fire_department_rounded,
-                        texto: Text(racha == 1 ? '1 día' : '$racha días'),
-                        semantica: 'Racha de $racha ${racha == 1 ? 'día' : 'días'}',
+                        key: const ValueKey('pastilla-racha'),
+                        tuIcono: TuIcono.racha,
+                        texto: Text(textoDias(dias), style: estiloCifras(tema.textTheme.labelLarge)),
+                        semantica: 'Racha de ${textoDias(dias)}',
                         colorTexto: texto,
                       ),
                     ],
@@ -345,7 +357,11 @@ class _Cabecera extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: Espacio.xs),
-                  Text(mensajeRacha, style: tema.textTheme.bodyLarge?.copyWith(color: texto)),
+                  Text(
+                    textoRacha(racha),
+                    key: const ValueKey('texto-racha'),
+                    style: tema.textTheme.bodyLarge?.copyWith(color: texto),
+                  ),
                   const SizedBox(height: Espacio.m),
                   Row(
                     children: [
@@ -370,17 +386,44 @@ class _Cabecera extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: Espacio.l - Espacio.xs),
-                  FilledButton.icon(
+                  FilledButton(
                     key: const ValueKey('boton-seguir'),
                     // Amarillo sobre azul: la acción principal, como una pegatina de la marca.
-                    style: FilledButton.styleFrom(backgroundColor: pegatina.fondo, foregroundColor: pegatina.tinta),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: pegatina.fondo,
+                      foregroundColor: pegatina.tinta,
+                      padding: const EdgeInsets.symmetric(horizontal: Espacio.l, vertical: Espacio.s + Espacio.xs),
+                    ),
                     onPressed: onSeguir,
-                    icon: Icon(siguiente == null ? Icons.fitness_center_rounded : Icons.play_arrow_rounded),
-                    label: Text(
-                      siguiente == null
-                          ? 'Repasar lo aprendido'
-                          : '${hechas == 0 ? 'Empezar' : 'Seguir'}: ${siguiente.titulo}',
-                      textAlign: TextAlign.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (siguiente == null)
+                          const Icon(Icons.fitness_center_rounded)
+                        else
+                          IconoTuTurno(
+                            TuIcono.ticket,
+                            estilo: EstiloIcono.mono,
+                            color: pegatina.tinta,
+                            decorativo: true,
+                          ),
+                        const SizedBox(width: Espacio.s + Espacio.xs),
+                        Flexible(
+                          child: siguiente == null
+                              ? const Text('Repasar lo aprendido', textAlign: TextAlign.center)
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('Tu turno', textAlign: TextAlign.center),
+                                    Text(
+                                      siguiente.titulo,
+                                      textAlign: TextAlign.center,
+                                      style: tema.textTheme.bodyMedium?.copyWith(color: pegatina.tinta),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/core/voz/stt.dart';
 import 'package:tuturno/core/voz/tts.dart';
 import 'package:tuturno/features/aprende/modelos.dart';
+import 'package:tuturno/features/aprende/textos.dart';
 import 'package:tuturno/features/aprende/widgets/comunes.dart';
+import 'package:tuturno/features/aprende/widgets/correccion.dart';
 import 'package:tuturno/features/aprende/widgets/ejercicio_dilo.dart';
 import 'package:tuturno/features/aprende/widgets/ejercicio_eleccion.dart';
 import 'package:tuturno/features/aprende/widgets/ejercicio_emparejar.dart';
 import 'package:tuturno/features/aprende/widgets/ejercicio_ordenar.dart';
 import 'package:tuturno/features/aprende/widgets/opcion.dart';
 import 'package:tuturno/tema.dart';
+import 'package:tuturno/widgets/iconos/iconos.dart';
 
 import 'ayudantes.dart';
+
+/// Los iconos de TuTurno de un tipo que hay en pantalla.
+Finder _tuIcono(TuIcono icono) => find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == icono);
 
 const _eleccion = EjercicioEleccion(
   id: 'E-001',
@@ -76,8 +83,11 @@ Future<void> _montar(
   FakeStt? stt,
   FakeTts? tts,
   Brightness brillo = Brightness.light,
+  Size tamano = movil,
+  double escalaTexto = 1,
+  bool desplazable = true,
 }) async {
-  tester.view.physicalSize = movil * tester.view.devicePixelRatio;
+  tester.view.physicalSize = tamano * tester.view.devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(
     ProviderScope(
@@ -86,8 +96,14 @@ Future<void> _montar(
       overrides: [sttProvider.overrideWithValue(stt ?? FakeStt()), ttsProvider.overrideWithValue(tts ?? FakeTts())],
       child: MaterialApp(
         theme: temaTuTurno(brillo),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(escalaTexto)),
+          child: child!,
+        ),
         home: Scaffold(
-          body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: ejercicio),
+          body: desplazable
+              ? SingleChildScrollView(padding: const EdgeInsets.all(16), child: ejercicio)
+              : Align(alignment: Alignment.bottomCenter, child: ejercicio),
         ),
       ),
     ),
@@ -165,8 +181,9 @@ void main() {
       expect(find.bySemanticsLabel(RegExp(r'10 años\. Tu respuesta, no es la correcta')), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp(r'12 años\. Respuesta correcta')), findsOneWidget);
       semantica.dispose();
-      // Fallar no va en rojo (el rojo es de Ayuda): una bombilla, como en Vive el caso.
-      expect(find.byIcon(Icons.lightbulb_rounded), findsOneWidget);
+      // Fallar no va en rojo (el rojo es de Ayuda): una bombilla de TuTurno, como en Vive el caso.
+      expect(_tuIcono(TuIcono.idea), findsOneWidget);
+      expect(_tuIcono(TuIcono.cruz), findsNothing);
       expect(find.byIcon(Icons.close_rounded), findsNothing);
       final tarjeta = tester.widget<TarjetaOpcion>(find.byKey(const ValueKey('opcion-0')));
       expect(tarjeta.estado, EstadoOpcion.incorrecta);
@@ -208,7 +225,9 @@ void main() {
       expect(find.bySemanticsLabel('Falso. Respuesta correcta'), findsOneWidget);
       expect(find.bySemanticsLabel('Verdadero. Tu respuesta, no es la correcta'), findsOneWidget);
       semantica.dispose();
-      expect(find.byIcon(Icons.lightbulb_rounded), findsOneWidget);
+      expect(_tuIcono(TuIcono.idea), findsOneWidget);
+      expect(_tuIcono(TuIcono.check), findsOneWidget);
+      expect(_tuIcono(TuIcono.cruz), findsNothing);
       expect(find.byIcon(Icons.cancel_rounded), findsNothing);
     });
   });
@@ -220,9 +239,12 @@ void main() {
       final inicial = barajar(4, semillaDe(_ordenar.id), evitarIdentidad: true);
       expect(_ordenar.esCorrecta(inicial), isFalse);
       expect(find.byTooltip('Subir «${_ordenar.pasos[inicial.first]}»'), findsOneWidget);
+      // Hasta mover algo no hay respuesta: se dice por qué aún no se puede comprobar (auditoría, P2-4).
+      expect(find.text(textoMueveUnaTarjeta), findsOneWidget);
 
       await responder(tester, _ordenar, bien: true);
       expect(_ordenar.esCorrecta(respuestas.last), isTrue);
+      expect(find.text(textoMueveUnaTarjeta), findsNothing);
       // En pantalla, de arriba abajo, en el orden correcto.
       final ys = [for (final p in _ordenar.pasos) tester.getTopLeft(find.text(p)).dy];
       expect(ys, orderedEquals([...ys]..sort()));
@@ -326,6 +348,8 @@ void main() {
       final respuestas = <String?>[];
       await _montar(tester, VistaDilo(ejercicio: _dilo, bloqueado: false, onRespuesta: respuestas.add));
       expect(find.text(_dilo.pregunta), findsOneWidget);
+      expect(find.text(textoDiloAyuda), findsOneWidget);
+      expect(find.text(textoDiloComprueba), findsOneWidget);
       await tester.enterText(campoDilo, 'Me escuchan');
       await tester.pump();
       expect(respuestas.last, isNull);
@@ -446,6 +470,53 @@ void main() {
       await _montar(tester, VistaDilo(ejercicio: _dilo, bloqueado: true, onRespuesta: (_) {}));
       expect(find.byKey(const ValueKey('micro-dilo')), findsNothing);
       expect(tester.widget<TextField>(campoDilo).readOnly, isTrue);
+    });
+  });
+
+  group('Panel de corrección', () {
+    testWidgets('con letra 1,6 en un móvil estrecho, el título no se parte y los puntos bajan de línea', (
+      tester,
+    ) async {
+      await _montar(
+        tester,
+        PanelCorreccion(tipo: TipoCorreccion.acierto, titulo: '¡Lo has clavado!', xp: 10, onContinuar: () {}),
+        tamano: const Size(320, 640),
+        escalaTexto: 1.6,
+        desplazable: false,
+      );
+      expect(tester.takeException(), isNull);
+      final titulo = find.byKey(const ValueKey('titulo-correccion'));
+      final parrafo = tester.renderObject<RenderParagraph>(
+        find.descendant(of: titulo, matching: find.byType(RichText)),
+      );
+      expect(parrafo.size.width, greaterThanOrEqualTo(parrafo.getMinIntrinsicWidth(double.infinity) - 0.5));
+      expect(find.text('+10 XP'), findsOneWidget);
+      expect(find.byKey(const ValueKey('tut-feliz')), findsOneWidget);
+    });
+
+    testWidgets('si se falla, Tut anima (nunca triste) y no hay rojo de error', (tester) async {
+      await _montar(
+        tester,
+        PanelCorreccion(tipo: TipoCorreccion.fallo, titulo: '¡Casi!', onContinuar: () {}),
+        desplazable: false,
+      );
+      expect(find.byKey(const ValueKey('tut-animo')), findsOneWidget);
+      expect(find.byKey(const ValueKey('tut-triste')), findsNothing);
+      expect(find.byWidgetPredicate((w) => w is MascotaTut && w.expresion == ExpresionTut.triste), findsNothing);
+    });
+
+    testWidgets('«Dilo» corregido en el móvil lo dice: «Corrección aproximada sin conexión»', (tester) async {
+      await _montar(
+        tester,
+        PanelCorreccion(
+          tipo: TipoCorreccion.fallo,
+          titulo: 'Vas por buen camino',
+          aproximada: true,
+          onContinuar: () {},
+        ),
+        desplazable: false,
+      );
+      expect(find.text(textoDiloAproximada), findsOneWidget);
     });
   });
 

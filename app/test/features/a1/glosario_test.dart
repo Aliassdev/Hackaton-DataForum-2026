@@ -94,7 +94,8 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'xyz');
       await tester.pumpAndSettle();
-      expect(find.text('Aún no tengo “xyz” en el glosario'), findsOneWidget);
+      // Con las comillas de la app («»), nunca las inglesas.
+      expect(find.text('Aún no tengo «xyz» en el glosario'), findsOneWidget);
 
       await tester.tap(find.text('Pregúntalo'));
       await esperarTransicion(tester);
@@ -281,7 +282,10 @@ void main() {
       expect(iconoDeTermino('Coordinador de bienestar y protección'), TuIcono.personaConfianza);
       expect(iconoDeTermino('Víctima'), TuIcono.escudo);
       expect(iconoDeTermino('Orden de alejamiento'), TuIcono.escudo);
-      expect(iconoDeTermino('Citación'), TuIcono.fuente);
+      expect(iconoDeTermino('Citación'), TuIcono.citacion);
+      expect(iconoDeTermino('Denuncia'), TuIcono.fuente);
+      expect(iconoDeTermino('Derecho a ser oído'), TuIcono.turnoPalabra);
+      expect(iconoDeTermino('Audiencia del menor'), TuIcono.turnoPalabra);
       expect(iconoDeTermino('Fiscalía de Menores'), TuIcono.juzgado);
       expect(iconoDeTermino('Persona investigada'), TuIcono.juzgado);
       expect(iconoDeTermino('Derecho a la propia imagen'), TuIcono.candado);

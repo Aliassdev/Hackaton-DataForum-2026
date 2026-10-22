@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,23 +7,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuturno/app.dart';
 import 'package:tuturno/core/api/models.dart';
+import 'package:tuturno/core/entrada.dart' show EntradaNotifier;
 import 'package:tuturno/core/progreso.dart';
 import 'package:tuturno/features/ajustes/ajustes_screen.dart';
 import 'package:tuturno/features/aprende/aprende_screen.dart';
 import 'package:tuturno/features/ayuda/ayuda_screen.dart';
 import 'package:tuturno/features/glosario/glosario_screen.dart';
 import 'package:tuturno/features/inicio/bienvenida.dart';
+import 'package:tuturno/features/inicio/tu_camino.dart' show TuCamino;
 import 'package:tuturno/features/inicio/turno_del_dia.dart';
 import 'package:tuturno/features/inicio/widgets/saludo.dart';
 import 'package:tuturno/features/inicio/widgets/ticket_del_dia.dart';
 import 'package:tuturno/tema.dart';
 import 'package:tuturno/widgets/ayuda_button.dart';
+import 'package:tuturno/widgets/fuente_chip.dart';
 import 'package:tuturno/widgets/iconos/iconos.dart';
+import 'package:tuturno/widgets/justicia/fondo_justicia.dart';
 import 'package:tuturno/widgets/marca/marca.dart';
 import 'package:tuturno/widgets/modulos.dart';
 import 'package:tuturno/widgets/movimiento/movimiento.dart';
 import 'package:tuturno/features/juego/juego_screen.dart';
 import 'package:tuturno/features/pregunta/pregunta_screen.dart';
+import 'package:tuturno/features/situacion/papel.dart';
 import 'package:tuturno/features/situacion/situacion_screen.dart';
 
 import 'helpers.dart';
@@ -34,6 +40,24 @@ ProviderContainer _contenedor(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(TuTurnoApp)));
 
 String _progreso(Progreso progreso) => jsonEncode(progreso.toJson());
+
+/// El ticket de Pregunta guardado (lib/core/entrada.dart), con los valores de su `valor`.
+Map<String, Object> _entrada({String? rol, String? fase}) => {
+  EntradaNotifier.clave: jsonEncode({'edad': 13, 'procedimiento': 'penal', 'rol': rol, 'fase': fase}),
+};
+
+/// Textos de privacidad que no son ciertos hoy (auditoría P1-4).
+final _seBorra = RegExp(r'se borra|borramos|lo que hablamos', caseSensitive: false);
+
+/// Palabras de pérdida, que la racha amable no usa nunca.
+final _perder = RegExp(r'perd|pierd', caseSensitive: false);
+
+/// docs/MARCO_LEGAL.md, o null si no está (por ejemplo, si solo se copia app/). Con `DOCS=<carpeta>`, esa copia.
+String? _marcoLegal() {
+  final carpeta = Platform.environment['DOCS'];
+  final rutas = [if (carpeta != null) '$carpeta/MARCO_LEGAL.md', '../docs/MARCO_LEGAL.md', 'docs/MARCO_LEGAL.md'];
+  return rutas.map(File.new).where((f) => f.existsSync()).firstOrNull?.readAsStringSync();
+}
 
 void main() {
   group('Bienvenida', () {
@@ -65,10 +89,8 @@ void main() {
     });
 
     testWidgets('la segunda pantalla dice exactamente lo que acordamos (sección 4.1)', (tester) async {
-      expect(
-        mensajeIA,
-        'Soy una IA. No te pido tu nombre y lo que hablamos se borra. Si estás en peligro, pulsa Ayuda.',
-      );
+      // Solo lo que es cierto hoy (auditoría P1-4): nada de que lo que hablamos «se borra».
+      expect(mensajeIA, 'Soy una IA. No te pido tu nombre ni crear una cuenta. Si estás en peligro, pulsa Ayuda.');
       await arrancarApp(tester, bienvenidaVista: false);
       await tester.tap(find.text('Siguiente'));
       await tester.pumpAndSettle();
@@ -124,6 +146,85 @@ void main() {
       await arrancarApp(tester);
       expect(find.text('¿Qué es TuTurno?'), findsNothing);
       expect(find.byType(TarjetaModulo), findsNWidgets(3));
+    });
+
+    testWidgets('la primera pantalla enseña el palacio en color debajo del logotipo, con tu turno en el panel', (
+      tester,
+    ) async {
+      await arrancarApp(tester, bienvenidaVista: false);
+      final palacio = find.byType(FondoJusticia);
+      expect(palacio, findsOneWidget);
+      expect(tester.widget<FondoJusticia>(palacio).variante, VarianteFondoJusticia.color);
+      expect(tester.getTopLeft(palacio).dy, greaterThan(tester.getBottomLeft(find.byType(IntroMarca)).dy));
+      expect(tester.getBottomLeft(palacio).dy, lessThan(tester.getTopLeft(find.text('¿Qué es TuTurno?')).dy));
+      // De lado a lado: se sale del margen de la página.
+      expect(tester.getSize(palacio).width, movil.width);
+      // El panel de encima de la puerta gira hasta tu número de turno (el 1, el primer día).
+      final panel = tester.widget<PanelFlip>(find.descendant(of: palacio, matching: find.byType(PanelFlip)));
+      expect(panel.texto, '01');
+      expect(panel.fondo, ColoresMarca.papel);
+      expect(panel.color, ColoresMarca.azulNoche);
+    });
+
+    testWidgets('dice que tienes derecho a que te escuchen, con su fuente: LO 1/1996, art. 9.1', (tester) async {
+      await arrancarApp(tester, bienvenidaVista: false);
+      expect(
+        textoDerechoASerOido,
+        'Cuando algo te afecta, tienes derecho a que te escuchen, tengas la edad que tengas. TuTurno te ayuda a '
+        'entender para que puedas hablar en tu turno.',
+      );
+      expect(find.text(textoDerechoASerOido), findsOneWidget);
+      final chip = tester.widget<FuenteChip>(find.byType(FuenteChip));
+      expect(chip.fuente.norma, 'LO 1/1996');
+      expect(chip.fuente.articulo, '9.1');
+      expect(find.text('LO 1/1996 · art. 9.1'), findsOneWidget);
+
+      await pulsar(tester, find.byType(FuenteChip));
+      expect(find.text('De dónde sale la respuesta'), findsOneWidget);
+      expect(find.text('Ley de protección jurídica del menor'), findsOneWidget);
+    });
+
+    test('la fuente del derecho a que te escuchen está en docs/MARCO_LEGAL.md', () {
+      final marco = _marcoLegal();
+      if (marco == null) {
+        markTestSkipped('No está docs/MARCO_LEGAL.md');
+        return;
+      }
+      expect(marco, contains('### LO 1/1996, art. 9.1'));
+      expect(marco, contains('sin discriminación alguna por edad'));
+    });
+
+    testWidgets('en un móvil pequeño, un degradado abajo avisa de que hay más y se va al llegar al final', (
+      tester,
+    ) async {
+      await arrancarApp(tester, bienvenidaVista: false, tamano: const Size(360, 640));
+      double opacidad() =>
+          tester.widget<AnimatedOpacity>(find.byKey(const ValueKey('degradado-hay-mas')).first).opacity;
+      expect(opacidad(), 1);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      expect(opacidad(), 0);
+      expect(find.text(Modulo.pregunta.titulo), findsOneWidget);
+    });
+  });
+
+  group('Textos ciertos', () {
+    testWidgets('ningún texto de la bienvenida ni del inicio dice que lo que hablamos se borra', (tester) async {
+      await arrancarApp(tester, bienvenidaVista: false);
+      expect(find.textContaining(_seBorra), findsNothing, reason: 'bienvenida 1');
+      await tester.tap(find.text('Siguiente'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(_seBorra), findsNothing, reason: 'bienvenida 2');
+      expect(find.text(textoSinCuenta), findsOneWidget);
+      expect(
+        textoSinCuenta,
+        'No hace falta registrarte. Tu móvil no guarda la conversación de Pregunta: al salir, desaparece de la pantalla.',
+      );
+      await tester.tap(find.text('Empezar'));
+      await tester.pumpAndSettle();
+      // El inicio entero (la portada se construye completa: es un SingleChildScrollView).
+      expect(find.textContaining(_seBorra), findsNothing, reason: 'inicio');
+      expect(find.text(mensajeIA), findsOneWidget);
     });
   });
 
@@ -243,7 +344,9 @@ void main() {
         overrides: [relojProvider.overrideWithValue(() => _tarde)],
       );
       final pase = find.byType(PaseProgreso);
-      expect(find.descendant(of: pase, matching: find.text('0')), findsOneWidget);
+      // Racha amable: en vez de «0 días», una invitación.
+      expect(find.descendant(of: pase, matching: find.text(PaseProgreso.empiezaHoy)), findsOneWidget);
+      expect(find.descendant(of: pase, matching: find.text('0')), findsNothing);
       expect(find.descendant(of: pase, matching: find.text('5')), findsNothing);
     });
 
@@ -278,6 +381,136 @@ void main() {
       final pantalla = tester.widget<SituacionScreen>(find.byType(SituacionScreen));
       expect(pantalla.rol, RolProceso.victima);
       expect(find.text('Pregunta como víctima'), findsOneWidget);
+    });
+
+    testWidgets('Mi situación es «tu guía»: el expediente y el talón «TU GUÍA», nunca «tu expediente»', (tester) async {
+      await arrancarApp(tester);
+      final ticket = find.ancestor(of: find.text('Mi situación'), matching: find.byType(TicketTuTurno));
+      final icono = tester.widget<IconoTuTurno>(find.descendant(of: ticket, matching: find.byType(IconoTuTurno)));
+      expect(icono.icono, TuIcono.expediente);
+      expect(find.descendant(of: ticket, matching: find.text('TU')), findsOneWidget);
+      expect(find.descendant(of: ticket, matching: find.text('GUÍA')), findsOneWidget);
+      expect(find.textContaining(RegExp('tu expediente', caseSensitive: false)), findsNothing);
+    });
+
+    testWidgets('con tu papel en el ticket, Mi situación es «Tu camino» (sin decir el papel) y lleva directo', (
+      tester,
+    ) async {
+      await arrancarApp(tester, preferencias: _entrada(rol: 'victima'));
+      expect(find.text(TuCamino.tituloNeutro), findsOneWidget);
+      expect(find.text('MI SITUACIÓN'), findsOneWidget);
+      expect(find.text(TuCamino.descripcionNeutra), findsOneWidget);
+      // Móvil compartido: el ticket del inicio no dice el papel a quien lo mire.
+      final ticket = find.ancestor(of: find.text(TuCamino.tituloNeutro), matching: find.byType(TicketTuTurno));
+      expect(find.descendant(of: ticket, matching: find.textContaining('íctima')), findsNothing);
+
+      await pulsar(tester, find.text(TuCamino.tituloNeutro));
+      // Sin la hoja de elegir papel: directo a la línea de la víctima.
+      expect(find.text('¿Qué papel tienes en el caso?'), findsNothing);
+      final pantalla = tester.widget<SituacionScreen>(find.byType(SituacionScreen));
+      expect(pantalla.rolId, 'victima');
+      expect(pantalla.rol, RolProceso.victima);
+    });
+
+    testWidgets('con el papel y la fase en el ticket, el inicio no dice ninguno de los dos', (tester) async {
+      await arrancarApp(
+        tester,
+        preferencias: _entrada(rol: 'investigado', fase: 'durante'),
+      );
+      expect(find.text(TuCamino.tituloNeutro), findsOneWidget);
+      expect(find.text(PapelSituacion.investigado.tituloCamino), findsNothing);
+      final ticket = find.ancestor(of: find.text(TuCamino.tituloNeutro), matching: find.byType(TicketTuTurno));
+      expect(find.descendant(of: ticket, matching: find.textContaining('nvestig')), findsNothing);
+      expect(find.descendant(of: ticket, matching: find.textContaining('Durante')), findsNothing);
+    });
+
+    testWidgets('escuchado en familia lleva a su propia línea, /situacion/escuchado_familia', (tester) async {
+      await arrancarApp(tester, preferencias: _entrada(rol: 'escuchado_familia'));
+      const titulo = TuCamino.tituloNeutro;
+      expect(find.text(titulo), findsOneWidget);
+      await pulsar(tester, find.text(titulo));
+      expect(tester.widget<SituacionScreen>(find.byType(SituacionScreen)).rolId, 'escuchado_familia');
+    });
+
+    testWidgets('con «No lo sé» (o sin ticket), Mi situación abre el selector de siempre', (tester) async {
+      await arrancarApp(tester, preferencias: _entrada(rol: 'no_lo_se'));
+      expect(find.textContaining('Tu camino'), findsNothing);
+      await pulsar(tester, find.text('Mi situación'));
+      expect(find.text('¿Qué papel tienes en el caso?'), findsOneWidget);
+      expect(find.byType(SituacionScreen), findsNothing);
+    });
+
+    testWidgets('el día de tu cita, el «modo día» en la portada, sin decir el papel ni dónde es', (tester) async {
+      await arrancarApp(
+        tester,
+        preferencias: {
+          ..._entrada(rol: 'victima'),
+          'mi_situacion': jsonEncode({'fecha': '2026-10-22', 'hora': '12:30'}),
+        },
+        overrides: [relojProvider.overrideWithValue(() => _tarde)],
+      );
+      expect(find.text('Hoy es tu día'), findsOneWidget);
+      expect(find.textContaining('A las 12:30.'), findsOneWidget);
+      // Ni el papel ni dónde es la cita.
+      final tarjeta = find.ancestor(of: find.text('Hoy es tu día'), matching: find.byType(TicketTuTurno));
+      expect(find.descendant(of: tarjeta, matching: find.textContaining('íctima')), findsNothing);
+      expect(find.descendant(of: tarjeta, matching: find.textContaining('juzgado')), findsNothing);
+    });
+
+    testWidgets('los días de antes de la cita, la portada no la anuncia', (tester) async {
+      await arrancarApp(
+        tester,
+        preferencias: {
+          ..._entrada(rol: 'victima'),
+          'mi_situacion': jsonEncode({'fecha': '2026-10-24'}),
+        },
+        overrides: [relojProvider.overrideWithValue(() => _tarde)],
+      );
+      expect(find.text('Hoy es tu día'), findsNothing);
+      expect(find.text('Tu cita'), findsNothing);
+      expect(find.textContaining('Faltan'), findsNothing);
+    });
+
+    testWidgets('con tu papel, Tut te recuerda tu camino en el saludo (sin decir cuál es)', (tester) async {
+      await arrancarApp(
+        tester,
+        preferencias: _entrada(rol: 'victima'),
+        overrides: [relojProvider.overrideWithValue(() => _tarde)],
+      );
+      expect(find.text(SaludoTut.fraseCamino), findsOneWidget);
+      expect(find.descendant(of: find.byType(SaludoTut), matching: find.textContaining('víctima')), findsNothing);
+    });
+
+    testWidgets('con racha 0 se ve «¡Empieza hoy!» y «Cómo se ganan» explica el descanso de cada semana', (
+      tester,
+    ) async {
+      await arrancarApp(tester, overrides: [relojProvider.overrideWithValue(() => _tarde)]);
+      final pase = find.byType(PaseProgreso);
+      expect(find.descendant(of: pase, matching: find.text('¡Empieza hoy!')), findsOneWidget);
+      expect(find.descendant(of: pase, matching: find.text('0')), findsNothing);
+      expect(find.descendant(of: pase, matching: find.text('días')), findsNothing);
+      expect(find.textContaining(_perder), findsNothing);
+
+      await tester.tap(pase);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('tienes un día de descanso cada semana'), findsOneWidget);
+      expect(find.textContaining('tus puntos nunca bajan'), findsOneWidget);
+      expect(find.textContaining(_perder), findsNothing);
+    });
+
+    testWidgets('sin racha en marcha, «Tu progreso» recuerda tu mejor racha (sin reñir)', (tester) async {
+      await arrancarApp(
+        tester,
+        preferencias: {
+          'progreso': _progreso(Progreso(xp: 60, racha: 5, mejorRacha: 5, ultimoDiaConLeccion: DateTime(2026, 10, 18))),
+        },
+        overrides: [relojProvider.overrideWithValue(() => _tarde)],
+      );
+      expect(find.text('¡Empieza hoy!'), findsOneWidget);
+      await tester.tap(find.byType(PaseProgreso));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Tu mejor racha: 5 días.'), findsOneWidget);
+      expect(find.textContaining(_perder), findsNothing);
     });
 
     testWidgets('el engranaje abre Ajustes y la palabra del día abre su detalle', (tester) async {
@@ -316,7 +549,7 @@ void main() {
       await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -3000));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('Soy una IA. No te pido tu nombre y lo que hablamos se borra.'), findsOneWidget);
+      expect(find.text(mensajeIA), findsOneWidget);
     }
 
     testWidgets('cabe sin desbordarse con la letra de Ajustes a 1,3 en un móvil pequeño', (tester) async {
@@ -344,6 +577,38 @@ void main() {
         overrides: [relojProvider.overrideWithValue(() => _tarde)],
       );
       await recorrerSinDesbordes(tester);
+    });
+
+    testWidgets('cabe a 1,3 en un móvil pequeño con tu camino y la fase (investigado, después)', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await arrancarApp(
+        tester,
+        preferencias: {
+          ..._entrada(rol: 'investigado', fase: 'despues'),
+          'ajustes.tamano_texto': 1.3,
+        },
+        tamano: const Size(360, 640),
+      );
+      expect(find.text(TuCamino.tituloNeutro), findsOneWidget);
+      await recorrerSinDesbordes(tester);
+    });
+
+    testWidgets('la bienvenida cabe sin desbordarse con la letra a 1,6', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await arrancarApp(tester, bienvenidaVista: false, tamano: const Size(360, 640));
+      expect(tester.takeException(), isNull);
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -4000));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(FuenteChip), findsOneWidget);
+      await tester.tap(find.text('Siguiente'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.drag(find.byType(SingleChildScrollView).last, const Offset(0, -4000));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('la bienvenida cabe con la letra a 1,3', (tester) async {

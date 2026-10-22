@@ -1,0 +1,273 @@
+{
+  "nota": "Lo que «Mi situación» añade a cada paso de los itinerarios (itinerarios/<papel>.json): dónde pasa (\"lugar\": con \"sala\" es en estrados, con toga), la duda que se lleva escrita a Pregunta, las palabras del Glosario que oirás, qué llevar, un ejemplo de «Vive el caso» y lo que cambia «para ti» según tu edad o tu ticket (con su fuente de docs/MARCO_LEGAL.md). \"desde_edad\" y \"hasta_edad\" dicen a qué edades se aplica el paso. Lo de \"llevar\" son consejos prácticos, no afirmaciones jurídicas.",
+  "validado": true,
+  "llevar": {
+    "citacion": {"texto": "La citación (el aviso) o una foto de ella", "consejo": true, "validado": true},
+    "dni": {"texto": "Tu DNI o tu pasaporte, si lo tienes", "consejo": true, "validado": true},
+    "preguntas": {"texto": "Tus preguntas apuntadas en «Mis preguntas»", "consejo": true, "validado": true},
+    "confianza": {"texto": "El teléfono de tu persona de confianza", "consejo": true, "validado": true},
+    "agua": {"texto": "Agua y algo de comer, por si toca esperar", "consejo": true, "validado": true},
+    "calma": {"texto": "Algo que te tranquilice: un libro o música con cascos", "consejo": true, "validado": true},
+    "papeles": {"texto": "Los papeles que te hayan dado antes", "consejo": true, "validado": true}
+  },
+  "papeles": {
+    "victima": {
+      "P1": {
+        "lugar": "comisaria",
+        "duda": "¿Qué derechos me tienen que explicar cuando pido ayuda?",
+        "palabras": ["Denuncia", "Coordinador de bienestar y protección", "Canal prioritario"],
+        "llevar": ["confianza"],
+        "ejemplo": "En «Vive el caso», Sergio habla con Laura, la coordinadora de bienestar y protección de su instituto, y ella pone en marcha el protocolo.",
+        "para_ti": [
+          {
+            "edad_min": 14,
+            "preocupaciones": ["redes"],
+            "texto": "Con {edad} años puedes pedir tú a la Agencia Española de Protección de Datos que quite fotos, vídeos o audios sexuales o violentos tuyos publicados en internet sin permiso.",
+            "fuentes": ["AEPD, Canal prioritario"],
+            "validado": true
+          }
+        ]
+      },
+      "P2": {
+        "lugar": "fiscalia",
+        "duda": "¿Quién va a llevar mi caso y qué hace cada persona?",
+        "palabras": ["Fiscalía de Menores", "Abogado de oficio", "Defensor judicial"],
+        "ejemplo": "En el caso de Sergio, los chicos tienen 14 y 15 años, así que la denuncia llega a la Fiscalía de Menores."
+      },
+      "P3": {
+        "lugar": "casa",
+        "duda": "¿Qué pone en una citación y qué tengo que hacer?",
+        "palabras": ["Citación", "Persona de confianza", "Prueba preconstituida", "Sala Gesell"],
+        "ejemplo": "A Lucía le salen muchas preguntas y las apunta en una libreta. Tú puedes hacerlo en «Mis preguntas».",
+        "para_ti": [
+          {
+            "con_quien": ["confianza"],
+            "texto": "Has dicho que irás con una persona de confianza: puedes ir con ella y con quien te represente, salvo que el juez explique por qué no.",
+            "fuentes": ["LECrim, art. 433"],
+            "validado": true
+          }
+        ]
+      },
+      "P4": {
+        "lugar": "gesell",
+        "cita": true,
+        "duda": "¿Cómo será el día que me escuchen?",
+        "palabras": ["Declaración", "Sala Gesell", "Equipo psicosocial", "Prueba preconstituida", "Videoconferencia"],
+        "llevar": ["citacion", "dni", "preguntas", "confianza", "agua", "calma"],
+        "ejemplo": "Lucía va con su tía Elena. Ana, la psicóloga, le hace las preguntas en la Sala Gesell, y la jueza lo sigue desde otra sala.",
+        "para_ti": [
+          {
+            "edad_max": 13,
+            "texto": "Como tienes {edad} años, en un caso de violencia tu entrevista se graba para el juicio: es la prueba preconstituida. Normalmente, después no tienes que ir al juicio.",
+            "fuentes": ["LECrim, art. 449 ter", "LECrim, art. 703 bis"],
+            "validado": true
+          },
+          {
+            "edad_min": 14,
+            "texto": "Con {edad} años, te pueden tomar declaración en una sala preparada y con profesionales formados.",
+            "fuentes": ["Ley 4/2015, art. 25.1"],
+            "validado": true
+          }
+        ]
+      },
+      "P5": {
+        "lugar": "juzgado",
+        "duda": "¿Qué medidas de protección existen y cómo se piden?",
+        "palabras": ["Orden de alejamiento", "Medida cautelar", "Protocolo contra el acoso", "Victimización secundaria"],
+        "ejemplo": "Sara habla con Laura en su instituto, que pone en marcha los pasos del protocolo para cuando se difunde algo íntimo de alguien."
+      },
+      "P6": {
+        "lugar": "sala",
+        "cita": true,
+        "duda": "¿Tengo que ir al juicio?",
+        "palabras": ["Mediación", "Conciliación", "Juicio", "Juez de menores"],
+        "llevar": ["citacion", "dni", "confianza", "agua", "calma"],
+        "ejemplo": "En el caso de Sergio, uno de los chicos quiere pedirle perdón, y el fiscal les explica qué es una conciliación.",
+        "para_ti": [
+          {
+            "edad_max": 13,
+            "texto": "Con {edad} años, en un caso de violencia tu entrevista se graba antes, y en el juicio normalmente ponen la grabación: no tienes que ir.",
+            "fuentes": ["LECrim, art. 449 ter", "LECrim, art. 703 bis"],
+            "validado": true
+          }
+        ]
+      },
+      "P7": {
+        "lugar": "casa",
+        "duda": "¿Cómo me van a contar lo que se decida?",
+        "palabras": ["Sentencia", "Orden de alejamiento", "Defensor del Pueblo"],
+        "ejemplo": "Lucía todavía no sabe cómo acabará todo, pero ya tiene respuestas para su libreta y sabe a quién preguntar."
+      }
+    },
+    "testigo": {
+      "P1": {
+        "lugar": "casa",
+        "duda": "¿Para qué me llaman como testigo?",
+        "palabras": ["Citación", "Testigo"]
+      },
+      "P2": {
+        "lugar": "juzgado",
+        "duda": "¿Dónde será, quién estará y cuánto puede durar?",
+        "palabras": ["Prueba preconstituida", "Sala Gesell"],
+        "para_ti": [
+          {
+            "edad_max": 13,
+            "texto": "Como tienes {edad} años, si es un caso de violencia, tu declaración se graba para el juicio y normalmente no tienes que repetirla.",
+            "fuentes": ["LECrim, art. 449 ter", "LECrim, art. 703 bis"],
+            "validado": true
+          }
+        ]
+      },
+      "P3": {
+        "lugar": "juzgado",
+        "cita": true,
+        "duda": "¿Qué puedo hacer si no entiendo una pregunta?",
+        "palabras": ["Declaración", "Equipo psicosocial", "Persona investigada"],
+        "llevar": ["citacion", "dni", "preguntas", "confianza", "agua", "calma"],
+        "ejemplo": "Cuando Lucía no sabe algo, dice «no lo sé», y cuando se cansa, pide parar un momento. Las dos cosas valen.",
+        "para_ti": [
+          {
+            "edad_max": 13,
+            "texto": "Con {edad} años, se evita que veas cara a cara a la persona investigada: se puede usar un cristal, una pantalla u otro medio.",
+            "fuentes": ["LECrim, art. 449 ter, párr. 3"],
+            "validado": true
+          },
+          {
+            "edad_min": 14,
+            "texto": "Con {edad} años, cuentas lo que sabes con tus palabras. Si no entiendes una pregunta, puedes pedir que te la expliquen.",
+            "fuentes": ["LO 1/1996, art. 9.1"],
+            "validado": true
+          }
+        ]
+      },
+      "P4": {
+        "lugar": "sala",
+        "cita": true,
+        "duda": "¿Tendré que ir al juicio?",
+        "palabras": ["Juicio"],
+        "llevar": ["citacion", "dni", "confianza", "agua", "calma"],
+        "para_ti": [
+          {
+            "edad_max": 13,
+            "texto": "Con {edad} años, si tu declaración se grabó como prueba preconstituida, normalmente ponen la grabación y no tienes que ir.",
+            "fuentes": ["LECrim, art. 703 bis"],
+            "validado": true
+          }
+        ]
+      },
+      "P5": {
+        "lugar": "casa",
+        "duda": "¿Tengo que hacer algo más después de declarar?",
+        "palabras": ["Defensor del Pueblo"]
+      }
+    },
+    "investigado": {
+      "P1": {
+        "lugar": "fiscalia",
+        "duda": "¿Qué es la Fiscalía de Menores y qué va a pasar?",
+        "palabras": ["Fiscalía de Menores", "Responsabilidad penal", "Expediente", "Persona investigada"],
+        "para_ti": [
+          {
+            "edad_max": 13,
+            "texto": "Con {edad} años, la ley penal de menores no se te aplica: actúan los servicios de protección de menores, que cuidan de que estés bien.",
+            "fuentes": ["LO 5/2000, art. 3"],
+            "validado": true
+          },
+          {
+            "edad_min": 14,
+            "texto": "Con {edad} años, se aplica la ley penal de menores: el caso lo lleva la Fiscalía de Menores.",
+            "fuentes": ["LO 5/2000, art. 1.1", "LO 5/2000, art. 16.2"],
+            "validado": true
+          }
+        ]
+      },
+      "P2": {
+        "lugar": "comisaria",
+        "desde_edad": 14,
+        "duda": "¿Qué derechos tengo si me detienen?",
+        "palabras": ["Detención", "Abogado de oficio"]
+      },
+      "P3": {
+        "lugar": "fiscalia",
+        "desde_edad": 14,
+        "duda": "¿Qué hace la Fiscalía de Menores mientras investiga?",
+        "palabras": ["Fiscalía de Menores", "Medida cautelar", "Conciliación"]
+      },
+      "P4": {
+        "lugar": "juzgado",
+        "desde_edad": 14,
+        "duda": "¿Qué es una medida cautelar?",
+        "palabras": ["Medida cautelar", "Orden de alejamiento", "Juez de menores"]
+      },
+      "P5": {
+        "lugar": "fiscalia",
+        "desde_edad": 14,
+        "duda": "¿Qué es la mediación y cómo funciona?",
+        "palabras": ["Mediación", "Conciliación"]
+      },
+      "P6": {
+        "lugar": "sala",
+        "desde_edad": 14,
+        "cita": true,
+        "duda": "¿Cómo es una audiencia en el juzgado de menores?",
+        "palabras": ["Juez de menores", "Medida"],
+        "llevar": ["citacion", "dni", "preguntas", "confianza", "agua", "calma", "papeles"]
+      },
+      "P7": {
+        "lugar": "juzgado",
+        "desde_edad": 14,
+        "duda": "¿Qué significa la decisión del juez de menores?",
+        "palabras": ["Medida", "Orden de alejamiento", "Defensor del Pueblo"]
+      }
+    },
+    "escuchado_familia": {
+      "P1": {
+        "lugar": "casa",
+        "duda": "¿Por qué me quiere escuchar el juez?",
+        "palabras": ["Derecho a ser oído"],
+        "para_ti": [
+          {
+            "edad_min": 12,
+            "texto": "Con {edad} años, si tus padres no se ponen de acuerdo, el juez tiene que escucharte siempre.",
+            "fuentes": ["LEC, art. 770"],
+            "validado": true
+          },
+          {
+            "edad_max": 11,
+            "texto": "Con {edad} años, el juez puede escucharte si lo ve necesario, y también lo puedes pedir tú.",
+            "fuentes": ["LEC, art. 770"],
+            "validado": true
+          }
+        ]
+      },
+      "P2": {
+        "lugar": "casa",
+        "duda": "¿Dónde será, quién estará y cuánto puede durar?",
+        "llevar": ["preguntas"]
+      },
+      "P3": {
+        "lugar": "juzgado",
+        "cita": true,
+        "duda": "¿Quién es el equipo técnico y para qué habla conmigo?",
+        "llevar": ["citacion", "preguntas", "confianza", "agua", "calma"]
+      },
+      "P4": {
+        "lugar": "despacho",
+        "cita": true,
+        "duda": "¿Qué pasa con lo que le cuente al juez?",
+        "palabras": ["Derecho a ser oído"],
+        "llevar": ["citacion", "preguntas", "confianza", "agua", "calma"]
+      },
+      "P5": {
+        "lugar": "juzgado",
+        "duda": "¿Cuándo se va a decidir y cómo me lo contarán?",
+        "palabras": ["Desamparo"]
+      },
+      "P6": {
+        "lugar": "casa",
+        "duda": "¿Qué cambia para mí con la decisión?",
+        "palabras": ["Defensor del Pueblo"]
+      }
+    }
+  }
+}

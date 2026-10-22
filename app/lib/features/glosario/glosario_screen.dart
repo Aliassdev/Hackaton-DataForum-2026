@@ -13,13 +13,20 @@ import '../../widgets/estados.dart';
 import '../../widgets/iconos/iconos.dart';
 import '../../widgets/modulos.dart';
 import '../../widgets/movimiento/contador_flip.dart';
+import '../../widgets/movimiento/hapticos.dart';
 import '../../widgets/movimiento/ticket.dart';
 import '../../widgets/tuturno_scaffold.dart';
 import 'detalle_termino.dart';
+import 'favoritos.dart';
+import 'terminos_por_caso.dart';
 
 /// Glosario (sección 4.5): buscador sin tildes y una colección de cartas, una por palabra, numeradas como cartas
 /// coleccionables y agrupadas por letras. Al tocar una carta se abre su detalle.
 /// Con [busquedaInicial] (p. ej. /glosario?q=citación), si coincide con un término, se abre su detalle.
+///
+/// Debajo del buscador, los filtros (plan v2, producto §5.7): «Todas», «Mis palabras (n)» y un chip por cada caso de
+/// Vive el caso con protagonista («Lucía», «Sergio», «Sara»). El filtro se combina con la búsqueda, y el recuento
+/// cuenta lo que se ve.
 class GlosarioScreen extends ConsumerStatefulWidget {
   const GlosarioScreen({super.key, this.busquedaInicial, this.vieneDePregunta = false});
 
@@ -35,10 +42,32 @@ class GlosarioScreen extends ConsumerStatefulWidget {
 class _GlosarioScreenState extends ConsumerState<GlosarioScreen> {
   late final TextEditingController _busqueda = TextEditingController(text: widget.busquedaInicial?.trim() ?? '');
   bool _detalleInicialResuelto = false;
+  FiltroGlosario _filtro = FiltroGlosario.todas;
+
+  /// La lista vuelve arriba al cambiar de filtro o de búsqueda: lo primero que se ve es lo que se acaba de pedir.
+  final _desplazamiento = ScrollController();
+  late String _ultimaBusqueda = _busqueda.text;
+
+  void _filtrar(FiltroGlosario filtro) {
+    if (filtro == _filtro) return;
+    _arriba();
+    setState(() => _filtro = filtro);
+  }
+
+  void _alBuscar() {
+    if (_busqueda.text == _ultimaBusqueda) return;
+    _ultimaBusqueda = _busqueda.text;
+    _arriba();
+  }
+
+  void _arriba() {
+    if (_desplazamiento.hasClients) _desplazamiento.jumpTo(0);
+  }
 
   @override
   void initState() {
     super.initState();
+    _busqueda.addListener(_alBuscar);
     final inicial = normalizar(widget.busquedaInicial?.trim() ?? '');
     if (inicial.isEmpty) return;
     ref.listenManual<AsyncValue<List<EntradaGlosario>>>(glosarioProvider, (_, estado) {
@@ -63,6 +92,7 @@ class _GlosarioScreenState extends ConsumerState<GlosarioScreen> {
   @override
   void dispose() {
     _busqueda.dispose();
+    _desplazamiento.dispose();
     super.dispose();
   }
 
@@ -90,11 +120,26 @@ class _GlosarioScreenState extends ConsumerState<GlosarioScreen> {
                     mensaje: 'No he podido abrir el glosario. Prueba otra vez.',
                     onReintentar: () => ref.invalidate(glosarioProvider),
                   ),
-                  data: (entradas) => ValueListenableBuilder(
-                    valueListenable: _busqueda,
-                    builder: (context, valor, _) =>
-                        _Resultados(entradas: entradas, consulta: valor.text, vieneDePregunta: widget.vieneDePregunta),
-                  ),
+                  data: (entradas) {
+                    final lista = ValueListenableBuilder(
+                      valueListenable: _busqueda,
+                      builder: (context, valor, _) => _Resultados(
+                        entradas: entradas,
+                        consulta: valor.text,
+                        filtro: _filtro,
+                        onFiltrar: _filtrar,
+                        desplazamiento: _desplazamiento,
+                        vieneDePregunta: widget.vieneDePregunta,
+                      ),
+                    );
+                    if (entradas.isEmpty) return lista;
+                    return Column(
+                      children: [
+                        _Filtros(entradas: entradas, filtro: _filtro, onFiltrar: _filtrar),
+                        Expanded(child: lista),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -139,6 +184,66 @@ class _Buscador extends StatelessWidget {
   }
 }
 
+/// Qué palabras enseña la lista: todas, las de «Mis palabras» o las de un caso de Vive el caso.
+enum TipoFiltro { todas, misPalabras, caso }
+
+@immutable
+class FiltroGlosario {
+  const FiltroGlosario._(this.tipo, [this.casoId]);
+
+  /// Las palabras que salen en el caso [casoId].
+  const FiltroGlosario.caso(String casoId) : this._(TipoFiltro.caso, casoId);
+
+  static const todas = FiltroGlosario._(TipoFiltro.todas);
+  static const misPalabras = FiltroGlosario._(TipoFiltro.misPalabras);
+
+  final TipoFiltro tipo;
+  final String? casoId;
+
+  @override
+  bool operator ==(Object other) => other is FiltroGlosario && other.tipo == tipo && other.casoId == casoId;
+
+  @override
+  int get hashCode => Object.hash(tipo, casoId);
+}
+
+/// El chip de caso de [filtro], o null si no es de caso o si ese caso ya no tiene chip.
+FiltroCaso? casoDelFiltro(FiltroGlosario filtro, List<FiltroCaso> casos) =>
+    filtro.tipo == TipoFiltro.caso ? casos.where((c) => c.casoId == filtro.casoId).firstOrNull : null;
+
+/// Las palabras de [entradas] que deja ver [filtro]: todas, las guardadas en [favoritos] o las del caso, según
+/// [casos]. Un caso que ya no tiene chip (p. ej., si los casos no han cargado) enseña todas.
+List<EntradaGlosario> aplicarFiltro(
+  List<EntradaGlosario> entradas,
+  FiltroGlosario filtro, {
+  Set<String> favoritos = const {},
+  List<FiltroCaso> casos = const [],
+}) {
+  switch (filtro.tipo) {
+    case TipoFiltro.todas:
+      return entradas;
+    case TipoFiltro.misPalabras:
+      return [
+        for (final e in entradas)
+          if (favoritos.contains(e.id)) e,
+      ];
+    case TipoFiltro.caso:
+      final caso = casoDelFiltro(filtro, casos);
+      if (caso == null) return entradas;
+      return [
+        for (final e in entradas)
+          if (caso.terminos.contains(e.id)) e,
+      ];
+  }
+}
+
+/// «Mis palabras» sin ninguna palabra guardada.
+const tituloMisPalabrasVacia = 'Aún no has guardado ninguna palabra';
+const pistaMisPalabrasVacia = 'Abre una carta y toca «Guardar en mis palabras».';
+
+/// Una búsqueda que no encuentra nada en todo el glosario.
+String tituloSinResultados(String palabra) => 'Aún no tengo «$palabra» en el glosario';
+
 /// Lo que coincide con [consulta] en el término o en la definición, sin que importen tildes ni mayúsculas.
 List<EntradaGlosario> filtrarGlosario(List<EntradaGlosario> entradas, String consulta) {
   final q = normalizar(consulta.trim());
@@ -161,15 +266,78 @@ Map<String, int> numerosDeCarta(List<EntradaGlosario> entradas) => {for (final (
 /// Cifras con las que se escriben los números de carta («07» si hay menos de 100).
 int cifrasDeCarta(int total) => math.max(2, '$total'.length);
 
-class _Resultados extends StatelessWidget {
-  const _Resultados({required this.entradas, required this.consulta, this.vieneDePregunta = false});
+/// Los chips de filtro: «Todas», «Mis palabras (n)» y uno por caso con protagonista. Se ven todos a la vez (si no
+/// caben en una línea, pasan a la siguiente): así «Sara» no queda escondida por la derecha. Si los casos no cargan,
+/// solo los dos primeros.
+class _Filtros extends ConsumerWidget {
+  const _Filtros({required this.entradas, required this.filtro, required this.onFiltrar});
+
+  final List<EntradaGlosario> entradas;
+  final FiltroGlosario filtro;
+  final ValueChanged<FiltroGlosario> onFiltrar;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoritos = ref.watch(favoritosProvider);
+    // Solo cuentan las guardadas que siguen en el glosario.
+    final guardadas = entradas.where((e) => favoritos.contains(e.id)).length;
+    final casos = ref.watch(filtrosCasoProvider).value ?? const <FiltroCaso>[];
+    // Un caso que ya no tiene chip cuenta como «Todas».
+    final actual = filtro.tipo == TipoFiltro.caso && casoDelFiltro(filtro, casos) == null
+        ? FiltroGlosario.todas
+        : filtro;
+
+    Widget chip(FiltroGlosario valor, String texto, {String? semantica}) => ChoiceChip(
+      label: Text(texto, semanticsLabel: semantica),
+      selected: actual == valor,
+      onSelected: (_) {
+        Hapticos.seleccion();
+        onFiltrar(valor);
+      },
+    );
+
+    return Padding(
+      key: const Key('glosario-filtros'),
+      padding: const EdgeInsets.fromLTRB(Espacio.m, 0, Espacio.m, Espacio.xs),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Wrap(
+          spacing: Espacio.s,
+          children: [
+            chip(FiltroGlosario.todas, 'Todas'),
+            chip(FiltroGlosario.misPalabras, 'Mis palabras ($guardadas)'),
+            for (final caso in casos)
+              chip(
+                FiltroGlosario.caso(caso.casoId),
+                caso.protagonista,
+                semantica: 'Palabras del caso de ${caso.protagonista}',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Resultados extends ConsumerWidget {
+  const _Resultados({
+    required this.entradas,
+    required this.consulta,
+    required this.filtro,
+    required this.onFiltrar,
+    this.desplazamiento,
+    this.vieneDePregunta = false,
+  });
 
   final List<EntradaGlosario> entradas;
   final String consulta;
+  final FiltroGlosario filtro;
+  final ValueChanged<FiltroGlosario> onFiltrar;
+  final ScrollController? desplazamiento;
   final bool vieneDePregunta;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (entradas.isEmpty) {
       return const _AvisoTut(
         expresion: ExpresionTut.neutral,
@@ -177,12 +345,41 @@ class _Resultados extends StatelessWidget {
         mensaje: 'Muy pronto tendrás aquí las palabras difíciles, explicadas fácil.',
       );
     }
-    final encontradas = filtrarGlosario(entradas, consulta);
+    final favoritos = ref.watch(favoritosProvider);
+    final casos = ref.watch(filtrosCasoProvider).value ?? const <FiltroCaso>[];
+    final caso = casoDelFiltro(filtro, casos);
+    final visibles = aplicarFiltro(entradas, filtro, favoritos: favoritos, casos: casos);
+    final encontradas = filtrarGlosario(visibles, consulta);
     if (encontradas.isEmpty) {
       final palabra = consulta.trim();
+      // «Mis palabras» vacía: cómo se guarda una.
+      if (filtro.tipo == TipoFiltro.misPalabras && visibles.isEmpty) {
+        return _AvisoTut(
+          expresion: ExpresionTut.neutral,
+          titulo: tituloMisPalabrasVacia,
+          mensaje: pistaMisPalabrasVacia,
+          accion: OutlinedButton(
+            onPressed: () => onFiltrar(FiltroGlosario.todas),
+            child: const Text('Ver todas las palabras'),
+          ),
+        );
+      }
+      // No está en esta lista, pero sí en el glosario: se busca en todas.
+      if (visibles.length < entradas.length && filtrarGlosario(entradas, consulta).isNotEmpty) {
+        return _AvisoTut(
+          expresion: ExpresionTut.pensando,
+          titulo: caso != null ? 'No sale en el caso de ${caso.protagonista}' : 'No está en Mis palabras',
+          mensaje: 'Pero en el glosario sí hay palabras con «$palabra».',
+          accion: FilledButton.icon(
+            onPressed: () => onFiltrar(FiltroGlosario.todas),
+            icon: const IconoTuTurno(TuIcono.buscar, estilo: EstiloIcono.mono, decorativo: true),
+            label: const Text('Buscar en todas'),
+          ),
+        );
+      }
       return _AvisoTut(
         expresion: ExpresionTut.pensando,
-        titulo: 'Aún no tengo “$palabra” en el glosario',
+        titulo: tituloSinResultados(palabra),
         mensaje: 'Pregúntalo y te lo explico con palabras sencillas.',
         accion: FilledButton.icon(
           onPressed: () => irAPregunta(
@@ -212,6 +409,7 @@ class _Resultados extends StatelessWidget {
     // La lista entra una sola vez; al escribir en el buscador no vuelve a animarse (solo gira el contador).
     return Entrada(
       child: ListView.builder(
+        controller: desplazamiento,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(Espacio.m, 0, Espacio.m, Espacio.xl),
         itemCount: filas.length + 1,
@@ -226,6 +424,7 @@ class _Resultados extends StatelessWidget {
                 entrada: entrada,
                 numero: numeros[entrada.id] ?? 0,
                 cifras: cifras,
+                guardada: favoritos.contains(entrada.id),
                 onTap: () => mostrarDetalleTermino(
                   context,
                   entrada,
@@ -365,16 +564,23 @@ class _PintorTroquel extends CustomPainter {
   bool shouldRepaint(_PintorTroquel anterior) => anterior.color != color || anterior.grosor != grosor;
 }
 
-/// Una palabra del glosario como carta de la colección: el icono de su tema, el nombre y el principio de la
-/// definición; en el talón amarillo, su número. Se lee como un botón con el nombre y la definición (el número es
-/// decorativo).
+/// Una palabra del glosario como carta de la colección: el icono de su tema, el nombre (con una estrella si está en
+/// «Mis palabras») y el principio de la definición; en el talón amarillo, su número. Se lee como un botón con el
+/// nombre y la definición (el número es decorativo).
 class _CartaTermino extends StatelessWidget {
-  const _CartaTermino({required this.entrada, required this.numero, required this.cifras, required this.onTap});
+  const _CartaTermino({
+    required this.entrada,
+    required this.numero,
+    required this.cifras,
+    required this.onTap,
+    this.guardada = false,
+  });
 
   final EntradaGlosario entrada;
   final int numero;
   final int cifras;
   final VoidCallback onTap;
+  final bool guardada;
 
   @override
   Widget build(BuildContext context) {
@@ -415,9 +621,20 @@ class _CartaTermino extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        entrada.termino,
-                        style: tema.textTheme.headlineSmall?.copyWith(color: colores.tintaTicket, height: 1.1),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              entrada.termino,
+                              style: tema.textTheme.headlineSmall?.copyWith(color: colores.tintaTicket, height: 1.1),
+                            ),
+                          ),
+                          if (guardada) ...[
+                            const SizedBox(width: Espacio.xs),
+                            const IconoTuTurno(TuIcono.estrella, size: Espacio.l - 2, semanticLabel: 'En Mis palabras'),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: Espacio.xs),
                       Text(

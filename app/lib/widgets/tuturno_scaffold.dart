@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../tema.dart';
@@ -43,19 +45,25 @@ class TuTurnoScaffold extends StatelessWidget {
   final Widget? bottomNavigationBar;
   final Color? backgroundColor;
 
+  /// Lo más que crecen con la letra las acciones de la barra (auditoría P1-1): con letra 1,6, la pastilla «Ayuda»
+  /// crecía tanto que se comía el título. Con este límite sigue siendo grande y se lee bien; el título sí crece entero.
+  static const escalaMaximaAcciones = 1.2;
+
   @override
   Widget build(BuildContext context) {
     final esquema = Theme.of(context).colorScheme;
+    Widget limitada(Widget accion) =>
+        MediaQuery.withClampedTextScaling(maxScaleFactor: escalaMaximaAcciones, child: accion);
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: tituloWidget ?? TituloBarra(titulo),
         shape: BordeTroquelado(color: esquema.onSurface.withValues(alpha: 0.18)),
         actions: [
-          ...acciones,
-          if (mostrarGlosario) const GlosarioButton(),
+          for (final accion in acciones) limitada(accion),
+          if (mostrarGlosario) limitada(const GlosarioButton()),
           if (mostrarAyuda)
-            AnilloPulso(activo: resaltarAyuda, color: context.colores.ayuda, child: const AyudaButton()),
+            limitada(AnilloPulso(activo: resaltarAyuda, color: context.colores.ayuda, child: const AyudaButton())),
           const SizedBox(width: Espacio.s),
         ],
       ),
@@ -68,8 +76,8 @@ class TuTurnoScaffold extends StatelessWidget {
 
 /// El título de una barra que no se corta (auditoría P1-1 y P1-2): en un móvil estrecho, con Glosario y Ayuda al lado,
 /// solo quedan unos 110 puntos. Va con el estilo de la barra (20) si cabe en una línea; si no, más pequeño (hasta 16);
-/// si aun así no cabe, en dos líneas, y si una sola palabra no cabe, encogido lo justo. Con un título muy largo que no
-/// cabe ni así, dos líneas y «…».
+/// si aun así no cabe, en dos líneas, siempre que ninguna palabra se tenga que partir. Si ni así, encogido lo justo, en
+/// una línea o en dos (lo que deje la letra más grande). Nunca parte una palabra ni pone «…».
 class TituloBarra extends StatelessWidget {
   const TituloBarra(this.texto, {super.key});
 
@@ -78,9 +86,6 @@ class TituloBarra extends StatelessWidget {
   /// El tamaño más pequeño al que se baja antes de pasar a dos líneas.
   static const tamanoMinimo = 16.0;
 
-  /// Lo más que se encoge una palabra que no cabe (más pequeña no se leería bien).
-  static const encogidoMaximo = 0.7;
-
   @override
   Widget build(BuildContext context) {
     final base = DefaultTextStyle.of(context).style;
@@ -88,16 +93,23 @@ class TituloBarra extends StatelessWidget {
     final direccion = Directionality.of(context);
     return LayoutBuilder(
       builder: (context, limites) {
-        TextPainter medir(TextStyle estilo, {int? lineas, double ancho = double.infinity}) => TextPainter(
-          text: TextSpan(text: texto, style: estilo),
+        TextPainter medir(String cual, TextStyle estilo, {int? lineas, double ancho = double.infinity}) => TextPainter(
+          text: TextSpan(text: cual, style: estilo),
           textDirection: direccion,
           textScaler: escalador,
           maxLines: lineas,
         )..layout(maxWidth: ancho);
+        Size medida(String cual, TextStyle estilo, {double ancho = double.infinity}) {
+          final pintor = medir(cual, estilo, ancho: ancho);
+          final tamano = pintor.size;
+          pintor.dispose();
+          return tamano;
+        }
+
         bool cabe(TextStyle estilo, int lineas) {
-          final medida = medir(estilo, lineas: lineas, ancho: limites.maxWidth);
-          final si = !medida.didExceedMaxLines && medida.height <= limites.maxHeight;
-          medida.dispose();
+          final pintor = medir(texto, estilo, lineas: lineas, ancho: limites.maxWidth);
+          final si = !pintor.didExceedMaxLines && pintor.height <= limites.maxHeight;
+          pintor.dispose();
           return si;
         }
 
@@ -107,18 +119,37 @@ class TituloBarra extends StatelessWidget {
           if (cabe(estilo, 1)) return Text(texto, style: estilo, maxLines: 1, softWrap: false);
         }
         final pequeno = base.copyWith(fontSize: tamanoMinimo, height: 1.1);
-        if (cabe(pequeno, 2)) return Text(texto, style: pequeno, maxLines: 2, softWrap: true);
-        final natural = medir(pequeno);
-        final encogido = limites.maxWidth / natural.width;
-        natural.dispose();
-        if (encogido >= encogidoMaximo) {
-          return FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(texto, style: pequeno, maxLines: 1, softWrap: false),
-          );
+        final palabras = texto.split(' ').where((p) => p.isNotEmpty).toList();
+        final palabraMasAncha = palabras.fold(0.0, (maximo, p) => math.max(maximo, medida(p, pequeno).width));
+        if (palabraMasAncha <= limites.maxWidth && cabe(pequeno, 2)) {
+          return Text(texto, style: pequeno, maxLines: 2, softWrap: true);
         }
-        return Text(texto, style: pequeno, maxLines: 2, softWrap: true, overflow: TextOverflow.ellipsis);
+
+        // Encogido lo justo. En dos líneas, cortando por la palabra que deja las dos más parecidas.
+        final enUna = medida(texto, pequeno);
+        var anchoEnDos = enUna.width;
+        for (var i = 1; i < palabras.length; i++) {
+          final primera = medida(palabras.take(i).join(' '), pequeno).width;
+          final segunda = medida(palabras.skip(i).join(' '), pequeno).width;
+          anchoEnDos = math.min(anchoEnDos, math.max(primera, segunda));
+        }
+        anchoEnDos = anchoEnDos.ceilToDouble() + 1;
+        final enDos = Size(anchoEnDos, medida(texto, pequeno, ancho: anchoEnDos).height);
+        double escala(Size s) => math.min(
+          limites.maxWidth / s.width,
+          limites.maxHeight.isFinite ? limites.maxHeight / s.height : double.infinity,
+        );
+        final dosLineas = palabras.length > 1 && escala(enDos) > escala(enUna);
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: dosLineas
+              ? SizedBox(
+                  width: anchoEnDos,
+                  child: Text(texto, style: pequeno, maxLines: 2, softWrap: true),
+                )
+              : Text(texto, style: pequeno, maxLines: 1, softWrap: false),
+        );
       },
     );
   }

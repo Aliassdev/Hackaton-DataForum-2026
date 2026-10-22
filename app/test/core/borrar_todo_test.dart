@@ -9,7 +9,9 @@ import 'package:tuturno/core/entrada.dart';
 import 'package:tuturno/core/mis_preguntas.dart';
 import 'package:tuturno/core/progreso.dart';
 import 'package:tuturno/core/providers.dart';
+import 'package:tuturno/features/glosario/favoritos.dart' show FavoritosNotifier;
 import 'package:tuturno/features/inicio/turno_del_dia.dart';
+import 'package:tuturno/features/situacion/mi_ticket.dart' show MiTicketNotifier;
 
 // «Borrar todo lo de este móvil» (plan v2, producto §5.3): borra lo de la persona y deja los ajustes.
 
@@ -39,6 +41,7 @@ final _deUsuario = <String, Object>{
   ]),
   'inicio.turno_del_dia': '{"dia": "2026-10-22"}',
   'glosario.favoritos': '["fiscal"]',
+  'mi_situacion': '{"preocupaciones": ["ver_persona"], "fecha": "2026-10-24"}',
   'bienvenida_vista': true,
 };
 
@@ -110,6 +113,7 @@ void main() {
         'mis_preguntas',
         'inicio.turno_del_dia',
         'glosario.favoritos',
+        'mi_situacion',
         'bienvenida_vista',
       ]);
       expect(clavesDeUsuario.where((c) => c.startsWith('ajustes.')), isEmpty);
@@ -121,6 +125,8 @@ void main() {
       expect(clavesDeUsuario, contains(EntradaNotifier.clave));
       expect(clavesDeUsuario, contains(MisPreguntasNotifier.clave));
       expect(clavesDeUsuario, contains(TurnoDelDiaNotifier.clave));
+      expect(clavesDeUsuario, contains(FavoritosNotifier.clave));
+      expect(clavesDeUsuario, contains(MiTicketNotifier.clave));
     });
 
     test('la de la bienvenida es la que lee Storage', () async {

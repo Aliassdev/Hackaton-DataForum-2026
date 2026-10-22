@@ -47,7 +47,7 @@ class Compositor extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (:voz, :esperando, :situacion, :problema, :hayMensajes, :hablaAgente) = ref.watch(
+    final (:voz, :esperando, :situacion, :problema, :hayMensajes, :hablaAgente, :conectando) = ref.watch(
       proveedor.select(
         (s) => (
           voz: s.voz,
@@ -56,19 +56,21 @@ class Compositor extends ConsumerWidget {
           problema: s.problemaVoz,
           hayMensajes: s.mensajes.isNotEmpty,
           hablaAgente: s.agenteHablando,
+          conectando: s.conectandoVoz,
         ),
       ),
     );
-    // Modo agente: el agente habla con su voz, y «Voz / Sin voz» (que es la del móvil) no lo callaría.
-    final conAgente = ref.watch(proveedor.notifier).conAgente;
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
     final escuchando = voz != EstadoVoz.inactivo;
     final estadoMicro = esperando
         ? EstadoMicro.desactivado
-        // Modo agente: no se escucha mientras habla el agente (se transcribiría su voz).
+        // Modo agente: no se escucha mientras habla el agente (se transcribiría su voz) ni mientras conecta (el saludo
+        // cortaría el dictado).
         : hablaAgente && voz == EstadoVoz.inactivo
         ? EstadoMicro.hablaAgente
+        : conectando && voz == EstadoVoz.inactivo
+        ? EstadoMicro.conectando
         : switch (voz) {
             EstadoVoz.preparando => EstadoMicro.preparando,
             EstadoVoz.escuchando => EstadoMicro.escuchando,
@@ -162,7 +164,8 @@ class Compositor extends ConsumerWidget {
                 const SizedBox(height: Espacio.xs),
                 Row(
                   children: [
-                    Expanded(child: Center(child: conAgente ? const SizedBox.shrink() : const _BotonVozAutomatica())),
+                    // «Voz / Sin voz»: en el modo agente, con voz contesta el agente en alto y sin voz, por escrito.
+                    const Expanded(child: Center(child: _BotonVozAutomatica())),
                     BotonMicro(estado: estadoMicro, proveedor: proveedor, onPressed: onMicro),
                     Expanded(
                       child: Center(
@@ -484,9 +487,12 @@ enum EstadoMicro {
   noDisponible,
 
   /// Modo agente: el agente está hablando.
-  hablaAgente;
+  hablaAgente,
 
-  bool get activo => this != desactivado && this != hablaAgente;
+  /// Modo agente: se está abriendo la sesión con el agente.
+  conectando;
+
+  bool get activo => this != desactivado && this != hablaAgente && this != conectando;
 }
 
 String _etiquetaMicro(EstadoMicro estado) => switch (estado) {
@@ -496,6 +502,7 @@ String _etiquetaMicro(EstadoMicro estado) => switch (estado) {
   EstadoMicro.desactivado => 'Espera a que te conteste…',
   EstadoMicro.noDisponible => 'Micrófono no disponible',
   EstadoMicro.hablaAgente => 'TuTurno está hablando…',
+  EstadoMicro.conectando => 'Conectando…',
 };
 
 String _semanticaMicro(EstadoMicro estado) => switch (estado) {
@@ -505,6 +512,7 @@ String _semanticaMicro(EstadoMicro estado) => switch (estado) {
   EstadoMicro.desactivado => 'Micrófono desactivado mientras llega la respuesta',
   EstadoMicro.noDisponible => 'Micrófono no disponible. Puedes escribir tu pregunta o pulsar para intentarlo otra vez',
   EstadoMicro.hablaAgente => 'Micrófono desactivado mientras habla TuTurno',
+  EstadoMicro.conectando => 'Micrófono desactivado mientras se conecta con TuTurno',
 };
 
 /// Texto bajo el micrófono.

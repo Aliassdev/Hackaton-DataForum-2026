@@ -85,6 +85,9 @@ flutter:
     - assets/mock/content/ejercicios/
     - assets/mock/content/juego/
     - assets/mock/content/itinerarios/
+    # Mi situación: derechos, preocupaciones, pasos y notas «Para ti» (lib/features/situacion/contenido.dart).
+    # Cuando pase a content/, añadir también assets/content/situacion/ (y que sync_content.sh la copie).
+    - assets/mock/content/situacion/
     # Marca (SVG): el logotipo TuTurno y el monograma TuT en amarillo, azul noche, blanco y azul. En la app se
     # dibujan con LogoTuTurno y MonogramaTut (lib/widgets/marca/); los SVG sirven para flutter_svg y para fuera.
     - assets/marca/logotipo/

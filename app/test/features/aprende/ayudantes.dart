@@ -169,15 +169,20 @@ class FakeTts implements Tts {
   }
 }
 
-/// API de prueba: «Dilo» con MockTuTurnoApi sin espera. Puede fallar o esperar a que el test la suelte.
+/// API de prueba, que hace de servidor: «Dilo» con la corrección de MockTuTurnoApi (o [respuesta]) sin espera. Puede
+/// fallar o esperar a que el test la suelte. Solo se le pregunta con `montar(servidor: true)`: con la API simulada
+/// (USE_MOCK), «Dilo» se corrige en el móvil.
 class ApiDePrueba implements TuTurnoApi {
-  ApiDePrueba({this.error});
+  ApiDePrueba({this.error, this.respuesta});
 
   final base = MockTuTurnoApi(latencia: Duration.zero);
   final notas = <GradeRequest>[];
 
   /// Si no es null, grade() lo lanza.
   Object? error;
+
+  /// Si no es null, grade() la devuelve (en vez de la del mock).
+  GradeResponse? respuesta;
 
   /// Si no es null, grade() espera a que se complete.
   Completer<void>? pausa;
@@ -192,7 +197,7 @@ class ApiDePrueba implements TuTurnoApi {
     if (espera != null) await espera.future;
     final fallo = error;
     if (fallo != null) throw fallo;
-    return base.grade(request);
+    return respuesta ?? base.grade(request);
   }
 
   @override
@@ -222,7 +227,9 @@ const movil = Size(412, 915);
 Map<String, Object> progresoGuardado({
   int xp = 0,
   int racha = 0,
+  int mejorRacha = 0,
   DateTime? ultimoDia,
+  DateTime? descanso,
   List<String> lecciones = const [],
   Map<String, double> dominio = const {},
   Map<String, DateTime> ultimaPractica = const {},
@@ -231,7 +238,9 @@ Map<String, Object> progresoGuardado({
     Progreso(
       xp: xp,
       racha: racha,
+      mejorRacha: mejorRacha,
       ultimoDiaConLeccion: ultimoDia,
+      descansoUsado: descanso,
       leccionesCompletadas: {...lecciones},
       dominio: dominio,
       ultimaPractica: ultimaPractica,
@@ -240,13 +249,15 @@ Map<String, Object> progresoGuardado({
 };
 
 /// Monta Aprende con su router (Pregunta, Ayuda y Glosario son pantallas de prueba), el contenido de ejemplo
-/// en memoria, el reloj fijo, la API de prueba y la voz falsa.
+/// en memoria, el reloj fijo, la API de prueba y la voz falsa. Sin [servidor], como con USE_MOCK: «Dilo» se corrige
+/// en el móvil. Con [servidor], hay backend (la API de prueba).
 Future<Montaje> montar(
   WidgetTester tester, {
   String ruta = '/aprende',
   Map<String, Object> preferencias = const {},
   ContentRepo? repo,
   ApiDePrueba? api,
+  bool servidor = false,
   FakeStt? stt,
   FakeTts? tts,
   DateTime? ahora,
@@ -294,7 +305,11 @@ Future<Montaje> montar(
   final contenedor = ProviderContainer(
     retry: (_, _) => null,
     overrides: [
-      configProvider.overrideWithValue(AppConfig(apiUrl: '', useMock: true, demo: demo)),
+      configProvider.overrideWithValue(
+        servidor
+            ? AppConfig(apiUrl: 'https://servidor.test', useMock: false, demo: demo)
+            : AppConfig(apiUrl: '', useMock: true, demo: demo),
+      ),
       sharedPreferencesProvider.overrideWithValue(prefs),
       contentProvider.overrideWithValue(repo ?? repoDeEjemplo()),
       apiProvider.overrideWithValue(laApi),
@@ -340,8 +355,10 @@ final botonComprobar = find.byKey(const ValueKey('boton-comprobar'));
 final botonContinuar = find.byKey(const ValueKey('boton-continuar'));
 final campoDilo = find.byKey(const ValueKey('campo-dilo'));
 
-/// Texto de «Dilo» que se envía en los tests.
-const respuestaDilo = 'Que el juez tiene que escucharte si tienes 12 años';
+/// Texto de «Dilo» que se envía en los tests. En E-106 (derecho a ser oído) explica 2 de las 3 ideas, también en la
+/// corrección del móvil: falta «Tu opinión se tiene en cuenta según tu edad y madurez» (como en el ejemplo de la
+/// sección 8.2).
+const respuestaDilo = 'Tengo derecho a que me escuchen y desde los 12 años ya tengo madurez';
 
 /// Responde [ejercicio] en pantalla, bien o mal (sin pulsar «Comprobar»).
 Future<void> responder(WidgetTester tester, Ejercicio ejercicio, {required bool bien}) async {

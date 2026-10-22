@@ -40,7 +40,13 @@ class Mensaje {
 
 /// Petición de `POST /api/agent/ask`.
 class AskRequest {
-  const AskRequest({required this.pregunta, this.modo = ModoPregunta.libre, this.situacion, this.historial = const []});
+  const AskRequest({
+    required this.pregunta,
+    this.modo = ModoPregunta.libre,
+    this.situacion,
+    this.historial = const [],
+    this.perfil,
+  });
 
   /// La API solo admite los 4 últimos mensajes.
   static const maxHistorial = 4;
@@ -50,31 +56,42 @@ class AskRequest {
   final RolProceso? situacion;
   final List<Mensaje> historial;
 
+  /// Las cuatro variables del perfil (edad, procedimiento, rol y fase), las mismas que van a la sesión de voz
+  /// (`Entrada.variablesAgente`, sección 8.6). Opcional: si es null, la petición es la de la sección 8.1 tal cual. Lo
+  /// que no se ha respondido va vacío, y el backend lo trata como «sin dato» (backend/API.md).
+  final Map<String, String>? perfil;
+
   Map<String, dynamic> toJson() {
     final desde = historial.length > maxHistorial ? historial.length - maxHistorial : 0;
+    final perfil = this.perfil;
     return {
       'pregunta': pregunta,
       'modo': modo.name,
       'situacion': situacion?.name,
       'historial': [for (final m in historial.skip(desde)) m.toJson()],
+      if (perfil != null) 'perfil': Map<String, String>.of(perfil),
     };
   }
 }
 
 class Fuente {
-  const Fuente({required this.id, required this.titulo, required this.norma, required this.articulo});
+  const Fuente({required this.id, required this.titulo, required this.norma, required this.articulo, this.url = ''});
 
   factory Fuente.fromJson(Map<String, dynamic> json) => Fuente(
     id: json['id'] as String,
     titulo: _texto(json['titulo']),
     norma: _texto(json['norma']),
     articulo: _texto(json['articulo']),
+    url: _url(json['url']),
   );
 
   final String id;
   final String titulo;
   final String norma;
   final String articulo;
+
+  /// Enlace al texto oficial (el artículo en el BOE, o la web del organismo). Vacío si no hay o si no es https.
+  final String url;
 }
 
 /// Respuesta de `POST /api/agent/ask`.
@@ -103,6 +120,21 @@ class AskResponse {
   final List<String> sugerencias;
   final List<String> terminos;
   final int latenciaMs;
+
+  AskResponse copyWith({
+    TipoRespuesta? tipo,
+    String? respuesta,
+    List<Fuente>? fuentes,
+    List<String>? sugerencias,
+    List<String>? terminos,
+  }) => AskResponse(
+    tipo: tipo ?? this.tipo,
+    respuesta: respuesta ?? this.respuesta,
+    fuentes: fuentes ?? this.fuentes,
+    sugerencias: sugerencias ?? this.sugerencias,
+    terminos: terminos ?? this.terminos,
+    latenciaMs: latenciaMs,
+  );
 }
 
 /// Petición de `POST /api/learn/grade` («Dilo con tus palabras»).
@@ -122,6 +154,7 @@ class GradeResponse {
     required this.cubiertas,
     required this.faltan,
     required this.feedback,
+    this.tipo,
   });
 
   factory GradeResponse.fromJson(Map<String, dynamic> json) => GradeResponse(
@@ -129,12 +162,20 @@ class GradeResponse {
     cubiertas: _textos(json['cubiertas']),
     faltan: _textos(json['faltan']),
     feedback: json['feedback'] as String,
+    tipo: _tipoGrade(json['tipo']),
   );
 
   final double puntuacion;
   final List<String> cubiertas;
   final List<String> faltan;
   final String feedback;
+
+  /// `"normal"` o `"crisis"` (campo nuevo y opcional de backend/API.md; null si el backend no lo manda). Con `crisis`,
+  /// lo escrito sonaba a peligro: no se ha corregido, [feedback] es la plantilla de ayuda con ANAR y la app enseña la
+  /// tarjeta de Ayuda sin tocar el dominio ni los puntos.
+  final String? tipo;
+
+  bool get esCrisis => tipo == 'crisis';
 }
 
 /// Respuesta de `GET /api/health`.
@@ -187,5 +228,19 @@ class ApiException implements Exception {
 }
 
 String _texto(Object? value) => value?.toString() ?? '';
+
+/// Solo enlaces https (o http) con dominio: los escribe el backend y se abren fuera de la app.
+String _url(Object? value) {
+  final texto = value?.toString().trim() ?? '';
+  final uri = Uri.tryParse(texto);
+  if (uri == null || !(uri.isScheme('https') || uri.isScheme('http')) || uri.host.isEmpty) return '';
+  return texto;
+}
+
+/// `tipo` de `grade`, en minúsculas y sin espacios (como [TipoRespuesta.fromJson], para no perder nunca un `crisis`).
+String? _tipoGrade(Object? value) {
+  final texto = value?.toString().trim().toLowerCase();
+  return texto == null || texto.isEmpty ? null : texto;
+}
 
 List<String> _textos(Object? value) => value is List ? [for (final v in value) v.toString()] : const [];

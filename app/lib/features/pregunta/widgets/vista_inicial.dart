@@ -3,16 +3,20 @@ import 'package:flutter/material.dart';
 import '../../../core/api/models.dart';
 import '../../../tema.dart';
 import '../../../widgets/iconos/iconos.dart';
+import '../agente/hoja_perfil.dart';
 import '../textos.dart';
+import 'compositor.dart' show ProveedorChat;
 import 'mensajes.dart';
 import 'tickets.dart';
 
-/// Antes de la primera pregunta: el ticket de «tu turno de preguntar» (quién responde: una IA) y preguntas de
-/// ejemplo, las del papel si lo hay. Tranquila: Tut no se mueve y nada pide prisa.
+/// Antes de la primera pregunta: para quién se explica (el perfil, que también viaja en el modo texto), el ticket de
+/// «tu turno de preguntar» (quién responde: una IA) y preguntas de ejemplo, las del papel si lo hay. Tranquila: Tut no
+/// se mueve y nada pide prisa.
 class VistaInicial extends StatelessWidget {
-  const VistaInicial({super.key, required this.onEjemplo, this.situacion});
+  const VistaInicial({super.key, required this.onEjemplo, required this.proveedor, this.situacion});
 
   final ValueChanged<String> onEjemplo;
+  final ProveedorChat proveedor;
   final RolProceso? situacion;
 
   @override
@@ -23,6 +27,8 @@ class VistaInicial extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(Espacio.m, Espacio.m, Espacio.m, Espacio.l),
       children: [
+        Aparecer(child: ResumenPerfil(proveedor: proveedor)),
+        const SizedBox(height: Espacio.m),
         const Aparecer(child: BurbujaPresentacion()),
         const SizedBox(height: Espacio.s + Espacio.xs),
         Aparecer(

@@ -2,21 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/models.dart';
-import '../../../core/entrada.dart';
+import '../../../core/providers.dart';
 import '../../../tema.dart';
 import '../../../widgets/iconos/iconos.dart';
-import '../../../widgets/movimiento/hapticos.dart';
-import '../../../widgets/movimiento/ticket.dart';
 import '../textos.dart';
-import '../widgets/estilo.dart';
 import '../widgets/mensajes.dart';
 import '../widgets/tickets.dart';
 import 'chat_agente.dart';
 import 'hoja_perfil.dart';
 import 'textos_agente.dart';
 
-/// Antes de la primera pregunta, en el modo agente: quién responde (una IA que habla en voz alta), el saludo del
-/// agente cuando llega (se oye y también se lee), el perfil con «Cambiar» y las preguntas de ejemplo.
+/// Antes de la primera pregunta, en el modo agente: para quién se explica (el perfil, con «Cambiar»), quién responde
+/// (una IA), el saludo del agente cuando llega (se oye y también se lee), el aviso de que contesta en voz alta y las
+/// preguntas de ejemplo.
 class VistaInicialAgente extends ConsumerWidget {
   const VistaInicialAgente({super.key, required this.onEjemplo, this.situacion});
 
@@ -25,31 +23,25 @@ class VistaInicialAgente extends ConsumerWidget {
   /// La de la ruta (elige el chat). La actual puede haberse quitado: se lee del estado.
   final RolProceso? situacion;
 
-  Future<void> _cambiarPerfil(BuildContext context, WidgetRef ref) async {
-    Hapticos.toque();
-    final chat = ref.read(chatAgenteProvider(situacion).notifier) as ChatAgenteNotifier;
-    final elegida = await mostrarHojaPerfil(
-      context,
-      inicial: ref.read(entradaProvider),
-      situacion: ref.read(chatAgenteProvider(situacion)).situacion,
-    );
-    if (elegida == null || !context.mounted) return;
-    await ref.read(entradaProvider.notifier).guardar(elegida);
-    await chat.cambiarPerfil();
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
-    final chat = ref.watch(chatAgenteProvider(situacion).notifier) as ChatAgenteNotifier;
-    final situacionActual = ref.watch(chatAgenteProvider(situacion).select((s) => s.situacion));
-    final resumen = resumenPerfil(ref.watch(entradaProvider));
-    final ejemplos = ejemplosPara(situacionActual);
+    final proveedor = chatAgenteProvider(situacion);
+    final chat = ref.watch(proveedor.notifier) as ChatAgenteNotifier;
+    final (:situacionActual, :ejemplos) = ref.watch(
+      proveedor.select((s) => (situacionActual: s.situacion, ejemplos: s.ejemplos)),
+    );
+    final preguntas = ejemplosPara(situacionActual);
+    // Con «Sin voz» o con lector de pantalla se contesta por escrito: no hace falta el aviso de la voz.
+    final vozPosible =
+        ref.watch(ajustesProvider.select((a) => a.vozActivada)) && !MediaQuery.accessibleNavigationOf(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(Espacio.m, Espacio.m, Espacio.m, Espacio.l),
       children: [
-        const Aparecer(child: _Presentacion()),
+        Aparecer(child: ResumenPerfil(proveedor: proveedor)),
+        const SizedBox(height: Espacio.m),
+        const Aparecer(child: BurbujaPresentacion()),
         ValueListenableBuilder<SesionAgente>(
           valueListenable: chat.sesion,
           builder: (context, sesion, _) {
@@ -58,92 +50,65 @@ class VistaInicialAgente extends ConsumerWidget {
               if (sesion.saludo case final saludo? when saludo.isNotEmpty) saludo,
               ...sesion.antesDePreguntar,
             ];
-            if (dichos.isEmpty) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(top: Espacio.m),
-              child: Aparecer(
-                child: Semantics(
-                  container: true,
-                  label: 'TuTurno dice',
-                  child: FilaAsistente(
-                    child: Container(
-                      key: const Key('saludo-agente'),
-                      padding: const EdgeInsets.symmetric(horizontal: Espacio.m, vertical: Espacio.s + Espacio.xs),
-                      decoration: BoxDecoration(
-                        color: context.colores.ticket,
-                        border: Border.all(color: esquema.outlineVariant),
-                        borderRadius: formaBurbuja(usuario: false),
-                        boxShadow: sombrasPapel(context, elevacion: 0.6),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (final (i, dicho) in dichos.indexed)
-                            Padding(
-                              padding: EdgeInsets.only(top: i == 0 ? 0 : Espacio.s),
-                              child: Text(
-                                dicho,
-                                style: tema.textTheme.bodyLarge?.copyWith(
-                                  color: context.colores.tintaTicket,
-                                  height: 1.4,
-                                ),
-                              ),
+            final conVoz =
+                vozPosible && !ejemplos && sesion.fase != FaseAgente.texto && sesion.fase != FaseAgente.sinVoz;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (dichos.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Espacio.m),
+                    child: Aparecer(
+                      child: Semantics(
+                        container: true,
+                        label: 'TuTurno dice',
+                        child: FilaAsistente(
+                          child: Container(
+                            key: const Key('saludo-agente'),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Espacio.m,
+                              vertical: Espacio.s + Espacio.xs,
                             ),
-                        ],
+                            decoration: BoxDecoration(
+                              color: context.colores.ticket,
+                              border: Border.all(color: esquema.outlineVariant),
+                              borderRadius: formaBurbuja(usuario: false),
+                              boxShadow: sombrasPapel(context, elevacion: 0.6),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (final (i, dicho) in dichos.indexed)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: i == 0 ? 0 : Espacio.s),
+                                    child: Text(
+                                      dicho,
+                                      style: tema.textTheme.bodyLarge?.copyWith(
+                                        color: context.colores.tintaTicket,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
+                // Con la voz del agente: que se sepa antes de preguntar que contesta en alto.
+                if (conVoz) ...[
+                  const SizedBox(height: Espacio.s + Espacio.xs),
+                  _Nota(key: const Key('aviso-voz-alta'), icono: TuIcono.altavoz, texto: textoAvisoVozAlta),
+                ],
+              ],
             );
           },
-        ),
-        const SizedBox(height: Espacio.m),
-        Aparecer(
-          retraso: Duracion.corta * 0.5,
-          child: Material(
-            color: tinteMarca(esquema),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Radios.m),
-              side: BorderSide(color: esquema.primary.withValues(alpha: 0.3)),
-            ),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(Espacio.m, Espacio.s, Espacio.xs, Espacio.s),
-              child: Row(
-                children: [
-                  IconoTuTurno(TuIcono.miSituacion, estilo: EstiloIcono.mono, color: esquema.primary, decorativo: true),
-                  const SizedBox(width: Espacio.s + Espacio.xs),
-                  Expanded(
-                    child: Text(
-                      resumen.isEmpty
-                          ? 'Si me dices tu edad y tu situación, te lo explico mejor.'
-                          : 'Para explicártelo mejor: $resumen',
-                      style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurface, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  TextButton(
-                    key: const Key('cambiar-perfil'),
-                    onPressed: () => _cambiarPerfil(context, ref),
-                    child: Text(resumen.isEmpty ? 'Elegir' : 'Cambiar'),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ),
         const SizedBox(height: Espacio.s + Espacio.xs),
         Aparecer(
           retraso: Duracion.corta * 0.5,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconoTuTurno(TuIcono.info, estilo: EstiloIcono.mono, color: esquema.onSurfaceVariant, decorativo: true),
-              const SizedBox(width: Espacio.s),
-              Expanded(
-                child: Text(textoAvisoIa, style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant)),
-              ),
-            ],
-          ),
+          child: const _Nota(icono: TuIcono.info, texto: textoAvisoIa),
         ),
         const SizedBox(height: Espacio.l),
         Aparecer(
@@ -157,13 +122,13 @@ class VistaInicialAgente extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: Espacio.s + Espacio.xs),
-        for (var i = 0; i < ejemplos.length; i++) ...[
+        for (var i = 0; i < preguntas.length; i++) ...[
           Aparecer(
             retraso: Duracion.corta * (i + 2) * 0.5,
             child: TicketPregunta(
-              texto: ejemplos[i].texto,
-              icono: ejemplos[i].icono,
-              onTap: () => onEjemplo(ejemplos[i].texto),
+              texto: preguntas[i].texto,
+              icono: preguntas[i].icono,
+              onTap: () => onEjemplo(preguntas[i].texto),
             ),
           ),
           const SizedBox(height: Espacio.s + Espacio.xs),
@@ -173,24 +138,26 @@ class VistaInicialAgente extends ConsumerWidget {
   }
 }
 
-/// El ticket de «tu turno de preguntar», como en el modo texto, con el texto del modo agente (sin promesas sobre lo
-/// que se guarda: depende de la configuración del agente).
-class _Presentacion extends StatelessWidget {
-  const _Presentacion();
+/// Una nota pequeña con su icono (decorativo).
+class _Nota extends StatelessWidget {
+  const _Nota({super.key, required this.icono, required this.texto});
 
-  static const _letraGrande = 1.2;
+  final TuIcono icono;
+  final String texto;
 
   @override
   Widget build(BuildContext context) {
-    final grande = MediaQuery.textScalerOf(context).scale(1) > _letraGrande;
-    return TicketTuTurno(
-      etiqueta: 'Tu turno de preguntar',
-      titulo: '¿Qué quieres saber?',
-      descripcion: textoPresentacionAgente,
-      fondoTalon: ColoresMarca.azul,
-      ladoTalon: grande ? LadoTalon.abajo : LadoTalon.derecha,
-      tamanoTalon: grande ? 88 : 104,
-      talon: MascotaTut(size: grande ? 72 : 88, animada: false, pegatina: true, decorativo: true),
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IconoTuTurno(icono, estilo: EstiloIcono.mono, color: esquema.onSurfaceVariant, decorativo: true),
+        const SizedBox(width: Espacio.s),
+        Expanded(
+          child: Text(texto, style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant)),
+        ),
+      ],
     );
   }
 }

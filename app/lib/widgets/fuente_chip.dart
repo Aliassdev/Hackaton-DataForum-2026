@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/api/models.dart';
 import '../tema.dart';
@@ -6,7 +7,7 @@ import 'iconos/iconos.dart';
 import 'movimiento/hapticos.dart';
 
 /// Etiqueta de una fuente legal (sección 4.4), con el libro de la ley ([TuIcono.ley]: «De dónde sale»). Al tocarla se
-/// ve la norma y el artículo.
+/// ve la norma y el artículo y, si la fuente trae enlace ([Fuente.url]), un botón para leer el texto oficial.
 class FuenteChip extends StatelessWidget {
   const FuenteChip({super.key, required this.fuente, this.numero});
 
@@ -93,28 +94,67 @@ const _nombresNormas = {
   'cp': 'Código Penal',
   'cc': 'Código Civil',
   'cdn': 'Convención sobre los Derechos del Niño',
+  // Las siglas que usa el backend en sus fuentes (content/leyes.json, campo «corta»).
+  'lorpm': 'Ley de responsabilidad penal de los menores',
+  'lopivi': 'Ley de protección de la infancia y la adolescencia frente a la violencia',
 };
 
+/// El nombre fácil de [norma] («LO 5/2000» o «LORPM» → «Ley de responsabilidad penal de los menores»), si lo hay.
 String? nombreNorma(String norma) => _nombresNormas[norma.trim().toLowerCase()];
 
-/// Hoja con el título, la norma y el artículo de una fuente.
+/// true si [url] es del BOE (el texto oficial de una ley).
+bool esEnlaceBoe(String url) {
+  final host = Uri.tryParse(url)?.host ?? '';
+  return host == 'boe.es' || host.endsWith('.boe.es');
+}
+
+/// Abre [url] fuera de la app (el navegador). Solo https o http. Devuelve false si no se pudo.
+Future<bool> abrirEnlaceFuente(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null || !(uri.isScheme('https') || uri.isScheme('http'))) return false;
+  try {
+    return await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Hoja con el título, la norma y el artículo de una fuente. Si trae enlace, con «Leer la ley en el BOE» (o «Abrir la
+/// web oficial», como la del Canal prioritario de la AEPD).
 Future<void> mostrarFuente(BuildContext context, Fuente fuente) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
   useSafeArea: true,
-  builder: (context) => _HojaFuente(fuente: fuente),
+  builder: (context) => HojaFuente(fuente: fuente),
 );
 
-class _HojaFuente extends StatelessWidget {
-  const _HojaFuente({required this.fuente});
+class HojaFuente extends StatelessWidget {
+  const HojaFuente({super.key, required this.fuente});
 
   final Fuente fuente;
+
+  Future<void> _abrir(BuildContext context) async {
+    Hapticos.toque();
+    final mensajero = ScaffoldMessenger.maybeOf(context);
+    if (!await abrirEnlaceFuente(fuente.url)) {
+      mensajero?.showSnackBar(const SnackBar(content: Text('No he podido abrir el enlace. Prueba otra vez.')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
     final nombre = nombreNorma(fuente.norma);
+    final conEnlace = fuente.url.trim().isNotEmpty;
+    final boe = conEnlace && esEnlaceBoe(fuente.url);
+    final explicacion = !conEnlace
+        ? 'Es la ley en la que se apoya la respuesta. Puedes enseñársela a una persona adulta de confianza o a tu '
+              'abogado o abogada.'
+        : boe
+        ? 'Es la ley en la que se apoya la respuesta. Puedes leerla en el BOE, que es donde se publican las leyes, o '
+              'enseñársela a una persona adulta de confianza o a tu abogado o abogada.'
+        : 'Es la web oficial de donde sale la respuesta. Puedes leerla o enseñársela a una persona adulta de confianza.';
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(Espacio.l, 0, Espacio.l, Espacio.l),
       child: Column(
@@ -144,7 +184,12 @@ class _HojaFuente extends StatelessWidget {
           ),
           const SizedBox(height: Espacio.l),
           if (fuente.norma.trim().isNotEmpty)
-            _Dato(icono: TuIcono.juzgado, etiqueta: 'Norma', valor: fuente.norma.trim(), detalle: nombre),
+            _Dato(
+              icono: TuIcono.juzgado,
+              etiqueta: conEnlace && !boe ? 'De dónde' : 'Norma',
+              valor: fuente.norma.trim(),
+              detalle: nombre,
+            ),
           if (fuente.articulo.trim().isNotEmpty)
             _Dato(icono: TuIcono.fuente, etiqueta: 'Artículo', valor: fuente.articulo.trim()),
           const SizedBox(height: Espacio.s),
@@ -154,13 +199,9 @@ class _HojaFuente extends StatelessWidget {
               color: tinte(context, esquema.primary),
               borderRadius: BorderRadius.circular(Radios.m),
             ),
-            child: Text(
-              'Es la ley en la que se apoya la respuesta. Puedes enseñársela a una persona adulta de confianza '
-              'o a tu abogado o abogada.',
-              style: tema.textTheme.bodyLarge?.copyWith(color: esquema.onSurface),
-            ),
+            child: Text(explicacion, style: tema.textTheme.bodyLarge?.copyWith(color: esquema.onSurface)),
           ),
-          if (fuente.id.isNotEmpty) ...[
+          if (fuente.id.isNotEmpty && !conEnlace) ...[
             const SizedBox(height: Espacio.s),
             Text(
               'Referencia: ${fuente.id}',
@@ -168,7 +209,17 @@ class _HojaFuente extends StatelessWidget {
             ),
           ],
           const SizedBox(height: Espacio.l),
-          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Entendido')),
+          if (conEnlace) ...[
+            FilledButton.icon(
+              key: const Key('abrir-fuente'),
+              onPressed: () => _abrir(context),
+              icon: const IconoTuTurno(TuIcono.web, estilo: EstiloIcono.mono, decorativo: true),
+              label: Text(boe ? 'Leer la ley en el BOE' : 'Abrir la web oficial'),
+            ),
+            const SizedBox(height: Espacio.s),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Entendido')),
+          ] else
+            FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Entendido')),
         ],
       ),
     );

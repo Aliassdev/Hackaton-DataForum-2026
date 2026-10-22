@@ -1,6 +1,7 @@
-// Mi situación con la identidad de TuTurno: la cabecera de ticket con tu papel, «Qué significa» con su nota de
-// tranquilidad, la línea de pasos real (features/pasos) y el selector de papel como tickets. Sigue siendo parte de
-// Pregunta: tranquila, sin celebraciones, y nunca pregunta qué pasó.
+// Mi situación con la identidad de TuTurno y la capa justicia: la carpeta de «Tu guía» (nunca «tu expediente») con tu
+// papel, «Qué significa» con su nota de tranquilidad, la línea de pasos real (features/pasos) y el selector de papel
+// como tickets (con «Me van a escuchar»). Sigue siendo parte de Pregunta: tranquila, sin sellos que caen, XP ni
+// confeti, y nunca pregunta qué pasó.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,8 +14,10 @@ import 'package:tuturno/core/content_repo.dart';
 import 'package:tuturno/core/providers.dart';
 import 'package:tuturno/features/pasos/pasos.dart';
 import 'package:tuturno/features/situacion/roles.dart';
-import 'package:tuturno/features/situacion/situacion_screen.dart';
 import 'package:tuturno/widgets/iconos/iconos.dart';
+import 'package:tuturno/widgets/justicia/expediente_caratula.dart';
+import 'package:tuturno/widgets/movimiento/confeti_papel.dart';
+import 'package:tuturno/widgets/movimiento/sello_animado.dart';
 import 'package:tuturno/widgets/movimiento/ticket.dart';
 
 import 'helpers.dart';
@@ -41,6 +44,7 @@ const _itinerarioTestigo = '''
 
 /// Como `arrancarApp`, pero con el itinerario de testigo en el contenido.
 Future<GoRouter> _arrancarConPasos(WidgetTester tester) async {
+  ExpedienteCaratula.olvidarAperturas();
   tester.view.physicalSize = movil * tester.view.devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
   SharedPreferences.setMockInitialValues({'bienvenida_vista': true});
@@ -68,21 +72,27 @@ Future<GoRouter> _arrancarConPasos(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(ExpedienteCaratula.olvidarAperturas);
+
   group('Mi situación', () {
-    testWidgets('la cabecera es un ticket con tu papel y su pegatina', (tester) async {
+    testWidgets('la cabecera es la carpeta de «Tu guía» con tu papel; nunca «tu expediente»', (tester) async {
       final router = await arrancarApp(tester);
       await irA(tester, router, '/situacion/victima');
 
-      final cabecera = find.byType(CabeceraRol);
-      expect(cabecera, findsOneWidget);
-      expect(find.descendant(of: cabecera, matching: find.text('Víctima')), findsOneWidget);
-      expect(find.descendant(of: cabecera, matching: find.text(RolProceso.victima.resumen)), findsOneWidget);
-      final pegatina = tester.widget<IconoTuTurno>(find.descendant(of: cabecera, matching: find.byType(IconoTuTurno)));
-      expect(pegatina.icono, TuIcono.escudo);
-      expect(pegatina.pegatina, isTrue);
+      final caratula = find.byType(ExpedienteCaratula);
+      expect(caratula, findsOneWidget);
+      expect(find.descendant(of: caratula, matching: find.text('TU GUÍA')), findsOneWidget);
+      expect(find.descendant(of: caratula, matching: find.text('Tu camino como víctima')), findsOneWidget);
+      expect(find.descendant(of: caratula, matching: find.text('Tu papel: víctima')), findsOneWidget);
+      expect(find.textContaining(RegExp('tu expediente', caseSensitive: false)), findsNothing);
+      // Las fases con los iconos de la capa justicia: la citación, la puerta de la sala y el reloj.
+      final iconos = tester
+          .widgetList<IconoTuTurno>(find.descendant(of: caratula, matching: find.byType(IconoTuTurno)))
+          .map((i) => i.icono);
+      expect(iconos, containsAll([TuIcono.citacion, TuIcono.puertaSala, TuIcono.reloj, TuIcono.expediente]));
     });
 
-    testWidgets('con itinerario, enseña la línea de pasos en lugar del aviso «Muy pronto»', (tester) async {
+    testWidgets('con itinerario, enseña la línea de pasos y, debajo, la pregunta con ese papel', (tester) async {
       final router = await _arrancarConPasos(tester);
       await irA(tester, router, '/situacion/testigo');
 
@@ -95,7 +105,6 @@ void main() {
       );
       expect(find.text('Te llega una citación'), findsOneWidget);
       expect(find.text('Cuentas lo que sabes'), findsOneWidget);
-      // Debajo de los pasos sigue la pregunta con ese papel.
       await pulsar(tester, find.text('Pregunta como testigo'));
       await esperarTransicion(tester);
       expect(tester.takeException(), isNull);
@@ -108,27 +117,47 @@ void main() {
       expect(find.text(textoSinPasos), findsOneWidget);
       expect(find.text(RolProceso.investigado.explicacion), findsOneWidget);
       expect(find.text(RolProceso.investigado.tranquilidad), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Pregunta como investigado o investigada'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Pregunta como investigado o investigada'), findsOneWidget);
     });
 
-    testWidgets('el selector de papel son tickets con el icono de cada papel y Tut tranquilo', (tester) async {
+    testWidgets('el selector de papel son tickets con el icono de cada papel (también «Me van a escuchar»)', (
+      tester,
+    ) async {
       final router = await arrancarApp(tester);
       await irA(tester, router, '/situacion/otra-cosa');
 
-      for (final rol in RolProceso.values) {
-        final ticket = find.ancestor(of: find.text(rol.nombre), matching: find.byType(TicketTuTurno));
-        expect(ticket, findsOneWidget, reason: rol.name);
+      for (final papel in PapelSituacion.values) {
+        final ticket = find.ancestor(of: find.text(papel.nombre), matching: find.byType(TicketTuTurno));
+        await tester.ensureVisible(ticket);
+        expect(ticket, findsOneWidget, reason: papel.id);
         final iconos = tester.widgetList<IconoTuTurno>(
           find.descendant(of: ticket, matching: find.byType(IconoTuTurno)),
         );
-        expect(iconos.map((i) => i.icono), contains(rol.tuIcono), reason: rol.name);
+        expect(iconos.map((i) => i.icono), contains(papel.tuIcono), reason: papel.id);
       }
-      final tut = tester.widget<MascotaTut>(find.byType(MascotaTut));
-      expect(tut.expresion, ExpresionTut.neutral);
-      expect(tut.animada, isFalse);
+      // El papel de quien investigan nunca lleva la balanza: es un icono neutro (el juzgado).
+      expect(RolProceso.investigado.tuIcono, TuIcono.juzgado);
+      // Tut, tranquilo y quieto.
+      for (final tut in tester.widgetList<MascotaTut>(find.byType(MascotaTut))) {
+        expect(tut.expresion, ExpresionTut.neutral);
+        expect(tut.animada, isFalse);
+      }
     });
 
-    testWidgets('con «reducir animaciones», nada se mueve (ni el papel de la cabecera)', (tester) async {
+    testWidgets('sin sellos que caen, sin confeti y sin XP', (tester) async {
+      final router = await _arrancarConPasos(tester);
+      await irA(tester, router, '/situacion/testigo');
+      expect(find.byType(SelloAnimado), findsNothing);
+      expect(find.byType(ConfetiPapel, skipOffstage: false), findsNothing);
+      expect(find.textContaining('XP'), findsNothing);
+    });
+
+    testWidgets('con «reducir animaciones», nada se mueve (la carpeta ya está abierta)', (tester) async {
       tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
         disableAnimations: true,
       );
@@ -138,7 +167,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump();
-      expect(find.byType(CabeceraRol), findsOneWidget);
+      expect(find.byType(ExpedienteCaratula), findsOneWidget);
+      // La tapa (con «Mi situación» en su carátula) ya no está: la carpeta sale abierta.
+      expect(find.descendant(of: find.byType(ExpedienteCaratula), matching: find.text('Mi situación')), findsNothing);
       expect(tester.binding.transientCallbackCount, 0);
       expect(tester.binding.hasScheduledFrame, isFalse);
     });

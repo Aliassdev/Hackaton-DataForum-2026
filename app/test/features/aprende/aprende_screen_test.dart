@@ -3,11 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/core/progreso.dart';
 import 'package:tuturno/features/aprende/aprende_screen.dart';
 import 'package:tuturno/features/aprende/curso.dart';
+import 'package:tuturno/features/aprende/textos.dart';
+import 'package:tuturno/widgets/justicia/justicia.dart';
 
 import 'ayudantes.dart';
 
 /// Etiqueta del nodo de una lección para el lector de pantalla (empieza así).
 Finder _nodo(String texto) => find.bySemanticsLabel(RegExp(RegExp.escape(texto)));
+
+/// [texto] dentro del botón «Tu turno» de la cabecera.
+Finder _enBotonSeguir(String texto) =>
+    find.descendant(of: find.byKey(const ValueKey('boton-seguir')), matching: find.text(texto));
+
+/// El título de una lección en el mapa (el último: el primero puede ser el del botón «Tu turno»).
+Finder _tituloEnMapa(String titulo) => find.text(titulo).last;
 
 void main() {
   testWidgets('la primera vez: cabecera, dos unidades y solo la primera lección abierta', (tester) async {
@@ -15,19 +24,26 @@ void main() {
     await montar(tester);
 
     expect(find.text('¡Empieza a aprender!'), findsOneWidget);
-    expect(find.text('Empezar: Que te escuchen'), findsOneWidget);
-    expect(find.text('0 XP'), findsOneWidget);
+    expect(_enBotonSeguir('Tu turno'), findsOneWidget);
+    expect(_enBotonSeguir('Que te escuchen'), findsOneWidget);
+    expect(find.bySemanticsLabel('0 puntos de experiencia'), findsOneWidget);
     expect(find.text('0 días'), findsOneWidget);
     expect(find.text('0/17 lecciones'), findsOneWidget);
     expect(find.text('¡Empieza aquí!'), findsOneWidget);
+    expect(find.text('Completa una lección para empezar tu racha.'), findsOneWidget);
     expect(_nodo('Lección 1 de 3: Que te escuchen. Disponible, 6 ejercicios'), findsOneWidget);
     expect(_nodo('Lección 2 de 3: Fiscalía y Defensor del Pueblo. Bloqueada'), findsOneWidget);
+    // Cada unidad es una sala, con su cartel.
+    expect(find.widgetWithText(CartelSala, 'SALA 1 · Tus derechos'), findsOneWidget);
+    // Sin ninguna lección hecha, aún no hay nada que practicar (auditoría, P2-8).
+    expect(find.text('Practicar'), findsNothing);
 
-    await tester.scrollUntilVisible(find.text('Si te toca declarar'), 300);
+    await tester.scrollUntilVisible(find.textContaining('Si te toca declarar'), 300);
     await tester.pumpAndSettle();
-    expect(find.text('Se abre al terminar la unidad anterior.'), findsWidgets);
+    expect(find.text(textoSalaCerrada), findsWidgets);
     expect(_nodo('Lección 1 de 3: La citación y qué puedes pedir. Bloqueada'), findsOneWidget);
     expect(find.text('Lo que dominas'), findsWidgets);
+    expect(find.text(textoBalanza), findsWidgets);
     expect(find.text('Por aprender'), findsWidgets);
     semantica.dispose();
   });
@@ -45,11 +61,13 @@ void main() {
       ),
     );
     expect(find.text('¡Sigue así!'), findsOneWidget);
-    expect(find.text('120 XP'), findsOneWidget);
+    expect(find.bySemanticsLabel('120 puntos de experiencia'), findsOneWidget);
     expect(find.text('2 días'), findsOneWidget);
     expect(find.text('2/17 lecciones'), findsOneWidget);
     expect(find.text('¡Hoy ya has sumado a tu racha!'), findsOneWidget);
-    expect(find.text('Seguir: Abogado y canales seguros'), findsOneWidget);
+    expect(_enBotonSeguir('Tu turno'), findsOneWidget);
+    expect(_enBotonSeguir('Abogado y canales seguros'), findsOneWidget);
+    expect(find.text('Practicar'), findsOneWidget, reason: 'ya hay lecciones hechas en la sala 1');
     expect(_nodo('Lección 1 de 3: Que te escuchen. Completada'), findsOneWidget);
     expect(_nodo('Lección 3 de 3: Abogado y canales seguros. Disponible'), findsOneWidget);
     expect(find.text('Sigue aquí'), findsOneWidget);
@@ -65,12 +83,12 @@ void main() {
 
   testWidgets('tocar una lección abierta la empieza; una completada se puede repetir', (tester) async {
     final m = await montar(tester, preferencias: progresoGuardado(lecciones: ['U1-L1']));
-    await pulsar(tester, find.text('Que te escuchen'));
+    await pulsar(tester, _tituloEnMapa('Que te escuchen'));
     expect(find.byType(LeccionScreen), findsOneWidget);
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, 'U1-L1');
     m.router.pop();
     await tester.pumpAndSettle();
-    await pulsar(tester, find.text('Fiscalía y Defensor del Pueblo'));
+    await pulsar(tester, _tituloEnMapa('Fiscalía y Defensor del Pueblo'));
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, 'U1-L2');
   });
 
@@ -93,7 +111,7 @@ void main() {
 
   testWidgets('en modo demo, mantener pulsada una lección la abre en su «Dilo con tus palabras»', (tester) async {
     await montar(tester, demo: true);
-    await tester.longPress(find.text('Que te escuchen'));
+    await tester.longPress(_tituloEnMapa('Que te escuchen'));
     await tester.pumpAndSettle();
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, '${prefijoDilo}U1-L1');
     expect(find.text('Explica con tus palabras qué significa el derecho a ser oído.'), findsOneWidget);
@@ -101,7 +119,7 @@ void main() {
 
   testWidgets('fuera del modo demo, mantener pulsada una lección la abre normal', (tester) async {
     await montar(tester);
-    await tester.longPress(find.text('Que te escuchen'));
+    await tester.longPress(_tituloEnMapa('Que te escuchen'));
     await tester.pumpAndSettle();
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, 'U1-L1');
   });
@@ -112,8 +130,16 @@ void main() {
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, 'U1-L1');
   });
 
-  testWidgets('«Practicar» abre la práctica de su unidad; la unidad cerrada no se puede practicar', (tester) async {
+  testWidgets('con el progreso nuevo, «Practicar» no sale (no hay nada que practicar todavía)', (tester) async {
     await montar(tester);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -6000));
+    await tester.pumpAndSettle();
+    expect(find.text('Practicar', skipOffstage: false), findsNothing);
+    expect(find.text('Repasar', skipOffstage: false), findsNothing);
+  });
+
+  testWidgets('«Practicar» abre la práctica de su unidad; la unidad cerrada no se puede practicar', (tester) async {
+    await montar(tester, preferencias: progresoGuardado(lecciones: ['U1-L1']));
     expect(find.text('Practicar'), findsOneWidget);
     await pulsar(tester, find.text('Practicar'));
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, '${prefijoPractica}U1');
@@ -151,16 +177,45 @@ void main() {
     expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, '${prefijoPractica}U7');
   });
 
-  testWidgets('si pasó más de un día sin lecciones, la racha vuelve a cero', (tester) async {
-    await montar(tester, preferencias: progresoGuardado(racha: 5, ultimoDia: DateTime(2026, 10, 18)));
-    expect(find.text('0 días'), findsOneWidget);
-    expect(find.text('Completa una lección para empezar tu racha.'), findsOneWidget);
-  });
+  group('racha amable (producto, apartado 5.5)', () {
+    testWidgets('sin racha y con una mejor racha: se empieza otra, y se recuerda la mejor', (tester) async {
+      await montar(tester, preferencias: progresoGuardado(racha: 5, ultimoDia: DateTime(2026, 10, 18)));
+      expect(find.text('0 días'), findsOneWidget);
+      expect(find.text('Cuando quieras, empiezas una racha nueva. Tu mejor racha: 5 días.'), findsOneWidget);
+    });
 
-  testWidgets('si la última lección fue ayer, recuerda que hoy toca para no perder la racha', (tester) async {
-    await montar(tester, preferencias: progresoGuardado(racha: 5, ultimoDia: DateTime(2026, 10, 20)));
-    expect(find.text('5 días'), findsOneWidget);
-    expect(find.text('Haz una lección hoy para no perder tu racha.'), findsOneWidget);
+    testWidgets('si la última lección fue ayer: hoy la racha suma un día', (tester) async {
+      await montar(tester, preferencias: progresoGuardado(racha: 5, ultimoDia: DateTime(2026, 10, 20)));
+      expect(find.text('5 días'), findsOneWidget);
+      expect(find.text('Si haces una lección hoy, tu racha suma un día.'), findsOneWidget);
+    });
+
+    testWidgets('si ayer no hubo lección pero queda descanso: la racha sigue', (tester) async {
+      await montar(tester, preferencias: progresoGuardado(racha: 5, ultimoDia: DateTime(2026, 10, 19)));
+      expect(find.text('5 días'), findsOneWidget);
+      expect(
+        find.text('Ayer descansaste: tienes un día de descanso cada semana. Si haces una lección hoy, tu racha sigue.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('ningún texto de la racha habla de perderla, en ningún estado', (tester) async {
+      final casos = <TipoRacha, Map<String, Object>>{
+        TipoRacha.sinRacha: progresoGuardado(),
+        TipoRacha.hoyHecha: progresoGuardado(racha: 3, ultimoDia: DateTime(2026, 10, 21), lecciones: ['U1-L1']),
+        TipoRacha.pendienteHoy: progresoGuardado(racha: 3, ultimoDia: DateTime(2026, 10, 20), lecciones: ['U1-L1']),
+        TipoRacha.conDescanso: progresoGuardado(racha: 3, ultimoDia: DateTime(2026, 10, 19), lecciones: ['U1-L1']),
+      };
+      for (final MapEntry(key: tipo, value: preferencias) in casos.entries) {
+        await montar(tester, preferencias: preferencias);
+        expect(find.byKey(const ValueKey('texto-racha')), findsOneWidget, reason: tipo.name);
+        expect(find.textContaining(RegExp('perd|pierd', caseSensitive: false)), findsNothing, reason: tipo.name);
+      }
+      // Y una mejor racha que ya pasó.
+      await montar(tester, preferencias: progresoGuardado(racha: 9, mejorRacha: 12, ultimoDia: DateTime(2026, 10, 1)));
+      expect(find.textContaining('Tu mejor racha: 12 días'), findsOneWidget);
+      expect(find.textContaining(RegExp('perd|pierd', caseSensitive: false)), findsNothing);
+    });
   });
 
   testWidgets('después de completar una lección, al volver al mapa la siguiente está abierta', (tester) async {
@@ -214,9 +269,13 @@ void main() {
       preferencias: progresoGuardado(xp: 1234, racha: 12, ultimoDia: DateTime(2026, 10, 21), lecciones: ['U1-L1']),
     );
     expect(tester.takeException(), isNull);
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -6000));
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
+    // Las 7 salas, hasta abajo del todo.
+    for (var i = 0; i < 6; i++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2500));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+    expect(find.textContaining('SALA 7'), findsOneWidget);
   });
 
   testWidgets('accesible: zonas táctiles, etiquetas y contraste en claro y en oscuro', (tester) async {

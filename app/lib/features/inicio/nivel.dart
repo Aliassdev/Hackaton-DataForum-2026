@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Niveles de experiencia: se suben con los puntos (XP) de Aprende. Cada uno tiene un título divertido, sin género
-/// (vale para chicos y chicas) y sin presión: los puntos nunca se pierden.
+/// (vale para chicos y chicas) y sin presión: los puntos solo suben.
 ///
 /// Con +10 XP por acierto, el nivel 2 llega con la primera lección.
 @immutable

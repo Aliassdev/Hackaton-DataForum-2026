@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -164,16 +166,27 @@ const glosarioPregunta = '''
 ]
 ''';
 
-/// Overrides comunes: configuración de mock, preferencias en memoria, glosario en memoria, API, voz y voz a
-/// texto falsas.
+/// El perfil de la hoja que se guarda en las pruebas si no se pide otro.
+const perfilDePrueba = <String, Object?>{'edad': 13, 'procedimiento': 'penal', 'rol': 'victima', 'fase': 'durante'};
+
+/// El JSON de las conversaciones de ejemplo, leído del disco (los tests se ejecutan desde app/).
+String ejemplosPreguntaJson() => File('assets/mock/content/pregunta_ejemplos.json').readAsStringSync();
+
+/// Overrides comunes: configuración de mock, preferencias en memoria (con el perfil [entrada], o sin perfil si es
+/// null), glosario en memoria, API, voz y voz a texto falsas.
 Future<List<Override>> overridesDePrueba({
   required ApiGrabadora api,
   required FakeStt stt,
   required FakeTts tts,
   bool vozActivada = true,
   String glosario = glosarioPregunta,
+  Map<String, Object?>? entrada = perfilDePrueba,
 }) async {
-  SharedPreferences.setMockInitialValues({'bienvenida_vista': true, 'ajustes.voz_activada': vozActivada});
+  SharedPreferences.setMockInitialValues({
+    'bienvenida_vista': true,
+    'ajustes.voz_activada': vozActivada,
+    if (entrada != null) 'entrada': jsonEncode(entrada),
+  });
   final prefs = await SharedPreferences.getInstance();
   return [
     configProvider.overrideWithValue(const AppConfig(apiUrl: '', useMock: true, demo: false)),

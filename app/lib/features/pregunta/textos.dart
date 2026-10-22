@@ -5,10 +5,22 @@ import '../../widgets/iconos/tu_icono.dart';
 // Textos de «Pregunta». Frases cortas, de tú y con palabras que entiende alguien de 11 años.
 // El agente habla del proceso y nunca pregunta qué ha pasado.
 
+// Sin promesas sobre lo que se guarda (auditoría P1-4). Lo cierto: la app no guarda la conversación (solo vive en
+// memoria y desaparece al salir de Pregunta) y el backend de TuTurno no escribe lo que se pregunta en sus registros.
 const textoPresentacion =
-    'Soy una IA. Pregúntame sobre tus derechos o sobre cómo funciona un juicio. No guardo lo que hablamos.';
+    'Soy una IA. Pregúntame sobre tus derechos o sobre cómo funciona un juicio. '
+    'No me cuentes tu nombre ni lo que ha pasado.';
 
 const textoAvisoIa = 'Soy una IA y puedo equivocarme. Si es urgente, pulsa Ayuda.';
+
+/// «Empezar de nuevo» en el modo texto.
+const textoBorrar = 'Desaparece de la pantalla. La app no guarda tus conversaciones.';
+
+/// A los 8 s sin respuesta (en los dos modos).
+const textoSigoBuscando = 'Sigo buscando en las leyes';
+
+/// Para quitar fotos o vídeos (respuesta de «hechos» que hablaba de imágenes): el Canal prioritario de la AEPD.
+const textoQuitarImagenes = 'Quitar fotos o vídeos de internet';
 
 /// Una pregunta de ejemplo con su icono de TuTurno (decorativo).
 typedef Ejemplo = ({String texto, TuIcono icono});

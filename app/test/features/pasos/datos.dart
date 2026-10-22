@@ -138,6 +138,9 @@ Future<void> montarLinea(
   Size tamano = const Size(390, 844),
   List<Override> overrides = const [],
   bool esperar = true,
+  PersonalizacionLinea? personalizacion,
+  bool apuntar = true,
+  bool escuchar = true,
 }) async {
   tester.view.physicalSize = tamano * tester.view.devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
@@ -162,7 +165,13 @@ Future<void> montarLinea(
         home: Scaffold(
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(Espacio.m),
-            child: LineaPasos(rol: rol, faseActual: faseActual),
+            child: LineaPasos(
+              rol: rol,
+              faseActual: faseActual,
+              personalizacion: personalizacion,
+              apuntar: apuntar,
+              escuchar: escuchar,
+            ),
           ),
         ),
       ),

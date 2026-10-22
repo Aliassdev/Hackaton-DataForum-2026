@@ -4,19 +4,23 @@ import 'package:flutter/material.dart';
 import '../../../core/api/models.dart';
 import '../../../core/texto.dart';
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
+import '../../../widgets/movimiento/pop_pegatina.dart';
 import '../../../widgets/texto_con_terminos.dart';
 import '../../pregunta/widgets/mensajes.dart' show TarjetaCrisis;
 import '../modelos.dart';
 import '../textos.dart';
 import 'comunes.dart';
 
-/// Cómo ha ido una respuesta: bien, no, sin corregir («Dilo» sin conexión o saltado) o «ayuda» (en «Dilo» se ha
-/// escrito algo que suena a peligro: no se corrige y se ofrecen los teléfonos de ayuda).
+/// Cómo ha ido una respuesta: bien, no, sin corregir («Dilo» saltado) o «ayuda» (en «Dilo» se ha escrito algo que
+/// suena a peligro: no se corrige y se ofrecen los teléfonos de ayuda).
 enum TipoCorreccion { acierto, fallo, neutra, ayuda }
 
-/// Panel que sube desde abajo después de «Comprobar»: si es correcto o no, la respuesta correcta, la explicación,
-/// la fuente y «Continuar». Se anuncia solo al lector de pantalla.
+/// Panel que sube desde abajo después de «Comprobar»: Tut (contento si aciertas, animándote si no; nunca triste), el
+/// título, los puntos, la respuesta correcta, la explicación, la fuente y «Continuar». Se anuncia solo al lector de
+/// pantalla.
 ///
+/// La cabecera va en un Wrap: con letra grande, los puntos bajan de línea y el título nunca se parte a media palabra.
 /// Los detalles se desplazan dentro del panel (con la barra siempre a la vista, para que se note que hay más) y
 /// «Continuar» no se mueve de abajo.
 class PanelCorreccion extends StatefulWidget {
@@ -31,8 +35,8 @@ class PanelCorreccion extends StatefulWidget {
     this.fuente = '',
     this.xp = 0,
     this.textoRacha,
+    this.aproximada = false,
     this.textoBoton = 'Continuar',
-    this.onReintentar,
     this.onEscuchar,
     this.hablando,
     this.altoDisponible,
@@ -52,11 +56,11 @@ class PanelCorreccion extends StatefulWidget {
 
   /// «¡3 seguidas!», si toca.
   final String? textoRacha;
+
+  /// «Dilo» corregido en el móvil, sin servidor: se avisa de que es una corrección aproximada.
+  final bool aproximada;
   final String textoBoton;
   final VoidCallback onContinuar;
-
-  /// Si no se ha podido corregir («Dilo» sin conexión): «Volver a intentarlo», encima de «Continuar».
-  final VoidCallback? onReintentar;
 
   /// Leer la corrección en voz alta (o pararla). Con [hablando], el botón cambia a «Parar».
   final VoidCallback? onEscuchar;
@@ -85,13 +89,18 @@ class _PanelCorreccionState extends State<PanelCorreccion> {
     final esquema = tema.colorScheme;
     final exito = context.colores.exito;
     final tipo = widget.tipo;
-    final (Color acento, Color sobreAcento, IconData icono) = switch (tipo) {
-      TipoCorreccion.acierto => (exito, context.colores.sobreExito, Icons.check_rounded),
-      // El rojo de la marca es para Ayuda y los errores: fallar es parte de aprender, con una bombilla y el color
-      // terciario, como en Vive el caso.
-      TipoCorreccion.fallo => (esquema.tertiary, esquema.onTertiary, Icons.lightbulb_rounded),
-      TipoCorreccion.neutra => (esquema.primary, esquema.onPrimary, Icons.info_rounded),
-      TipoCorreccion.ayuda => (esquema.primary, esquema.onPrimary, Icons.favorite_rounded),
+    final Color acento = switch (tipo) {
+      TipoCorreccion.acierto => exito,
+      // El rojo de la marca es para Ayuda y los errores: fallar es parte de aprender (terciario, como en Vive el caso).
+      TipoCorreccion.fallo => esquema.tertiary,
+      TipoCorreccion.neutra || TipoCorreccion.ayuda => esquema.primary,
+    };
+    // Tut da la corrección: contento si aciertas, animándote si no. Nunca triste. Con la ayuda, sin adornos.
+    final ExpresionTut? expresion = switch (tipo) {
+      TipoCorreccion.acierto => ExpresionTut.feliz,
+      TipoCorreccion.fallo => ExpresionTut.animo,
+      TipoCorreccion.neutra => ExpresionTut.pensando,
+      TipoCorreccion.ayuda => null,
     };
     final alto = widget.altoDisponible ?? MediaQuery.sizeOf(context).height;
     final letraGrande = MediaQuery.textScalerOf(context).scale(1) > 1.15;
@@ -106,7 +115,6 @@ class _PanelCorreccionState extends State<PanelCorreccion> {
     final hayDetalles = detalle != null || explicacion.isNotEmpty || fuente.isNotEmpty;
     final onEscuchar = widget.onEscuchar;
     final hablando = widget.hablando;
-    final onReintentar = widget.onReintentar;
     final continuar = Text(widget.textoBoton);
 
     return ConstrainedBox(
@@ -137,44 +145,39 @@ class _PanelCorreccionState extends State<PanelCorreccion> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       // Solo el título y los puntos se anuncian solos; el botón de escuchar va aparte.
                       child: Semantics(
                         liveRegion: true,
                         container: true,
-                        child: Row(
+                        child: Wrap(
+                          key: const ValueKey('cabecera-correccion'),
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: Espacio.s + Espacio.xs,
+                          runSpacing: Espacio.xs,
                           children: [
-                            // Con la ayuda, sin adornos y con el título más pequeño: lo que importa es la tarjeta
-                            // de los teléfonos, que tiene que caber.
-                            if (!ayuda) ...[
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.4, end: 1),
-                                duration: duracion(context, Duracion.larga),
-                                curve: Curves.elasticOut,
-                                builder: (context, escala, hijo) => Transform.scale(scale: escala, child: hijo),
-                                child: Container(
-                                  width: Espacio.xl + Espacio.s,
-                                  height: Espacio.xl + Espacio.s,
-                                  decoration: BoxDecoration(shape: BoxShape.circle, color: acento),
-                                  child: Icon(icono, color: sobreAcento, size: Espacio.l + 2),
-                                ),
+                            if (expresion != null)
+                              MascotaTut(
+                                key: ValueKey('tut-${expresion.name}'),
+                                expresion: expresion,
+                                size: Espacio.xxl,
+                                decorativo: true,
                               ),
-                              const SizedBox(width: Espacio.m - 4),
-                            ],
-                            Expanded(
-                              child: Semantics(
-                                header: true,
-                                child: Text(
-                                  widget.titulo,
-                                  style: (ayuda ? tema.textTheme.titleMedium : tema.textTheme.titleLarge)?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: esquema.onSurface,
-                                  ),
+                            // Sin Expanded: si no cabe al lado de Tut, baja entero a la línea siguiente.
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                widget.titulo,
+                                key: const ValueKey('titulo-correccion'),
+                                style: (ayuda ? tema.textTheme.titleMedium : tema.textTheme.titleLarge)?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: esquema.onSurface,
                                 ),
                               ),
                             ),
-                            if (widget.xp > 0) ...[const SizedBox(width: Espacio.s), _ChapaXp(xp: widget.xp)],
+                            if (widget.xp > 0) _ChapaXp(xp: widget.xp),
                           ],
                         ),
                       ),
@@ -186,23 +189,30 @@ class _PanelCorreccionState extends State<PanelCorreccion> {
                           key: const ValueKey('boton-escuchar-correccion'),
                           tooltip: leyendo ? 'Parar la lectura' : 'Escuchar la explicación',
                           onPressed: onEscuchar,
-                          color: esquema.onSurface,
-                          icon: Icon(leyendo ? Icons.stop_rounded : Icons.volume_up_rounded),
+                          icon: IconoTuTurno(
+                            leyendo ? TuIcono.silencio : TuIcono.altavoz,
+                            estilo: EstiloIcono.mono,
+                            color: esquema.onSurface,
+                            decorativo: true,
+                          ),
                         ),
                       ),
                   ],
                 ),
+                if (widget.aproximada) ...[const SizedBox(height: Espacio.xs), const _AvisoAproximada()],
                 if (textoRacha != null) ...[
                   const SizedBox(height: Espacio.s),
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: PastillaDato(
-                      icono: Icons.local_fire_department_rounded,
-                      texto: Text(textoRacha),
-                      semantica: textoRacha,
-                      colorTexto: esquema.onSurface,
-                      colorIcono: esquema.tertiary,
-                      fondo: esquema.surface.withValues(alpha: 0.7),
+                    child: PopPegatina(
+                      clave: textoRacha,
+                      child: PastillaDato(
+                        tuIcono: TuIcono.racha,
+                        texto: Text(textoRacha),
+                        semantica: textoRacha,
+                        colorTexto: esquema.onSurface,
+                        fondo: esquema.surface.withValues(alpha: 0.7),
+                      ),
                     ),
                   ),
                 ],
@@ -242,15 +252,6 @@ class _PanelCorreccionState extends State<PanelCorreccion> {
                   ),
                 ],
                 const SizedBox(height: Espacio.m - 4),
-                if (onReintentar != null) ...[
-                  OutlinedButton.icon(
-                    key: const ValueKey('boton-reintentar'),
-                    onPressed: onReintentar,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text(textoVolverAIntentar),
-                  ),
-                  const SizedBox(height: Espacio.s),
-                ],
                 // Con la ayuda, lo principal es llamar: seguir con la lección queda en segundo plano.
                 if (ayuda)
                   OutlinedButton(
@@ -276,6 +277,33 @@ class _PanelCorreccionState extends State<PanelCorreccion> {
   }
 }
 
+/// «Corrección aproximada sin conexión»: «Dilo» se ha corregido en el móvil (correccion_local.dart).
+class _AvisoAproximada extends StatelessWidget {
+  const _AvisoAproximada();
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    return Row(
+      key: const ValueKey('aviso-aproximada'),
+      children: [
+        IconoTuTurno(
+          TuIcono.info,
+          estilo: EstiloIcono.mono,
+          size: Espacio.m + 2,
+          color: esquema.onSurfaceVariant,
+          decorativo: true,
+        ),
+        const SizedBox(width: Espacio.xs + 2),
+        Expanded(
+          child: Text(textoDiloAproximada, style: tema.textTheme.labelLarge?.copyWith(color: esquema.onSurfaceVariant)),
+        ),
+      ],
+    );
+  }
+}
+
 class _ChapaXp extends StatelessWidget {
   const _ChapaXp({required this.xp});
 
@@ -283,22 +311,16 @@ class _ChapaXp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final esquema = tema.colorScheme;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: duracion(context, Duracion.larga),
-      curve: Curves.easeOutBack,
-      builder: (context, t, hijo) => Opacity(
-        opacity: t.clamp(0.0, 1.0),
-        child: Transform.translate(offset: Offset(0, (1 - t) * Espacio.m), child: hijo),
-      ),
+    final esquema = Theme.of(context).colorScheme;
+    // Una recompensa: se pega como una pegatina (con «reducir animaciones», ya puesta).
+    return PopPegatina(
+      vibrar: true,
       child: PastillaDato(
-        icono: Icons.bolt_rounded,
+        key: const ValueKey('chapa-xp'),
+        tuIcono: TuIcono.xp,
         texto: Text('+$xp XP'),
         semantica: 'Has ganado $xp puntos',
         colorTexto: esquema.onSurface,
-        colorIcono: esquema.tertiary,
         fondo: esquema.surface,
       ),
     );
@@ -360,16 +382,13 @@ String? comentarioDilo(GradeResponse nota) {
 }
 
 /// Ideas cubiertas y que faltan en «Dilo con tus palabras», con el comentario del evaluador. Lo que falta va aparte y
-/// destacado (con una bombilla): es lo que la IA ha encontrado que falta, el momento importante del ejercicio.
+/// destacado (con una bombilla), dicho con calma («Te ha faltado esta idea»): es el momento importante del ejercicio.
 class IdeasDilo extends StatelessWidget {
-  const IdeasDilo({super.key, this.nota, this.proposiciones = const [], this.error});
+  const IdeasDilo({super.key, this.nota, this.proposiciones = const []});
 
-  /// La corrección del backend. Si es null, se enseñan [proposiciones] como ideas clave.
+  /// La corrección (del servidor o del móvil). Si es null, se enseñan [proposiciones] como ideas clave.
   final GradeResponse? nota;
   final List<String> proposiciones;
-
-  /// Por qué no se ha podido corregir (sin conexión, por ejemplo).
-  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -377,7 +396,6 @@ class IdeasDilo extends StatelessWidget {
     final esquema = tema.colorScheme;
     final exito = context.colores.exito;
     final nota = this.nota;
-    final error = this.error;
     final cuerpo = tema.textTheme.bodyLarge?.copyWith(color: esquema.onSurface);
     final etiqueta = tema.textTheme.labelLarge?.copyWith(color: esquema.onSurface, fontWeight: FontWeight.w700);
 
@@ -385,7 +403,6 @@ class IdeasDilo extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (error != null) ...[Text(error, style: cuerpo), const SizedBox(height: Espacio.s + Espacio.xs)],
           Text(textoDiloIdeasClave, style: etiqueta),
           const SizedBox(height: Espacio.xs + 2),
           for (final p in proposiciones)
@@ -394,7 +411,7 @@ class IdeasDilo extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.lightbulb_rounded, size: Espacio.l - 2, color: esquema.tertiary),
+                  const IconoTuTurno(TuIcono.idea, size: Espacio.l, decorativo: true),
                   const SizedBox(width: Espacio.s),
                   Expanded(child: Text(p, style: cuerpo)),
                 ],
@@ -432,12 +449,7 @@ class IdeasDilo extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    size: Espacio.l - 2,
-                    color: exito,
-                    semanticLabel: 'La has explicado',
-                  ),
+                  const IconoTuTurno(TuIcono.check, size: Espacio.l, semanticLabel: 'La has explicado'),
                   const SizedBox(width: Espacio.s),
                   Expanded(child: Text(c, style: cuerpo)),
                 ],
@@ -446,7 +458,7 @@ class IdeasDilo extends StatelessWidget {
           ),
         if (nota.faltan.isNotEmpty) ...[
           const SizedBox(height: Espacio.xs),
-          Semantics(header: true, child: Text(textoDiloTeFalta, style: etiqueta)),
+          Semantics(header: true, child: Text(textoIdeasQueFaltan(nota.faltan.length), style: etiqueta)),
           const SizedBox(height: Espacio.xs + 2),
           for (final (i, f) in nota.faltan.indexed)
             Aparece(
@@ -485,9 +497,7 @@ class _IdeaQueFalta extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ExcludeSemantics(
-            child: Icon(Icons.lightbulb_rounded, size: Espacio.l - 2, color: esquema.tertiary),
-          ),
+          const IconoTuTurno(TuIcono.idea, size: Espacio.l, decorativo: true),
           const SizedBox(width: Espacio.s),
           Expanded(
             child: Text(

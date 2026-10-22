@@ -1,0 +1,403 @@
+{
+  "nota": "Derechos de «Mi situación», filtrados por papel, edad, fase y preocupaciones. Cada texto sale de la explicación de docs/MARCO_LEGAL.md con su artículo. Los ejemplos salen de los casos de «Vive el caso».",
+  "validado": true,
+  "derechos": [
+    {
+      "id": "DS-ser-oido",
+      "titulo": "Que te escuchen, tengas la edad que tengas",
+      "texto": "Tienes derecho a que te escuchen sin que importe tu edad. Con 12 años cumplidos, la ley considera siempre que tienes madurez suficiente para dar tu opinión.",
+      "ejemplo": "Lucía tiene 11 años y también tiene derecho a que la escuchen: su opinión cuenta.",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["preguntas"],
+      "fuentes": ["LO 1/1996, arts. 9.1 y 9.2", "CDN, art. 12.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-entender",
+      "titulo": "Que te lo expliquen con palabras que entiendas",
+      "texto": "Te tienen que dar la información con palabras que entiendas y de una forma adaptada a ti. Si algo no lo entiendes, puedes pedir que te lo expliquen otra vez.",
+      "ejemplo": "Si oyes «prueba preconstituida» y no sabes qué es, puedes decir: «¿Me lo explicas con otras palabras?».",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["no_entender"],
+      "fuentes": ["LO 1/1996, art. 9.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-fiscalia",
+      "titulo": "Avisar a la Fiscalía si no se respetan tus derechos",
+      "texto": "Puedes contar tú a la Fiscalía que no se respetan tus derechos, para que actúe.",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["despues"],
+      "fuentes": ["LO 1/1996, art. 10.2.b)"],
+      "validado": true
+    },
+    {
+      "id": "DS-defensor",
+      "titulo": "Quejarte al Defensor del Pueblo",
+      "texto": "Aunque seas menor de edad, puedes quejarte al Defensor del Pueblo, o al defensor de tu comunidad autónoma, si crees que una administración no ha respetado tus derechos.",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["despues"],
+      "fuentes": ["LO 3/1981, art. 10.1", "LO 1/1996, art. 10.2.c)"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-primer-momento",
+      "titulo": "Que te expliquen tus derechos desde el primer momento",
+      "texto": "Desde el primer contacto con la policía o el juzgado, incluso antes de denunciar, te tienen que explicar tus derechos; por ejemplo, cómo pedir protección.",
+      "papeles": ["victima"],
+      "preocupaciones": ["no_entender"],
+      "fuentes": ["Ley 4/2015, art. 5.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-entender",
+      "titulo": "Entender y que te entiendan",
+      "texto": "Si eres víctima, todo lo que te expliquen tiene que ser claro, sencillo y adaptado a tu edad. Los avisos oficiales se envían a tus padres o a quien te represente.",
+      "papeles": ["victima"],
+      "preocupaciones": ["no_entender", "familia"],
+      "fuentes": ["Ley 4/2015, art. 4"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-acompanada",
+      "titulo": "Ir con una persona de confianza",
+      "texto": "Cuando declares, puedes ir con quien te represente y con una persona de confianza que elijas tú, salvo que el juez explique por qué no. En la policía también se procura que esté contigo una persona de tu confianza.",
+      "ejemplo": "Lucía eligió ir con su tía Elena, porque con ella se siente tranquila.",
+      "papeles": ["victima"],
+      "preocupaciones": ["solo"],
+      "fuentes": ["LECrim, art. 433", "LOPIVI, art. 50.2.h)"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-sin-cruzarte",
+      "titulo": "No cruzarte con la persona investigada",
+      "texto": "Los juzgados y las fiscalías tienen que organizarse para que ni tú ni tu familia os crucéis con la persona investigada. En la comisaría, la policía tiene que evitar cualquier contacto.",
+      "ejemplo": "Lucía no va a una sala de juicio: va a una zona del juzgado preparada para niños y niñas.",
+      "papeles": ["victima"],
+      "preocupaciones": ["ver_persona"],
+      "fuentes": ["Ley 4/2015, art. 20", "LOPIVI, art. 50.2.d)"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-intimidad",
+      "titulo": "Que nadie publique quién eres",
+      "texto": "Si eres víctima y menor de edad, está prohibido publicar tu nombre, datos que permitan reconocerte o fotos tuyas o de tu familia.",
+      "papeles": ["victima"],
+      "preocupaciones": ["redes", "colegio"],
+      "fuentes": ["LECrim, art. 681.3", "Ley 4/2015, art. 22"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-abogado",
+      "titulo": "Un abogado o una abogada",
+      "texto": "Si eres víctima de violencia, el Colegio de Abogados tiene que asignártelo con urgencia. Es gratis en los casos que marca la ley, como los delitos sexuales; en otros, depende de los ingresos de tu familia.",
+      "ejemplo": "Sara va a la Fiscalía de Menores con su madre y con su abogada.",
+      "papeles": ["victima"],
+      "preocupaciones": ["solo"],
+      "fuentes": ["LOPIVI, arts. 14.1 y 14.3", "Ley 1/1996 de asistencia jurídica gratuita, art. 2.h)"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-sala",
+      "titulo": "Declarar en una sala preparada",
+      "texto": "Te pueden tomar declaración en una sala preparada para ello, como la Sala Gesell, y con profesionales formados para que lo pases lo mejor posible.",
+      "ejemplo": "La Sala Gesell de Lucía es acogedora: tiene un sofá, una mesa y una cámara pequeña.",
+      "papeles": ["victima"],
+      "preocupaciones": ["preguntas"],
+      "fuentes": ["Ley 4/2015, art. 25.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-grabacion",
+      "titulo": "Que tu entrevista se grabe para el juicio",
+      "texto": "En un caso de violencia, el juez tiene que hacer tu entrevista como prueba preconstituida: se graba para que sirva en el juicio. Después, normalmente ponen la grabación y no hace falta que vayas.",
+      "ejemplo": "A Lucía la entrevistan en la Sala Gesell y esa grabación vale para el juicio.",
+      "papeles": ["victima"],
+      "edad_max": 13,
+      "preocupaciones": ["preguntas", "ver_persona"],
+      "fuentes": ["LECrim, art. 449 ter", "LECrim, art. 703 bis"],
+      "validado": true
+    },
+    {
+      "id": "DS-no-verla",
+      "titulo": "No ver cara a cara a la persona investigada",
+      "texto": "Si la persona investigada está presente en tu entrevista, se evita que la veas cara a cara. Para eso se puede usar un cristal, una pantalla u otro medio.",
+      "ejemplo": "La jueza, la fiscal y los abogados siguen la entrevista de Lucía desde otra sala, a través de una pantalla.",
+      "papeles": ["victima", "testigo"],
+      "edad_max": 13,
+      "preocupaciones": ["ver_persona"],
+      "fuentes": ["LECrim, art. 449 ter, párr. 3"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-distancia",
+      "titulo": "Declarar a distancia si tu caso es de menores",
+      "condicion": "Si a quien investigan tiene de 14 a 17 años",
+      "texto": "En los casos de la Fiscalía de Menores, como eres menor, lo normal es que declares por videoconferencia, sin ir a la sala donde están los acusados. Solo irías en persona si el juez o el fiscal explican por qué hace falta.",
+      "papeles": ["victima"],
+      "preocupaciones": ["ver_persona"],
+      "fuentes": ["LO 5/2000, art. 4"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-avisos",
+      "titulo": "Saber cuándo es el juicio y qué se decide",
+      "texto": "A ti o a tus padres os tienen que avisar de la fecha, la hora y el lugar del juicio, y de las decisiones importantes, como no seguir con el caso o la sentencia.",
+      "papeles": ["victima"],
+      "preocupaciones": ["despues", "familia"],
+      "fuentes": ["Ley 4/2015, art. 7.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-mediacion",
+      "titulo": "Mediación, solo si tú quieres",
+      "texto": "Una mediación con quien te hizo daño solo se hace si das tu permiso después de que te la expliquen bien, y si no es peligrosa para ti. Puedes echarte atrás cuando quieras.",
+      "ejemplo": "A Sergio le explican qué es una conciliación cuando uno de los chicos quiere pedirle perdón.",
+      "papeles": ["victima"],
+      "preocupaciones": ["ver_persona", "despues"],
+      "fuentes": ["Ley 4/2015, art. 15"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-proteccion",
+      "titulo": "Que te protejan mientras dura el caso",
+      "texto": "Quienes investigan y juzgan tienen que protegerte para que el proceso no te haga más daño; como eres menor, la Fiscalía lo vigila de forma especial. Si a quien investigan tiene de 14 a 17 años, el fiscal puede pedir al juez en cualquier momento que no se te acerque ni se comunique contigo.",
+      "papeles": ["victima"],
+      "preocupaciones": ["ver_persona", "redes", "colegio"],
+      "fuentes": ["Ley 4/2015, art. 19", "LO 5/2000, art. 28.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-denunciar",
+      "titulo": "Denunciar tú, sin un adulto",
+      "texto": "Puedes ir a la policía y denunciar tú, sin que tenga que acompañarte una persona adulta.",
+      "papeles": ["victima"],
+      "fases": ["antes"],
+      "preocupaciones": ["familia", "solo"],
+      "fuentes": ["LOPIVI, art. 50.2.e)"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-centro",
+      "titulo": "Que tu colegio o instituto te proteja",
+      "texto": "En tu centro tiene que haber un coordinador o coordinadora de bienestar y protección: la persona a la que puedes contarlo. Si cuentas que sufres violencia, el centro tiene que tomar medidas para protegerte.",
+      "ejemplo": "Sergio y Sara hablan con Laura, la coordinadora de bienestar de su instituto.",
+      "papeles": ["victima"],
+      "preocupaciones": ["colegio"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LOPIVI, arts. 35.1 y 35.2.c)", "LOPIVI, art. 20.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-v-protocolo",
+      "titulo": "Que se active el protocolo contra el acoso",
+      "texto": "Todos los colegios e institutos tienen que seguir un protocolo contra el acoso y el ciberacoso, y se pone en marcha con solo que tú lo cuentes. Si se difunde algo íntimo tuyo por el móvil o internet, el protocolo tiene pasos para ese caso.",
+      "papeles": ["victima"],
+      "preocupaciones": ["colegio", "redes"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LOPIVI, art. 34.1", "LOPIVI, art. 34.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-canal",
+      "titulo": "Pedir que quiten fotos o vídeos tuyos de internet",
+      "texto": "Si se han publicado fotos, vídeos o audios sexuales o violentos tuyos sin permiso, puedes pedir que los retiren en el Canal prioritario de la Agencia Española de Protección de Datos. Con 14 a 17 años puedes contactar tú directamente. Este canal no sirve para WhatsApp, Telegram ni el correo.",
+      "ejemplo": "Sara quiere que desaparezcan las publicaciones en las que sale su nombre.",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["redes"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LOPIVI, arts. 52.2 y 52.3", "AEPD, Canal prioritario", "AEPD, FAQ 15.03"],
+      "validado": true
+    },
+    {
+      "id": "DS-olvido",
+      "titulo": "Que una red social borre fotos o datos tuyos",
+      "texto": "Si una red social tiene fotos o datos tuyos subidos antes de que cumplas 18 años, los subieras tú u otra persona, basta con que pidas que los borren. Tiene que hacerlo sin retrasos.",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["redes"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LOPDGDD, art. 94.3"],
+      "validado": true
+    },
+    {
+      "id": "DS-imagen",
+      "titulo": "Tu imagen es tuya",
+      "texto": "Hacer, copiar o publicar fotos o vídeos de alguien sin su permiso va contra su derecho a la propia imagen. Y si un día diste permiso, puedes retirarlo cuando quieras.",
+      "ejemplo": "Sara lo tiene claro al final de su caso: la culpa no es suya y su imagen es suya.",
+      "papeles": ["victima", "testigo", "investigado", "escuchado_familia"],
+      "preocupaciones": ["redes"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LO 1/1982, art. 7.5", "LO 1/1982, arts. 2.2 y 2.3", "LO 1/1996, art. 4.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-t-grabacion",
+      "titulo": "Que tu declaración se grabe para el juicio",
+      "texto": "Si eres testigo en un caso de violencia, el juez tiene que hacer tu entrevista como prueba preconstituida: se graba y vale como si hablaras en el juicio. Normalmente, después no tienes que volver a ir.",
+      "papeles": ["testigo"],
+      "edad_max": 13,
+      "preocupaciones": ["preguntas", "ver_persona", "despues"],
+      "fuentes": ["LECrim, art. 449 ter", "LECrim, art. 703 bis"],
+      "validado": true
+    },
+    {
+      "id": "DS-equipo",
+      "titulo": "Que te pregunte un equipo preparado",
+      "texto": "El juez puede pedir que tu entrevista la haga un equipo psicosocial, con psicólogos y trabajadores sociales que conocen tu situación. Por eso habla contigo gente que no conoces: para tratarte mejor.",
+      "ejemplo": "En el caso de Lucía, las preguntas se las hace Ana, una psicóloga del equipo psicosocial.",
+      "papeles": ["victima", "testigo"],
+      "edad_max": 13,
+      "preocupaciones": ["preguntas"],
+      "fuentes": ["LECrim, art. 449 ter, párr. 2"],
+      "validado": true
+    },
+    {
+      "id": "DS-t-casa",
+      "titulo": "Si lo que viste fue violencia en casa",
+      "texto": "Para la ley, la violencia en tu ámbito familiar también es violencia contra ti, y la ley te protege frente a ella. Puedes pedir que te expliquen qué protección tienes.",
+      "papeles": ["testigo"],
+      "preocupaciones": ["familia"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LOPIVI, art. 1.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-menor14",
+      "titulo": "Con menos de 14 años, no se te juzga con la ley de menores",
+      "texto": "La ley penal de menores solo se aplica de 14 a 17 años. Con menos de 14, actúan las normas y los servicios de protección de menores, que cuidan de que estés bien.",
+      "papeles": ["investigado"],
+      "edad_max": 13,
+      "preocupaciones": ["despues"],
+      "fuentes": ["LO 5/2000, art. 1.1", "LO 5/2000, art. 3"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-explicar",
+      "titulo": "Que te expliquen tus derechos con palabras claras",
+      "texto": "Si te detienen, la policía tiene que decirte enseguida y con palabras claras de qué se te acusa, por qué te detiene y qué derechos tienes, adaptado a tu edad y a tu madurez.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["no_entender"],
+      "fuentes": ["LO 5/2000, art. 17.1", "LECrim, art. 520.2 bis"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-avisar",
+      "titulo": "Que avisen a tu familia",
+      "texto": "Si te detienen, la policía tiene que avisar enseguida a tus padres o tutores, y a la Fiscalía, de que te han detenido y de dónde estás. Cuando declares, también pueden estar ellos, salvo que haya motivos para que no.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["familia", "solo"],
+      "fuentes": ["LO 5/2000, arts. 17.1 y 17.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-abogado",
+      "titulo": "Un abogado o una abogada, y hablar a solas",
+      "texto": "Tienes derecho a un abogado o una abogada: lo puedes elegir o te asignan uno de oficio. Puedes hablar a solas con él o con ella antes de declarar. Si te detienen, también al terminar.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["preguntas", "solo"],
+      "fuentes": ["LO 5/2000, art. 22.1", "LO 5/2000, art. 17.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-defensa",
+      "titulo": "Defenderte y no declarar contra ti",
+      "texto": "Si te acusan de algo, tienes derecho a defenderte con un abogado o una abogada, a saber de qué se te acusa, a no declarar contra ti y a no tener que decir que eres culpable.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["preguntas"],
+      "fuentes": ["CE, art. 24.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-inocencia",
+      "titulo": "Que no se dé nada por decidido",
+      "texto": "Se presume que eres inocente mientras no se demuestre lo contrario: que te investiguen no quiere decir que ya se haya decidido nada.",
+      "papeles": ["investigado"],
+      "preocupaciones": ["colegio", "familia", "despues"],
+      "fuentes": ["CE, art. 24.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-oido",
+      "titulo": "Que el juez te escuche antes de decidir",
+      "texto": "El juez tiene que escucharte antes de decidir algo que te afecte. Pueden acompañarte tus padres u otra persona que elijas, si el juez lo permite.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["solo", "despues"],
+      "fuentes": ["LO 5/2000, art. 22.1"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-medidas",
+      "titulo": "Si hay una medida, te tienen que explicar por qué",
+      "texto": "Si el juez de menores decide que hiciste algo que la ley no permite, puede poner una medida. Para elegirla tiene en cuenta sobre todo tu edad, tu familia, tu situación y lo que es mejor para ti, y tiene que explicar por qué la elige y cuánto dura.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["despues"],
+      "fuentes": ["LO 5/2000, arts. 7.1 y 7.3"],
+      "validado": true
+    },
+    {
+      "id": "DS-i-acuerdo",
+      "titulo": "Un acuerdo con la víctima, solo si ella quiere",
+      "texto": "A veces se puede reconocer el daño y pedir perdón: es la conciliación. Solo hay conciliación si la víctima acepta las disculpas, y en la mediación cualquiera puede echarse atrás cuando quiera.",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "preocupaciones": ["ver_persona", "despues"],
+      "fuentes": ["LO 5/2000, art. 19.2", "Ley 4/2015, art. 15.3"],
+      "validado": true
+    },
+    {
+      "id": "DS-f-escuchar",
+      "titulo": "Que te den la oportunidad de que te escuchen",
+      "texto": "Si un juez o una oficina pública va a decidir algo sobre tu vida, tienen que darte la oportunidad de que te escuchen, a ti directamente o a través de alguien que hable por ti.",
+      "papeles": ["escuchado_familia"],
+      "preocupaciones": ["preguntas"],
+      "fuentes": ["CDN, art. 12.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-f-12",
+      "titulo": "Desde los 12 años, el juez tiene que escucharte",
+      "texto": "Si tus padres se separan y no se ponen de acuerdo, desde los 12 años el juez tiene que escucharte siempre.",
+      "papeles": ["escuchado_familia"],
+      "edad_min": 12,
+      "preocupaciones": ["familia"],
+      "fuentes": ["LEC, art. 770"],
+      "validado": true
+    },
+    {
+      "id": "DS-f-menos12",
+      "titulo": "Con menos de 12 años, también pueden escucharte",
+      "texto": "Si tus padres no se ponen de acuerdo, el juez puede escucharte aunque tengas menos de 12 años si lo ve necesario. También lo puedes pedir tú.",
+      "papeles": ["escuchado_familia"],
+      "edad_max": 11,
+      "preocupaciones": ["familia"],
+      "fuentes": ["LEC, art. 770"],
+      "validado": true
+    },
+    {
+      "id": "DS-ayuda-familia",
+      "titulo": "Que ayuden a tu familia",
+      "texto": "Si hay problemas en casa pero no son tan graves, los servicios sociales ayudan a tu familia para que puedas seguir viviendo con ella. Si no es seguro, se busca otra forma de protegerte.",
+      "papeles": ["victima", "testigo", "escuchado_familia"],
+      "preocupaciones": ["familia"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LO 1/1996, art. 17.1", "LO 1/1996, art. 18.2"],
+      "validado": true
+    },
+    {
+      "id": "DS-violencia-casa",
+      "titulo": "Si quien te cuida sufre violencia en casa",
+      "texto": "Si quien te cuida es víctima de violencia en casa, las autoridades tienen que ayudaros para que puedas seguir viviendo con esa persona.",
+      "papeles": ["victima", "testigo", "escuchado_familia"],
+      "preocupaciones": ["familia"],
+      "solo_si_preocupa": true,
+      "fuentes": ["LO 1/1996, art. 12.3"],
+      "validado": true
+    }
+  ]
+}

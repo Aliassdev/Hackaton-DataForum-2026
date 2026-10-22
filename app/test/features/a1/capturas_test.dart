@@ -12,7 +12,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +23,7 @@ import 'package:tuturno/core/content_repo.dart';
 import 'package:tuturno/core/progreso.dart';
 import 'package:tuturno/core/providers.dart';
 
+import '../../fuentes_reales.dart';
 import 'helpers.dart';
 
 final _destino = Platform.environment['CAPTURAS'];
@@ -31,30 +31,8 @@ final _destino = Platform.environment['CAPTURAS'];
 /// Un día fijo (jueves 22/10/2026, por la tarde) para que las capturas salgan siempre iguales.
 final _tarde = DateTime(2026, 10, 22, 17, 30);
 
-Future<void> _cargarFuentes() async {
-  Future<void> cargar(String familia, List<String> rutas) async {
-    final cargador = FontLoader(familia);
-    for (final ruta in rutas) {
-      final bytes = File(ruta).readAsBytesSync();
-      cargador.addFont(Future.value(ByteData.sublistView(bytes)));
-    }
-    await cargador.load();
-  }
-
-  await cargar('AtkinsonHyperlegible', [
-    'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
-    'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
-    'assets/fonts/AtkinsonHyperlegible-Italic.ttf',
-    'assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf',
-  ]);
-  await cargar('MaryKate', ['assets/fonts/MaryKate-Medium-ES.ttf']);
-  // FLUTTER_ROOT, o la carpeta de Flutter deducida de flutter_tester (bin/cache/artifacts/engine/<plataforma>/).
-  final flutter =
-      Platform.environment['FLUTTER_ROOT'] ??
-      File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;
-  final iconos = '$flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf';
-  if (File(iconos).existsSync()) await cargar('MaterialIcons', [iconos]);
-}
+/// Las fuentes de verdad de la app (Nunito, MaryKate, Atkinson Hyperlegible, Pixelify Sans y los iconos de Material).
+Future<void> _cargarFuentes() => cargarFuentesReales();
 
 /// Captura lo que hay en pantalla ahora mismo, sin esperar a que acaben las animaciones.
 Future<void> _capturarYa(WidgetTester tester, String nombre) async {
@@ -71,7 +49,17 @@ Future<void> _capturarYa(WidgetTester tester, String nombre) async {
 
 Future<void> _capturar(WidgetTester tester, String nombre) async {
   await tester.pumpAndSettle();
+  await _esperarDibujos(tester);
   await _capturarYa(tester, nombre);
+}
+
+/// Deja que flutter_svg lea y prepare los SVG que haya en pantalla (el palacio): en las pruebas, eso pasa fuera del
+/// reloj falso (el asset y un isolate), así que se le da tiempo de verdad y luego se pinta.
+Future<void> _esperarDibujos(WidgetTester tester) async {
+  for (var i = 0; i < 4; i++) {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 80)));
+    await tester.pump();
+  }
 }
 
 /// Como arrancarApp, pero sin esperar a que acaben las animaciones (para capturar la entrada a mitad).
@@ -187,6 +175,67 @@ void main() {
       await _capturar(tester, '14-inicio-cumplida$sufijo');
     }, skip: _destino == null);
   }
+
+  for (final brillo in Brightness.values) {
+    final sufijo = brillo == Brightness.dark ? '-oscuro' : '';
+    testWidgets('capturas del inicio con tu camino en Mi situación ($brillo)', (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = brillo;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      await arrancarApp(
+        tester,
+        preferencias: {
+          'progreso': _progresoDeEjemplo(),
+          // El ticket de Pregunta: 13 años · penal · víctima · durante (el momento de la demo).
+          'entrada': jsonEncode({'edad': 13, 'procedimiento': 'penal', 'rol': 'victima', 'fase': 'durante'}),
+        },
+        overrides: [relojProvider.overrideWithValue(() => _tarde)],
+      );
+      await _capturar(tester, '17-inicio-tu-camino$sufijo');
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -1000));
+      await _capturar(tester, '17b-inicio-tu-camino-abajo$sufijo');
+    }, skip: _destino == null);
+
+    testWidgets('capturas del inicio el día de la cita, con el «modo día» ($brillo)', (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = brillo;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      await arrancarApp(
+        tester,
+        preferencias: {
+          'progreso': _progresoDeEjemplo(),
+          'entrada': jsonEncode({'edad': 13, 'procedimiento': 'penal', 'rol': 'victima', 'fase': 'durante'}),
+          // «Tu día» de Mi situación: la cita es hoy a las 12:30.
+          'mi_situacion': jsonEncode({'fecha': '2026-10-22', 'hora': '12:30'}),
+        },
+        overrides: [relojProvider.overrideWithValue(() => _tarde)],
+      );
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -800));
+      await tester.pumpAndSettle();
+      await _capturar(tester, '17c-inicio-modo-dia$sufijo');
+    }, skip: _destino == null);
+  }
+
+  testWidgets('capturas de la bienvenida: el palacio y el derecho a que te escuchen', (tester) async {
+    await arrancarApp(tester, bienvenidaVista: false, overrides: [relojProvider.overrideWithValue(() => _tarde)]);
+    await _capturar(tester, '18-bienvenida-1-palacio');
+    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -420));
+    await _capturar(tester, '18b-bienvenida-1-derecho');
+  }, skip: _destino == null);
+
+  testWidgets('capturas de la bienvenida con la letra a 1,6 en un móvil pequeño', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await arrancarApp(
+      tester,
+      bienvenidaVista: false,
+      tamano: const Size(360, 640),
+      overrides: [relojProvider.overrideWithValue(() => _tarde)],
+    );
+    await _capturar(tester, '19-bienvenida-1-letra-16');
+    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -700));
+    await _capturar(tester, '19b-bienvenida-1-letra-16-medio');
+    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -3000));
+    await _capturar(tester, '19c-bienvenida-1-letra-16-final');
+  }, skip: _destino == null);
 
   testWidgets('capturas de la entrada de la bienvenida a mitad', (tester) async {
     // La presentación de la bienvenida a mitad (las letras cayendo).

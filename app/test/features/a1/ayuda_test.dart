@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:tuturno/core/progreso.dart';
 import 'package:tuturno/core/recursos_ayuda.dart';
 import 'package:tuturno/features/ayuda/ayuda_screen.dart';
+import 'package:tuturno/tema.dart';
+import 'package:tuturno/widgets/iconos/iconos.dart';
 
 import 'helpers.dart';
 
@@ -260,6 +262,181 @@ void main() {
     // Las notas van antes del botón: se leen antes de abrir la web.
     final yUltimaNota = tester.getTopLeft(find.text(canal.notas.last.texto)).dy;
     expect(yUltimaNota, lessThan(tester.getTopLeft(find.text('Abrir la web')).dy));
+  });
+
+  group('identidad: iconos de TuTurno y rojo solo para el 112', () {
+    /// Todo el contenido de Ayuda (sin la barra, que es común a todas las pantallas).
+    Finder enAyuda(Finder finder) => find.descendant(of: find.byKey(const Key('ayuda-contenido')), matching: finder);
+
+    for (final (nombre, ahora) in [('abierto', _mediodia), ('cerrado', _noche)]) {
+      testWidgets('ningún icono de Material salvo la flecha del desplegable ($nombre)', (tester) async {
+        await abrirAyuda(tester, ahora: ahora, tamano: const Size(400, 5000));
+        await tester.tap(find.text(tituloNoSabesQueDecir));
+        await tester.pumpAndSettle();
+        final iconos = tester.widgetList<Icon>(enAyuda(find.byType(Icon, skipOffstage: false))).toList();
+        expect([for (final i in iconos) i.icon], [Icons.expand_more_rounded]);
+        // Los de TuTurno: teléfono, web, chat y WhatsApp, reloj, persona de confianza, escudo, candado…
+        final propios = {
+          for (final i in tester.widgetList<IconoTuTurno>(enAyuda(find.byType(IconoTuTurno, skipOffstage: false))))
+            i.icono,
+        };
+        expect(
+          propios,
+          containsAll([
+            TuIcono.ayuda,
+            TuIcono.telefono,
+            TuIcono.web,
+            TuIcono.pregunta,
+            TuIcono.reloj,
+            TuIcono.personaConfianza,
+            TuIcono.escudo,
+            TuIcono.candado,
+            TuIcono.check,
+            TuIcono.cruz,
+          ]),
+        );
+      });
+
+      testWidgets('el rojo de Ayuda solo está en el bloque del 112 ($nombre)', (tester) async {
+        for (final brillo in Brightness.values) {
+          tester.platformDispatcher.platformBrightnessTestValue = brillo;
+          await abrirAyuda(tester, ahora: ahora, tamano: const Size(400, 5000));
+          final contexto = tester.element(find.byType(AyudaScreen));
+          final rojos = {contexto.colores.ayuda, Theme.of(contexto).colorScheme.error, ColoresMarca.rojoAyuda};
+          bool esRoja(Color? color) => color != null && rojos.contains(color);
+
+          final cajasRojas = [
+            for (final caja in tester.widgetList<DecoratedBox>(enAyuda(find.byType(DecoratedBox, skipOffstage: false))))
+              if (caja.decoration case BoxDecoration(:final color) when esRoja(color)) caja,
+          ];
+          expect(cajasRojas, hasLength(1), reason: '$brillo: solo el bloque del 112');
+          expect(cajasRojas.single.key, const Key('ayuda-112'));
+          for (final icono in tester.widgetList<IconoTuTurno>(
+            enAyuda(find.byType(IconoTuTurno, skipOffstage: false)),
+          )) {
+            expect(esRoja(icono.color), isFalse, reason: '$brillo: ${icono.icono}');
+          }
+          for (final texto in tester.widgetList<Text>(enAyuda(find.byType(Text, skipOffstage: false)))) {
+            expect(esRoja(texto.style?.color), isFalse, reason: '$brillo: ${texto.data}');
+          }
+          for (final material in tester.widgetList<Material>(enAyuda(find.byType(Material, skipOffstage: false)))) {
+            final dentroDel112 = find
+                .ancestor(of: find.byWidget(material), matching: find.byKey(const Key('ayuda-112')))
+                .evaluate()
+                .isNotEmpty;
+            if (!dentroDel112) expect(esRoja(material.color), isFalse, reason: '$brillo: ${material.runtimeType}');
+          }
+        }
+        tester.platformDispatcher.clearPlatformBrightnessTestValue();
+      });
+    }
+
+    test('cada recurso lleva un icono propio que encaja con lo que es', () {
+      RecursoAyuda recurso(bool Function(RecursoAyuda) donde) => recursosAyuda.singleWhere(donde);
+      expect(iconoDeRecurso(recurso((r) => r.urgente)), TuIcono.ayuda);
+      expect(iconoDeRecurso(recurso((r) => r.telefono == null)), TuIcono.web);
+      expect(iconoDeRecurso(recurso((r) => r.telefono == '017')), TuIcono.escudo);
+      expect(iconoDeRecurso(recurso((r) => r.nombre == 'Canal Joven de la AEPD')), TuIcono.candado);
+      expect(iconoDeRecurso(recurso((r) => r.telefono == '900 20 20 10')), TuIcono.telefono);
+    });
+  });
+
+  group('«¿No sabes qué decir?»', () {
+    final anar = recursosAyuda.singleWhere((r) => r.telefono == '900 20 20 10');
+
+    test('son frases de quien llama, sin nada nuevo sobre el recurso', () {
+      expect(frasesParaEmpezar(anar), [
+        'Puedes empezar así: «Hola, tengo una duda y no sé a quién preguntar».',
+        'Si te cuesta hablar, puedes decirlo: «Me cuesta hablar de esto».',
+        'Si prefieres escribir, usa el chat.',
+        'Puedes colgar cuando quieras.',
+      ]);
+      // Sin chat, sin la frase del chat.
+      final sinChat = recursosAyuda.singleWhere((r) => r.telefono == '116 111');
+      expect(frasesParaEmpezar(sinChat), isNot(contains('Si prefieres escribir, usa el chat.')));
+      // Nada de promesas ni afirmaciones sobre el servicio (gratis, confidencial, 24 horas…).
+      for (final frase in frasesParaEmpezar(anar)) {
+        for (final prohibida in ['gratis', 'confidencial', 'hora', 'secreto', 'nadie', 'siempre', 'te prometo']) {
+          expect(frase.toLowerCase(), isNot(contains(prohibida)), reason: frase);
+        }
+        expect(frase, isNot(contains('"')), reason: 'comillas de la app: «»');
+      }
+    });
+
+    testWidgets('está solo en la tarjeta de ANAR, cerrado al principio, y se despliega al tocarlo', (tester) async {
+      final semantica = tester.ensureSemantics();
+      await abrirAyuda(tester);
+      final desplegable = find.byKey(const Key('ayuda-no-sabes-que-decir'));
+      expect(desplegable, findsOneWidget);
+      final tarjetaAnar = find.ancestor(of: find.text('Fundación ANAR'), matching: find.byType(Card));
+      expect(find.descendant(of: tarjetaAnar, matching: desplegable), findsOneWidget);
+      for (final frase in frasesParaEmpezar(anar)) {
+        expect(find.text(frase), findsNothing, reason: 'cerrado: $frase');
+      }
+      expect(
+        tester.getSemantics(find.text(tituloNoSabesQueDecir)),
+        isSemantics(label: tituloNoSabesQueDecir, isButton: true, hasTapAction: true, hasExpandedState: true),
+      );
+
+      await pulsar(tester, find.text(tituloNoSabesQueDecir));
+      for (final frase in frasesParaEmpezar(anar)) {
+        expect(find.text(frase), findsOneWidget, reason: frase);
+      }
+      expect(
+        tester.getSemantics(find.text(tituloNoSabesQueDecir)),
+        isSemantics(isButton: true, hasExpandedState: true, isExpanded: true),
+      );
+
+      await pulsar(tester, find.text(tituloNoSabesQueDecir));
+      expect(find.text(frasesParaEmpezar(anar).first), findsNothing);
+      semantica.dispose();
+    });
+
+    testWidgets('con «reducir animaciones» se abre de golpe', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+        disableAnimations: true,
+      );
+      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      await abrirAyuda(tester);
+      await tester.ensureVisible(find.text(tituloNoSabesQueDecir));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(tituloNoSabesQueDecir));
+      await tester.pump();
+      expect(find.text(frasesParaEmpezar(anar).first), findsOneWidget);
+      final desplegable = find.byKey(const Key('ayuda-no-sabes-que-decir'));
+      final tamano = tester.widget<AnimatedSize>(find.descendant(of: desplegable, matching: find.byType(AnimatedSize)));
+      expect(tamano.duration, lessThan(const Duration(milliseconds: 1)));
+      final giro = tester.widget<AnimatedRotation>(
+        find.descendant(of: desplegable, matching: find.byType(AnimatedRotation)),
+      );
+      expect(giro.duration, Duration.zero);
+    });
+  });
+
+  testWidgets('lo de Sara se ve sin buscar: Canal prioritario (no sirve para WhatsApp), 017 y Canal Joven', (
+    tester,
+  ) async {
+    await abrirAyuda(tester, tamano: const Size(400, 5000));
+    // Todo está en la pantalla, en tarjetas a la vista (nada dentro de un desplegable).
+    for (final texto in [
+      'Quitar fotos o vídeos de internet',
+      'No sirve para WhatsApp, Telegram ni el correo. En ese caso, puedes ir a la policía o a la Fiscalía.',
+      'Abrir la web',
+      'Ciberseguridad (INCIBE)',
+      'Llamar al 017',
+      'Todos los días, de 8:00 a 23:00',
+      'Canal Joven de la AEPD',
+      _llamarCanalJoven,
+    ]) {
+      final encontrado = find.text(texto);
+      expect(encontrado, findsOneWidget, reason: texto);
+      expect(
+        find.ancestor(of: encontrado, matching: find.byKey(const Key('ayuda-no-sabes-que-decir'))),
+        findsNothing,
+        reason: texto,
+      );
+      expect(tester.getRect(encontrado).bottom, lessThan(5000), reason: texto);
+    }
   });
 
   for (final (nombre, ahora) in [('abierto', _mediodia), ('cerrado', _noche)]) {

@@ -11,7 +11,7 @@ import '../../widgets/iconos/iconos.dart';
 import '../../widgets/modulos.dart';
 
 // «Tu turno del día»: cada día, un ticket con un número y una misión pequeña que lleva a un módulo. Sin presión: no
-// hay avisos, ni cuentas atrás, ni nada que se pierda. El número de turno solo sube (los días con la misión hecha) y
+// hay avisos, ni cuentas atrás, ni castigos. El número de turno solo sube (los días con la misión hecha) y
 // todo se guarda en el móvil, como el resto del progreso.
 
 /// Misiones del turno del día. Solo llevan a Aprende y a Vive el caso: Pregunta y Ayuda nunca se gamifican.

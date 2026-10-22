@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../tema.dart';
 import '../../../widgets/iconos/iconos.dart';
+import '../../../widgets/justicia/balanza_dominio.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../bkt.dart';
 import '../textos.dart';
@@ -183,27 +184,6 @@ class _SacudidaState extends State<Sacudida> with SingleTickerProviderStateMixin
   }
 }
 
-/// Número que cuenta hasta [valor] (desde [desde] la primera vez, y desde el anterior cuando cambia).
-class ContadorAnimado extends StatelessWidget {
-  const ContadorAnimado({super.key, required this.valor, this.desde, this.style, this.prefijo = '', this.sufijo = ''});
-
-  final int valor;
-  final int? desde;
-  final TextStyle? style;
-  final String prefijo;
-  final String sufijo;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: (desde ?? valor).toDouble(), end: valor.toDouble()),
-      duration: duracion(context, const Duration(milliseconds: 900)),
-      curve: Curves.easeOutCubic,
-      builder: (context, v, _) => Text('$prefijo${v.round()}$sufijo', style: style),
-    );
-  }
-}
-
 /// Barra redondeada con el degradado de Aprende y un brillo arriba. Se anima al cambiar.
 class BarraProgreso extends StatelessWidget {
   const BarraProgreso({
@@ -277,9 +257,19 @@ class BarraProgreso extends StatelessWidget {
   }
 }
 
-/// Fila con el nombre de un concepto, cómo va y su barra de dominio (probabilidad BKT).
+/// Fila con la balanza, el nombre de un concepto, cómo va y su barra de dominio (probabilidad BKT). La balanza se
+/// inclina mientras falta y se queda recta al dominarlo (es decorativa: la etiqueta ya lo dice). Con [conEstado],
+/// debajo de la barra va también cómo está la balanza («Casi en equilibrio»).
 class BarraDominio extends StatelessWidget {
-  const BarraDominio({super.key, required this.nombre, required this.p, this.desde, this.compacta = false});
+  const BarraDominio({
+    super.key,
+    required this.nombre,
+    required this.p,
+    this.desde,
+    this.compacta = false,
+    this.conEstado = false,
+    this.alEquilibrar,
+  });
 
   final String nombre;
   final double p;
@@ -287,6 +277,10 @@ class BarraDominio extends StatelessWidget {
   /// Para animar una mejora (de [desde] a [p]).
   final double? desde;
   final bool compacta;
+  final bool conEstado;
+
+  /// Al quedarse recta la balanza viniendo de inclinada (un concepto recién dominado).
+  final VoidCallback? alEquilibrar;
 
   @override
   Widget build(BuildContext context) {
@@ -300,43 +294,64 @@ class BarraDominio extends StatelessWidget {
       container: true,
       label: '$nombre: ${nivelDominio(p)}',
       excludeSemantics: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  nombre,
-                  style: (compacta ? tema.textTheme.bodyMedium : tema.textTheme.bodyLarge)?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: esquema.onSurface,
-                  ),
-                ),
-              ),
-              const SizedBox(width: Espacio.s),
-              if (dominado) ...[
-                Icon(Icons.workspace_premium_rounded, size: Espacio.m + Espacio.xs, color: exito),
-                const SizedBox(width: Espacio.xs),
-              ],
-              Text(
-                nivelDominio(p),
-                style: tema.textTheme.labelLarge?.copyWith(
-                  color: dominado ? exito : esquema.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Espacio.xs + 2),
-          BarraProgreso(
-            valor: avance,
+          BalanzaDominio(
+            avance: avance,
             desde: desde == null ? null : avanceDominio(desde),
-            alto: compacta ? Espacio.s + 2 : Espacio.m - 4,
-            etiqueta: nombre,
-            valorTexto: nivelDominio(p),
-            colores: dominado ? [exito, exito] : null,
+            tamano: compacta ? Espacio.l + Espacio.xs : Espacio.xl + Espacio.xs,
+            alEquilibrar: alEquilibrar,
+          ),
+          const SizedBox(width: Espacio.s),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        nombre,
+                        style: (compacta ? tema.textTheme.bodyMedium : tema.textTheme.bodyLarge)?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: esquema.onSurface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: Espacio.s),
+                    if (dominado) ...[
+                      IconoTuTurno(TuIcono.selloConseguido, size: Espacio.m + Espacio.xs, decorativo: true),
+                      const SizedBox(width: Espacio.xs),
+                    ],
+                    Text(
+                      nivelDominio(p),
+                      style: tema.textTheme.labelLarge?.copyWith(
+                        color: dominado ? exito : esquema.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Espacio.xs + 2),
+                BarraProgreso(
+                  valor: avance,
+                  desde: desde == null ? null : avanceDominio(desde),
+                  alto: compacta ? Espacio.s + 2 : Espacio.m - 4,
+                  etiqueta: nombre,
+                  valorTexto: nivelDominio(p),
+                  colores: dominado ? [exito, exito] : null,
+                ),
+                if (conEstado) ...[
+                  const SizedBox(height: Espacio.xs),
+                  Text(
+                    BalanzaDominio.estado(avance),
+                    style: tema.textTheme.labelMedium?.copyWith(color: esquema.onSurfaceVariant),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -462,7 +477,7 @@ class _HojaFuente extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.menu_book_rounded, color: esquema.primary),
+                    IconoTuTurno(TuIcono.ley, estilo: EstiloIcono.mono, color: esquema.primary, decorativo: true),
                     const SizedBox(width: Espacio.m),
                     Expanded(
                       child: Column(
@@ -497,19 +512,22 @@ class _HojaFuente extends StatelessWidget {
   }
 }
 
-/// Pastilla con un icono y un dato (XP, racha…), para ir encima del degradado de Aprende.
+/// Pastilla con un icono y un dato (XP, racha…), para ir encima del degradado de Aprende. El icono es de TuTurno
+/// ([tuIcono], a dos tintas) o, si no hay equivalente, de Material ([icono], del color [colorIcono]).
 class PastillaDato extends StatelessWidget {
   const PastillaDato({
     super.key,
-    required this.icono,
+    this.icono,
+    this.tuIcono,
     required this.texto,
     required this.semantica,
     required this.colorTexto,
     this.fondo,
     this.colorIcono,
-  });
+  }) : assert(icono != null || tuIcono != null);
 
-  final IconData icono;
+  final IconData? icono;
+  final TuIcono? tuIcono;
   final Widget texto;
   final String semantica;
   final Color colorTexto;
@@ -518,6 +536,8 @@ class PastillaDato extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tuIcono = this.tuIcono;
+    const lado = Espacio.m + Espacio.xs;
     return Semantics(
       label: semantica,
       excludeSemantics: true,
@@ -528,7 +548,10 @@ class PastillaDato extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icono, size: Espacio.m + Espacio.xs, color: colorIcono ?? colorTexto),
+              if (tuIcono != null)
+                IconoTuTurno(tuIcono, size: lado + 2, decorativo: true)
+              else
+                Icon(icono, size: lado, color: colorIcono ?? colorTexto),
               const SizedBox(width: Espacio.xs + 2),
               Flexible(
                 child: DefaultTextStyle.merge(

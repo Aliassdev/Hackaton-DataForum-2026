@@ -12,15 +12,17 @@ import '../../../core/recursos_ayuda.dart';
 import '../../../core/seguridad.dart';
 import '../../../core/texto.dart';
 import '../../../tema.dart';
-import '../../../widgets/fuente_chip.dart';
 import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../../../widgets/movimiento/ticket.dart';
+import '../../../widgets/salida_rapida_button.dart';
 import '../../../widgets/texto_con_terminos.dart';
 import '../agente/telefonos.dart';
-import '../agente/textos_agente.dart' show etiquetaEjemplo;
+import '../agente/textos_agente.dart' show etiquetaEjemplo, insigniaEjemplo, semanticaEjemplo, textoContestarPorEscrito;
 import '../chat_controller.dart';
 import '../textos.dart';
+import 'estilo.dart';
+import 'fuentes.dart';
 import 'tickets.dart';
 
 // Mensajes de «Pregunta». Tranquilos y claros: aquí nada se gamifica. Responde Tut, la mascota (siempre seria o
@@ -201,6 +203,25 @@ class BurbujaPresentacion extends StatelessWidget {
 void abrirTerminoDesdePregunta(BuildContext context, String termino) =>
     context.push(Uri(path: '/glosario', queryParameters: {'q': termino, 'desde': 'pregunta'}).toString());
 
+/// Los párrafos de una respuesta: el modo texto los separa con una línea en blanco (`\n\n`).
+List<String> parrafosDe(String texto) {
+  final parrafos = [
+    for (final parrafo in texto.split(RegExp(r'\n[ \t]*\n')))
+      if (parrafo.trim().isNotEmpty) parrafo.trim(),
+  ];
+  return parrafos.isEmpty ? [texto] : parrafos;
+}
+
+/// Abre el Canal prioritario de la AEPD («Quitar fotos o vídeos de internet», lib/core/recursos_ayuda.dart).
+Future<void> abrirCanalPrioritario(BuildContext context) async {
+  Hapticos.toque();
+  final mensajero = ScaffoldMessenger.maybeOf(context);
+  final recurso = recursosAyuda.firstWhere((r) => r.web?.contains('canalprioritario') ?? false);
+  if (!await abrirRecurso(recurso)) {
+    mensajero?.showSnackBar(SnackBar(content: Text('No he podido abrir la web. Escribe ${recurso.webVisible}.')));
+  }
+}
+
 /// Los términos de la respuesta que están en el Glosario: solo se subraya lo que se puede abrir.
 List<String> terminosEnGlosario(List<String> terminos, List<EntradaGlosario> glosario) {
   final disponibles = {for (final e in glosario) normalizar(e.termino.trim())};
@@ -248,18 +269,25 @@ class BurbujaAsistente extends ConsumerWidget {
       ref.watch(glosarioProvider).value ?? const <EntradaGlosario>[],
     );
 
+    final parrafos = parrafosDe(respuesta.respuesta);
     final cuerpo = Padding(
       padding: const EdgeInsets.fromLTRB(Espacio.m, Espacio.m, Espacio.m, Espacio.m - Espacio.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextoConTerminos(
-            texto: respuesta.respuesta,
-            terminos: terminos,
-            fuentes: respuesta.fuentes,
-            style: tema.textTheme.bodyLarge?.copyWith(color: colores.tintaTicket, height: 1.45),
-            onTermino: (termino) => abrirTerminoDesdePregunta(context, termino),
-          ),
+          // Las respuestas de ejemplo nunca parecen en directo.
+          if (mensaje.ejemplo) ...[const InsigniaEjemplo(), const SizedBox(height: Espacio.s)],
+          for (var i = 0; i < parrafos.length; i++) ...[
+            if (i > 0) const SizedBox(height: Espacio.s + Espacio.xs),
+            TextoConTerminos(
+              texto: parrafos[i],
+              terminos: terminos,
+              fuentes: respuesta.fuentes,
+              style: tema.textTheme.bodyLarge?.copyWith(color: colores.tintaTicket, height: 1.45),
+              onTermino: (termino) => abrirTerminoDesdePregunta(context, termino),
+              onFuente: (fuente) => mostrarFuentePregunta(context, fuente),
+            ),
+          ],
           if (respuesta.tipo == TipoRespuesta.hechos) ...[
             const SizedBox(height: Espacio.m),
             OutlinedButton.icon(
@@ -268,9 +296,28 @@ class BurbujaAsistente extends ConsumerWidget {
               label: const Text('Ver teléfonos de ayuda'),
             ),
           ],
-          // Modo agente: los teléfonos que ha dicho, para llamar (en crisis, sin los de la tarjeta de ayuda).
+          // Los teléfonos que dice la respuesta, para llamar (en crisis, sin los de la tarjeta de ayuda). Si eran
+          // «hechos» sobre fotos o vídeos, también el 017.
           if (mensaje.telefonos.isNotEmpty)
             BotonesTelefono(telefonos: mensaje.telefonos, sinLosDeLaTarjeta: respuesta.tipo == TipoRespuesta.crisis),
+          // «Hechos» sobre fotos o vídeos: el Canal prioritario de la AEPD.
+          if (mensaje.ayudaImagenes)
+            Padding(
+              padding: EdgeInsets.only(top: mensaje.telefonos.isEmpty ? Espacio.m : 0, bottom: Espacio.s),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const Key('quitar-imagenes'),
+                  style: OutlinedButton.styleFrom(
+                    alignment: AlignmentDirectional.centerStart,
+                    padding: const EdgeInsets.symmetric(horizontal: Espacio.m, vertical: Espacio.s),
+                  ),
+                  onPressed: () => abrirCanalPrioritario(context),
+                  icon: const IconoTuTurno(TuIcono.web, estilo: EstiloIcono.mono, decorativo: true),
+                  label: const Text('$textoQuitarImagenes · Canal prioritario de la AEPD'),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -303,7 +350,7 @@ class BurbujaAsistente extends ConsumerWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               for (var i = 0; i < respuesta.fuentes.length; i++)
-                FuenteChip(fuente: respuesta.fuentes[i], numero: i + 1),
+                EtiquetaFuente(fuente: respuesta.fuentes[i], numero: i + 1),
               BotonLeer(hablando: hablando, onPressed: onLeer),
             ],
           ),
@@ -319,17 +366,21 @@ class BurbujaAsistente extends ConsumerWidget {
           TarjetaCrisis(key: const Key('tarjeta-crisis'), revelar: revelar),
           const SizedBox(height: Espacio.m),
         ],
-        FilaAsistente(
-          etiqueta: mensaje.ejemplo ? etiquetaEjemplo : 'TuTurno · IA',
-          child: TicketVertical(
-            key: const Key('ticket-respuesta'),
-            color: colores.ticket,
-            colorTalon: esquema.surfaceContainer,
-            colorPerforado: esquema.outlineVariant,
-            borde: BorderSide(color: esquema.outlineVariant),
-            sombras: sombrasTicket(context, elevacion: 0.6),
-            cuerpo: cuerpo,
-            talon: talon,
+        Semantics(
+          container: true,
+          label: mensaje.ejemplo ? semanticaEjemplo : null,
+          child: FilaAsistente(
+            etiqueta: mensaje.ejemplo ? etiquetaEjemplo : 'TuTurno · IA',
+            child: TicketVertical(
+              key: const Key('ticket-respuesta'),
+              color: colores.ticket,
+              colorTalon: esquema.surfaceContainer,
+              colorPerforado: esquema.outlineVariant,
+              borde: BorderSide(color: esquema.outlineVariant),
+              sombras: sombrasTicket(context, elevacion: 0.6),
+              cuerpo: cuerpo,
+              talon: talon,
+            ),
           ),
         ),
         if (mostrarSugerencias && sugerencias.isNotEmpty) ...[
@@ -337,6 +388,42 @@ class BurbujaAsistente extends ConsumerWidget {
           Sugerencias(sugerencias: sugerencias, onSugerencia: onSugerencia),
         ],
       ],
+    );
+  }
+}
+
+/// La insignia «Ejemplo» de las respuestas de ejemplo (lo que lee el lector de pantalla va en la burbuja entera).
+class InsigniaEjemplo extends StatelessWidget {
+  const InsigniaEjemplo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    return ExcludeSemantics(
+      child: DecoratedBox(
+        key: const Key('insignia-ejemplo'),
+        decoration: ShapeDecoration(
+          color: tinteMarca(esquema, intensidad: 0.16),
+          shape: StadiumBorder(side: BorderSide(color: bordeTinte(esquema.primary))),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Espacio.s + Espacio.xs, vertical: Espacio.xs),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconoTuTurno(TuIcono.info, estilo: EstiloIcono.mono, size: 16, color: esquema.primary, decorativo: true),
+              const SizedBox(width: Espacio.xs),
+              Flexible(
+                child: Text(
+                  insigniaEjemplo,
+                  style: tema.textTheme.labelLarge?.copyWith(color: esquema.primary, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -426,9 +513,13 @@ class Sugerencias extends StatelessWidget {
 /// Con [revelar], al aparecer la lista se desplaza hasta ella: la lista va al revés y, sin esto, lo que se veía
 /// era el final de la respuesta y la tarjeta quedaba por arriba, fuera de la pantalla.
 class TarjetaCrisis extends StatefulWidget {
-  const TarjetaCrisis({super.key, this.revelar = false});
+  const TarjetaCrisis({super.key, this.revelar = false, this.salidaRapida = true});
 
   final bool revelar;
+
+  /// Con «Salir rápido» abajo (plan v2, producto §5.3): para quien no está seguro y necesita quitar TuTurno de la
+  /// pantalla en un toque.
+  final bool salidaRapida;
 
   static final anar = recursosAyuda.firstWhere((r) => r.telefono == '900 20 20 10');
   static final emergencias = recursosAyuda.firstWhere((r) => r.telefono == '112');
@@ -538,11 +629,21 @@ class _TarjetaCrisisState extends State<TarjetaCrisis> {
             const SizedBox(height: Espacio.s),
             _BotonLlamar(recurso: emergencias, texto: 'Emergencias · ${emergencias.telefonoVisible}'),
             const SizedBox(height: Espacio.xs),
-            TextButton.icon(
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
-              onPressed: () => context.push('/ayuda'),
-              icon: const Icon(Icons.arrow_forward_rounded),
-              label: const Text('Más teléfonos de ayuda'),
+            // Debajo de los teléfonos (que el de ANAR se vea antes), «Más teléfonos» y «Salir rápido».
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: Espacio.s,
+              runSpacing: Espacio.xs,
+              children: [
+                TextButton.icon(
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                  onPressed: () => context.push('/ayuda'),
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('Más teléfonos de ayuda'),
+                ),
+                if (widget.salidaRapida) const SalidaRapidaButton(compacto: true),
+              ],
             ),
           ],
         ),
@@ -692,9 +793,15 @@ class BurbujaError extends StatelessWidget {
   }
 }
 
-/// Mientras llega la respuesta: Tut pensando, tres puntos que botan y lo que está haciendo.
+/// Mientras llega la respuesta: Tut pensando, tres puntos que botan y lo que está haciendo. A los [avisoLento],
+/// «Sigo buscando en las leyes…» y, si se espera al agente de voz ([onPorEscrito]), «Contestar por escrito».
 class IndicadorEscribiendo extends StatefulWidget {
-  const IndicadorEscribiendo({super.key});
+  const IndicadorEscribiendo({super.key, this.onPorEscrito});
+
+  /// Modo agente: deja de esperar la voz y pregunta al modo texto.
+  final VoidCallback? onPorEscrito;
+
+  static const avisoLento = Duration(seconds: 8);
 
   @override
   State<IndicadorEscribiendo> createState() => _IndicadorEscribiendoState();
@@ -703,7 +810,9 @@ class IndicadorEscribiendo extends StatefulWidget {
 class _IndicadorEscribiendoState extends State<IndicadorEscribiendo> with SingleTickerProviderStateMixin {
   late final _puntos = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
   Timer? _temporizador;
+  Timer? _lento;
   var _paso = 0;
+  var _esLento = false;
 
   @override
   void initState() {
@@ -714,6 +823,9 @@ class _IndicadorEscribiendoState extends State<IndicadorEscribiendo> with Single
         return;
       }
       setState(() => _paso++);
+    });
+    _lento = Timer(IndicadorEscribiendo.avisoLento, () {
+      if (mounted) setState(() => _esLento = true);
     });
   }
 
@@ -730,6 +842,7 @@ class _IndicadorEscribiendoState extends State<IndicadorEscribiendo> with Single
   @override
   void dispose() {
     _temporizador?.cancel();
+    _lento?.cancel();
     _puntos.dispose();
     super.dispose();
   }
@@ -738,9 +851,11 @@ class _IndicadorEscribiendoState extends State<IndicadorEscribiendo> with Single
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
-    return Semantics(
+    final porEscrito = widget.onPorEscrito;
+    final paso = _esLento ? '$textoSigoBuscando…' : '${pasosEsperando[_paso]}…';
+    final indicador = Semantics(
       liveRegion: true,
-      label: 'TuTurno está preparando la respuesta',
+      label: _esLento ? 'TuTurno sigue buscando en las leyes' : 'TuTurno está preparando la respuesta',
       child: ExcludeSemantics(
         child: FilaAsistente(
           expresion: ExpresionTut.pensando,
@@ -785,8 +900,8 @@ class _IndicadorEscribiendoState extends State<IndicadorEscribiendo> with Single
                   child: AnimatedSwitcher(
                     duration: duracion(context, Duracion.media),
                     child: Text(
-                      '${pasosEsperando[_paso]}…',
-                      key: ValueKey(_paso),
+                      paso,
+                      key: ValueKey(paso),
                       style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant),
                     ),
                   ),
@@ -796,6 +911,27 @@ class _IndicadorEscribiendoState extends State<IndicadorEscribiendo> with Single
           ),
         ),
       ),
+    );
+    // Siempre la misma estructura: al salir el enlace, el indicador no se vuelve a crear.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        indicador,
+        if (_esLento && porEscrito != null)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: ladoAvatar + _huecoAvatar, top: Espacio.xs),
+            child: TextButton.icon(
+              key: const Key('contestar-por-escrito'),
+              onPressed: () {
+                Hapticos.toque();
+                porEscrito();
+              },
+              icon: const IconoTuTurno(TuIcono.enviar, estilo: EstiloIcono.mono, decorativo: true),
+              label: const Text(textoContestarPorEscrito),
+            ),
+          ),
+      ],
     );
   }
 

@@ -14,6 +14,10 @@
 /// - La fase de «Estás aquí» sale sola del formulario de entrada (entradaProvider), salvo que allí se eligiera otro
 ///   papel. Para forzarla: `LineaPasos(rol: 'victima', faseActual: Fase.durante)`.
 /// - `encabezado: false` quita el título «Tu camino, paso a paso» si la pantalla pone el suyo.
+/// - `personalizacion: PersonalizacionLinea(...)` la adapta a quien la mira (lo que cambia para ti, qué llevar, con
+///   quién irás, cómo prefiere que se lo cuenten y «Pregúntaselo a TuTurno»). La prepara «Mi situación».
+/// - Cada cosa que puedes pedir se puede apuntar en «Mis preguntas» (`apuntar: false` lo quita) y cada paso se puede
+///   escuchar (`escuchar: false`).
 /// - Lee `itinerarios/<rol>.json` con contentProvider (o el de assets/mock/content mientras content/ esté vacío).
 ///   También vale `'escuchado_familia'` (RolEntrada.valor). Sin itinerario visible enseña «Todavía no tengo los
 ///   pasos para este papel».
@@ -21,6 +25,10 @@
 library;
 
 export '../../core/entrada.dart' show Fase;
-export 'linea_pasos.dart' show LineaPasos, textoSinPasos;
+export 'escuchar.dart' show textoParaEscuchar;
+export 'linea_pasos.dart' show BotonApuntar, LineaPasos, iconoFase, textoSinPasos;
 export 'modelos.dart' show Itinerario, Paso, faseDe;
+export 'palabras.dart' show palabrasDelPaso, terminosEnTexto;
 export 'pasos_providers.dart' show carpetaItinerarios, faseDeEntrada, itinerarioProvider;
+export 'personajes_paso.dart' show PersonajePaso, RetratoPersonaje, personajeDePersona;
+export 'personalizacion_linea.dart';

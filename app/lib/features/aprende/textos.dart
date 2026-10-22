@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/progreso.dart';
 import 'modelos.dart';
 
 // Textos de Aprende. Frases cortas, de tú, con palabras que entiende alguien de 11 años.
@@ -101,24 +102,63 @@ String animoFinal({required int aciertos, required int total}) {
 
 const textoSalirTitulo = '¿Salir de la lección?';
 const textoSalirMensaje = 'Si sales ahora, no se guardan los puntos de esta lección. Lo que has aprendido sí se queda.';
-const textoDiloAyuda = 'Escribe o usa el micrófono. Puedes corregir el texto antes de comprobarlo.';
-const textoDiloSinRevisar = 'No he podido revisarlo ahora';
 
-/// Si no se ha podido corregir «Dilo» (sin conexión o con el servidor caído). No manda a Ayuda: es un fallo técnico.
-const textoDiloSinConexion =
-    'Puede que no haya conexión. Vuelve a intentarlo o compara lo que has escrito con las ideas clave.';
-const textoVolverAIntentar = 'Volver a intentarlo';
+/// «Dilo con tus palabras» (tema de justicia, apartado 8): el encabezado es «Tu turno de palabra» y la ayuda, calmada.
+const textoDiloAyuda = 'Explícalo como se lo contarías a un amigo. No hay prisa.';
+const textoDiloComprueba = 'TuTurno comprueba qué ideas clave has dicho.';
+const textoDiloPista = 'Escribe aquí o usa el micrófono…';
+const textoDiloComprobando = 'Comprobando tus ideas clave…';
 const textoDiloIdeasClave = 'Las ideas clave son:';
-const textoDiloTeFalta = 'Te falta';
+
+/// Cuando no hay servidor, «Dilo» se corrige en el móvil (correccion_local.dart) y se dice.
+const textoDiloAproximada = 'Corrección aproximada sin conexión';
 const palabrasMinimasDilo = 3;
 
+/// Lo que ha faltado se dice con calma, nunca como un veredicto.
+String textoIdeasQueFaltan(int cuantas) => cuantas == 1 ? 'Te ha faltado esta idea' : 'Te han faltado estas ideas';
+
 /// Título del panel de «Dilo» según la parte de las ideas que ha explicado ([puntuacion], de 0 a 1). Con la mitad o
-/// más, suma puntos.
+/// más, suma puntos. Sin ninguna idea, solo se enseñan (nunca «mal» ni «incorrecto»).
 String tituloDilo(double puntuacion) => puntuacion >= 1
     ? '¡Perfecto!'
     : puntuacion >= 0.5
     ? '¡Ya casi!'
-    : 'Vas por buen camino';
+    : puntuacion > 0
+    ? 'Vas por buen camino'
+    : 'Mira las ideas clave';
+
+/// Racha amable (producto, apartado 5.5): lo que dice la cabecera de Aprende según [estado]. Nunca se habla de
+/// perderla.
+String textoRacha(EstadoRacha estado) => switch (estado.tipo) {
+  TipoRacha.hoyHecha => '¡Hoy ya has sumado a tu racha!',
+  TipoRacha.pendienteHoy => 'Si haces una lección hoy, tu racha suma un día.',
+  TipoRacha.conDescanso =>
+    'Ayer descansaste: tienes un día de descanso cada semana. Si haces una lección hoy, tu racha sigue.',
+  TipoRacha.sinRacha when estado.mejor > 0 =>
+    'Cuando quieras, empiezas una racha nueva. Tu mejor racha: ${textoDias(estado.mejor)}.',
+  TipoRacha.sinRacha => 'Completa una lección para empezar tu racha.',
+};
+
+/// «1 día», «3 días».
+String textoDias(int n) => n == 1 ? '1 día' : '$n días';
+
+/// Al batir el récord de racha, en la celebración.
+String textoMejorRacha(int n) => '¡Tu mejor racha! ${textoDias(n)}.';
+
+/// Final de una lección o de un repaso: el sello cae sobre el papel.
+const textoLeccionSuperada = '¡Lección superada!';
+const textoRepasoHecho = '¡Repaso hecho!';
+const textoSelloConseguido = 'Sello conseguido';
+
+/// La balanza del dominio (BKT). Sus estados están en BalanzaDominio.estado.
+const textoBalanza = 'La balanza se equilibra cuando lo dominas.';
+
+/// El cartel de cada unidad: las unidades son las salas del palacio de justicia de papel.
+String cartelSala(int numero) => 'SALA $numero';
+const textoSalaCerrada = 'Se abre cuando termines la sala anterior. ¡Sin prisa!';
+
+/// «Ordena los pasos» antes de mover nada (auditoría, P2-4).
+const textoMueveUnaTarjeta = 'Mueve una tarjeta para poder comprobar.';
 
 /// Si en «Dilo» se escribe algo que suena a peligro, no se corrige: se ofrece ayuda (sección 10.2, «ante la duda,
 /// ofrecer ayuda»). Es la plantilla de crisis de la sección 9.7, partida en el título y lo que sigue a la tarjeta roja

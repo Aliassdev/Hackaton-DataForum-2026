@@ -4,16 +4,18 @@ import 'package:go_router/go_router.dart';
 
 import '../../../tema.dart';
 import '../../../widgets/iconos/iconos.dart';
+import '../../../widgets/justicia/panel_senalamiento.dart';
 import '../../../widgets/modulos.dart';
 import '../../../widgets/movimiento/movimiento.dart';
 import '../turno_del_dia.dart';
 
-/// «¡Es tu turno!»: el ticket del día sale del dispensador de turnos (como en un mostrador de verdad), con el número
-/// en un panel de paletas que gira y una misión pequeña que lleva a un módulo. Al cumplir la misión, un sello
-/// «HECHO» cae sobre el talón con confeti de papel (una sola vez).
+/// «¡Es tu turno!»: el ticket del día sale del panel de turnos (como en el vestíbulo de un juzgado o en un mostrador
+/// de verdad), con el número en paletas que giran y una misión pequeña que lleva a un módulo. Encima, el tablero del
+/// panel ([PanelSenalamiento]) dice el turno y la sala de la misión: «TURNO 001 · SALA 2 · APRENDE». Al cumplir la
+/// misión, un sello «HECHO» cae sobre el talón con confeti de papel (una sola vez).
 ///
 /// Todo el ticket es un botón que lleva al módulo de la misión. Con «reducir animaciones», el ticket ya está fuera,
-/// el número no gira y el sello aparece puesto.
+/// los números no giran y el sello aparece puesto.
 class TicketDelDia extends ConsumerStatefulWidget {
   const TicketDelDia({super.key, this.retraso = const Duration(milliseconds: 220)});
 
@@ -25,10 +27,10 @@ class TicketDelDia extends ConsumerStatefulWidget {
 }
 
 class _TicketDelDiaState extends ConsumerState<TicketDelDia> with SingleTickerProviderStateMixin {
-  /// Lo que tarda el ticket en salir del dispensador.
+  /// Lo que tarda el ticket en salir del panel de turnos.
   static const _salida = Duration(milliseconds: 820);
 
-  /// Alto del dispensador y altura de su ranura (por donde sale el ticket).
+  /// Alto de la barra del panel de turnos y altura de su ranura (por donde sale el ticket).
   static const _altoDispensador = 26.0;
   static const _ranura = 15.0;
 
@@ -88,11 +90,12 @@ class _TicketDelDiaState extends ConsumerState<TicketDelDia> with SingleTickerPr
         ? const Duration(milliseconds: 380)
         : _total + const Duration(milliseconds: 120);
 
-    // En su propia capa: mientras sale del dispensador solo se mueve, no se vuelve a pintar.
+    // En su propia capa: mientras sale del panel de turnos solo se mueve, no se vuelve a pintar.
     final ticket = RepaintBoundary(
       child: _Ticket(turno: turno, desde: _desde!, onTap: () => context.push(turno.mision.ruta)),
     );
-    return Stack(
+    final sala = turno.mision.modulo.sala;
+    final maquina = Stack(
       clipBehavior: Clip.none,
       children: [
         Padding(
@@ -154,7 +157,33 @@ class _TicketDelDiaState extends ConsumerState<TicketDelDia> with SingleTickerPr
         ),
       ],
     );
+    if (sala == null) return maquina;
+    // Encima, el panel de turnos con el número y la sala de la misión (los señalamientos de un juzgado): gira a la vez
+    // que el número del talón. Va encajado en la máquina (la barra se pinta encima de su borde de abajo).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Espacio.m),
+            child: PanelSenalamiento(
+              turno: _cifras(turno.numero),
+              desde: _cifras(_desde!),
+              sala: sala,
+              destino: turno.mision.modulo.titulo,
+            ),
+          ),
+        ),
+        Transform.translate(offset: const Offset(0, -_encaje), child: maquina),
+      ],
+    );
   }
+
+  /// Lo que el panel de turnos se mete por debajo de la barra de la máquina.
+  static const _encaje = 4.0;
+
+  /// El número de turno con tres cifras, como en el talón: 1 → «001».
+  static String _cifras(int numero) => numero.toString().padLeft(3, '0');
 }
 
 /// Recorta solo lo que queda por encima de la ranura: las sombras de los lados y de abajo se siguen viendo.
@@ -344,7 +373,7 @@ class _Flecha extends StatelessWidget {
   }
 }
 
-/// El dispensador de turnos: una barra con la ranura por la que sale el ticket y una lucecita amarilla.
+/// La barra del panel de turnos: la ranura por la que sale el ticket y una lucecita amarilla.
 class _Dispensador extends StatelessWidget {
   const _Dispensador();
 

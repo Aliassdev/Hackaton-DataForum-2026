@@ -7,10 +7,71 @@ import 'package:tuturno/features/juego/textos.dart' show casoNoEncontradoTitulo,
 import 'package:tuturno/features/pregunta/pregunta_screen.dart';
 import 'package:tuturno/features/situacion/roles.dart';
 import 'package:tuturno/features/situacion/situacion_screen.dart';
+import 'package:tuturno/widgets/justicia/cartel_sala.dart';
+import 'package:tuturno/widgets/modulos.dart';
 
 import 'helpers.dart';
 
 void main() {
+  // Los tickets de los módulos del inicio son las puertas del palacio de justicia de papel: cada uno con el cartel de
+  // su sala (tema-justicia.md, §7.9). Se tienen que ver bien en claro, en oscuro y con la letra grande.
+  group('Tickets de módulo en el inicio', () {
+    Future<void> comprobarCarteles(WidgetTester tester, String caso) async {
+      for (final modulo in Modulo.values) {
+        final tarjeta = find.widgetWithText(TarjetaModulo, modulo.titulo);
+        await tester.ensureVisible(tarjeta);
+        await tester.pumpAndSettle();
+        final cartel = find.descendant(of: tarjeta, matching: find.byType(CartelSala));
+        expect(cartel, findsOneWidget, reason: '$caso ${modulo.titulo}');
+        expect(tester.widget<CartelSala>(cartel).texto, modulo.sala, reason: caso);
+        expect(
+          find.descendant(of: cartel, matching: find.text(modulo.sala!)),
+          findsOneWidget,
+          reason: caso,
+        );
+        // El cartel va arriba, encima del título, y dentro de la tarjeta.
+        expect(tester.getBottomLeft(cartel).dy, lessThan(tester.getTopLeft(find.text(modulo.titulo)).dy));
+        final caja = tester.getRect(tarjeta);
+        expect(caja.inflate(1).contains(tester.getRect(cartel).topLeft), isTrue, reason: caso);
+        expect(caja.inflate(1).contains(tester.getRect(cartel).bottomRight), isTrue, reason: caso);
+      }
+      expect(tester.takeException(), isNull, reason: caso);
+    }
+
+    testWidgets('«SALA 1», «SALA 2» e «INFORMACIÓN», en claro y en oscuro', (tester) async {
+      expect([for (final modulo in Modulo.values) modulo.sala], ['SALA 1', 'SALA 2', 'INFORMACIÓN']);
+      for (final brillo in Brightness.values) {
+        tester.platformDispatcher.platformBrightnessTestValue = brillo;
+        await arrancarApp(tester);
+        await comprobarCarteles(tester, '$brillo');
+      }
+      tester.platformDispatcher.clearPlatformBrightnessTestValue();
+    });
+
+    testWidgets('con la letra a 1,3 en un móvil pequeño, sin desbordarse', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      for (final brillo in Brightness.values) {
+        tester.platformDispatcher.platformBrightnessTestValue = brillo;
+        await arrancarApp(tester, tamano: const Size(360, 640));
+        await comprobarCarteles(tester, '1,3 $brillo');
+      }
+      tester.platformDispatcher.clearPlatformBrightnessTestValue();
+    });
+
+    testWidgets('el cartel se lee junto al módulo, y Ayuda (fuera de la metáfora) no lleva cartel', (tester) async {
+      final semantica = tester.ensureSemantics();
+      await arrancarApp(tester);
+      for (final modulo in Modulo.values) {
+        final datos = tester.getSemantics(find.widgetWithText(TarjetaModulo, modulo.titulo)).getSemanticsData();
+        expect(datos.label, contains(modulo.sala!));
+        expect(datos.label, contains(modulo.titulo));
+      }
+      expect(find.byType(CartelSala), findsNWidgets(Modulo.values.length));
+      semantica.dispose();
+    });
+  });
+
   // En este arnés no hay contenido (ni AssetManifest): Vive el caso y Aprende enseñan sus estados vacíos, que tienen
   // que explicarlo con calma y dejar seguir.
   group('Vive el caso y Aprende sin contenido', () {

@@ -5,8 +5,10 @@
 //
 // En flutter_test las sombras se pintan sin desenfoque (debugDisableShadows): en el móvil salen suaves.
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -16,8 +18,23 @@ import 'package:tuturno/core/config.dart';
 import 'package:tuturno/core/content_repo.dart';
 import 'package:tuturno/core/providers.dart';
 
-import '../pregunta/capturas_comunes.dart';
+import '../../fuentes_reales.dart';
 import 'helpers.dart' show BundleEnMemoria;
+
+/// Carpeta de las capturas (`CAPTURAS=build/capturas`), o null si no se piden.
+final destinoCapturas = Platform.environment['CAPTURAS'];
+
+/// Guarda lo que hay en pantalla (hojas modales incluidas) en `$CAPTURAS/<nombre>.png`.
+Future<void> capturar(WidgetTester tester, String nombre) async {
+  final capa = tester.binding.renderViews.first.debugLayer! as OffsetLayer;
+  await tester.runAsync(() async {
+    final imagen = await capa.toImage(Offset.zero & tester.view.physicalSize);
+    final png = await imagen.toByteData(format: ui.ImageByteFormat.png);
+    File('$destinoCapturas/$nombre.png')
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(png!.buffer.asUint8List());
+  });
+}
 
 /// La app con el glosario y los itinerarios de ejemplo (assets/mock/content), como sin content/.
 Future<GoRouter> _arrancar(WidgetTester tester, {double escala = 1, Size tamano = const Size(412, 915)}) async {
