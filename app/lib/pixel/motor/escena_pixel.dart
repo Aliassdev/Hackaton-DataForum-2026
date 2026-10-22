@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../tema.dart' show duracion;
 import 'encaje_pixel.dart';
 import 'imagenes_pixel.dart';
+import 'marcha_pixel.dart';
 import 'paleta_pixel.dart';
+import 'rejilla_pixel.dart';
 import 'reloj_pixel.dart';
 import 'sprite.dart';
 
@@ -40,7 +42,8 @@ class ElementoEscena {
   /// Dado la vuelta de izquierda a derecha.
   final bool espejo;
 
-  /// Con un halo amarillo alrededor de la silueta, para señalar a quién tocar.
+  /// Con un halo amarillo alrededor de la silueta, para señalar a quién tocar. Si se puede tocar, los lectores de
+  /// pantalla lo anuncian como seleccionado.
   final bool resaltado;
 
   /// Dónde queda el sprite, en píxeles del fondo.
@@ -72,13 +75,26 @@ class ElementoEscena {
 
 /// Una escena de pixel art: un [fondo] (de unos 160 × 96 píxeles) con [elementos] encima, colocados en píxeles del
 /// fondo y pintados en orden (el último queda delante). Todo se escala junto, como una sola imagen nítida: la mayor
-/// escala entera de píxeles físicos que cabe, centrada, con el sitio que sobra del color [colorMarco] (el papel).
+/// escala entera de píxeles físicos que cabe, centrada, con el sitio que sobra del color [colorMarco] (el papel), y
+/// con el dibujo en la rejilla de píxeles de la pantalla aunque la caja empiece a medio píxel ([RejillaPixel]).
 ///
 /// Los elementos con [ElementoEscena.id] se pueden tocar si hay [alPulsar]: cada uno tiene una zona de toque del
 /// tamaño de su sprite (como mínimo [zonaMinima] × [zonaMinima]) y un nodo de Semantics de botón con su etiqueta. Las
-/// animaciones en reposo de los sprites se mueven solas, desfasadas, y se quedan quietas con «reducir animaciones».
+/// animaciones en reposo de los sprites se mueven solas, desfasadas, y se quedan quietas con «reducir animaciones» y
+/// mientras la app está en segundo plano.
 ///
-/// En una columna (sin límite de alto), la escena ocupa todo el ancho y el alto justo para su escala.
+/// En una columna, la escena ocupa todo el ancho y el alto justo para su escala; en un `Center` o en un diálogo, lo
+/// justo para su escala ([tamanoPara]). También sabe su tamaño intrínseco, así que se puede poner en un `AlertDialog`
+/// o en un `IntrinsicWidth`.
+///
+/// En el juego, mejor dentro del marco de la pantalla de juego, con el margen del azul noche del marco:
+///
+/// ```dart
+/// MarcoPixel(child: EscenaPixel(fondo: sala, elementos: [...], colorMarco: ColoresUiPixel.noche));
+/// ```
+///
+/// Suelta sobre el papel de la app, lleva un contorno azul noche de un píxel del dibujo ([contorno]): así los fondos
+/// claros no se funden con la página.
 class EscenaPixel extends StatefulWidget {
   const EscenaPixel({
     super.key,
@@ -87,6 +103,7 @@ class EscenaPixel extends StatefulWidget {
     this.alPulsar,
     this.descripcion,
     this.colorMarco,
+    this.contorno,
     this.animar = true,
   });
 
@@ -102,6 +119,11 @@ class EscenaPixel extends StatefulWidget {
   /// Color de los márgenes alrededor de la escena. Por defecto, [PaletaPixel.papel].
   final Color? colorMarco;
 
+  /// Un contorno azul noche de un píxel del dibujo por dentro del borde de la escena, encima de todo. Null: solo con
+  /// los márgenes de papel ([colorMarco] sin dar), que es cuando un fondo claro se fundiría con la página. Dentro de un
+  /// marco (`MarcoPixel`, con `colorMarco` azul noche) sobra.
+  final bool? contorno;
+
   /// Con false, nada se mueve.
   final bool animar;
 
@@ -111,17 +133,41 @@ class EscenaPixel extends StatefulWidget {
   /// Puntos lógicos por píxel del fondo cuando el padre no pone ningún límite.
   static const escalaLibre = 4.0;
 
+  /// El tamaño que ocupa una escena de [arte] píxeles con [limites] a densidad [dpr]. En cada dirección, lo que obligue
+  /// el padre si el límite es fijo (un `SizedBox`, un `Expanded`, el ancho de una columna) y, si no, lo justo para la
+  /// mayor escala entera de píxeles físicos que cabe en los dos lados con límite (en un `Center`, en un diálogo o en
+  /// el alto de una columna). Sin ningún límite, [escalaLibre] puntos por píxel.
+  static Size tamanoPara(BoxConstraints limites, Size arte, double dpr) {
+    double fisicos(double disponible, double lado) => math.max(1, (disponible * dpr / lado + 1e-6).floorToDouble());
+    final enAncho = limites.hasBoundedWidth ? fisicos(limites.maxWidth, arte.width) : null;
+    final enAlto = limites.hasBoundedHeight ? fisicos(limites.maxHeight, arte.height) : null;
+    final escala = switch ((enAncho, enAlto)) {
+      (final double a, final double b) => math.min(a, b) / dpr,
+      (final double a, null) || (null, final double a) => a / dpr,
+      (null, null) => escalaLibre,
+    };
+    return limites.constrain(
+      Size(
+        limites.hasTightWidth ? limites.maxWidth : arte.width * escala,
+        limites.hasTightHeight ? limites.maxHeight : arte.height * escala,
+      ),
+    );
+  }
+
   @override
   State<EscenaPixel> createState() => _EscenaPixelState();
 }
 
 class _EscenaPixelState extends State<EscenaPixel> {
   RelojPixel? _reloj;
+  late final AppLifecycleListener _ciclo;
 
   @override
   void initState() {
     super.initState();
     _reloj = _nuevoReloj();
+    // En segundo plano no se dibuja nada: que el reloj tampoco despierte a la app en cada fotograma.
+    _ciclo = AppLifecycleListener(onStateChange: (_) => _ponerEnMarcha());
   }
 
   List<AnimacionPixel?> _animaciones(EscenaPixel escena) => [
@@ -154,61 +200,49 @@ class _EscenaPixelState extends State<EscenaPixel> {
   }
 
   void _ponerEnMarcha() {
-    final reloj = _reloj;
-    if (reloj == null) return;
-    if (!widget.animar || duracion(context, const Duration(seconds: 1)) == Duration.zero) {
-      reloj.reposo();
-    } else if (TickerMode.valuesOf(context).enabled) {
-      reloj.arrancar();
-    } else {
-      reloj.parar();
-    }
+    if (mounted) ponerEnMarcha(context, _reloj, animar: widget.animar);
   }
 
   @override
   void dispose() {
+    _ciclo.dispose();
     _reloj?.dispose();
     super.dispose();
-  }
-
-  /// El tamaño de la escena: todo el sitio del padre o, en una dirección sin límite, lo justo para la escala entera.
-  Size _caja(BoxConstraints limites, double dpr) {
-    final arte = widget.fondo.tamano;
-    double fisicos(double disponible, double lado) => math.max(1, (disponible * dpr / lado + 1e-6).floorToDouble());
-    final Size caja;
-    if (limites.hasBoundedWidth && limites.hasBoundedHeight) {
-      caja = limites.biggest;
-    } else if (limites.hasBoundedWidth) {
-      caja = Size(limites.maxWidth, arte.height * fisicos(limites.maxWidth, arte.width) / dpr);
-    } else if (limites.hasBoundedHeight) {
-      caja = Size(arte.width * fisicos(limites.maxHeight, arte.height) / dpr, limites.maxHeight);
-    } else {
-      caja = arte * EscenaPixel.escalaLibre;
-    }
-    return limites.constrain(caja);
   }
 
   @override
   Widget build(BuildContext context) {
     final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? View.of(context).devicePixelRatio;
     final alPulsar = widget.alPulsar;
-    final escena = LayoutBuilder(
-      builder: (context, limites) {
-        final caja = _caja(limites, dpr);
-        final encaje = EncajePixel(caja: caja, arte: widget.fondo.tamano, dpr: dpr);
-        return SizedBox.fromSize(
-          size: caja,
-          child: Stack(
+    final arte = widget.fondo.tamano;
+    // Durante una transición de página la capa de la escena se mueve sin volver a pintarse: repintar con cada paso de
+    // la animación de la página deja el dibujo en la rejilla de la pantalla al terminar, aunque nada más se mueva.
+    final ruta = ModalRoute.of(context);
+    final repintar = Listenable.merge([_reloj, ruta?.animation, ruta?.secondaryAnimation]);
+    final escena = _CajaEscena(
+      arte: arte,
+      dpr: dpr,
+      child: LayoutBuilder(
+        builder: (context, limites) {
+          final caja = limites.biggest;
+          final encaje = EncajePixel(caja: caja, arte: arte, dpr: dpr);
+          return Stack(
             children: [
               Positioned.fill(
-                child: RepaintBoundary(
-                  child: CustomPaint(
-                    painter: _PintorEscena(
-                      fondo: widget.fondo,
-                      elementos: widget.elementos,
-                      encaje: encaje,
-                      colorMarco: widget.colorMarco ?? PaletaPixel.papel.color,
-                      reloj: _reloj,
+                child: RejillaPixel(
+                  child: RepaintBoundary(
+                    child: RejillaPixel(
+                      child: CustomPaint(
+                        painter: _PintorEscena(
+                          fondo: widget.fondo,
+                          elementos: widget.elementos,
+                          encaje: encaje,
+                          colorMarco: widget.colorMarco ?? PaletaPixel.papel.color,
+                          contorno: widget.contorno ?? widget.colorMarco == null,
+                          reloj: _reloj,
+                          repintar: repintar,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -221,6 +255,7 @@ class _EscenaPixelState extends State<EscenaPixel> {
                       child: Semantics(
                         container: true,
                         button: true,
+                        selected: elemento.resaltado ? true : null,
                         label: elemento.etiqueta ?? id,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
@@ -230,9 +265,9 @@ class _EscenaPixelState extends State<EscenaPixel> {
                       ),
                     ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
     final descripcion = widget.descripcion;
     return descripcion == null ? escena : Semantics(container: true, image: true, label: descripcion, child: escena);
@@ -250,19 +285,88 @@ class _EscenaPixelState extends State<EscenaPixel> {
   }
 }
 
+/// El tamaño de la escena ([EscenaPixel.tamanoPara]). Lo contesta él mismo, sin preguntar al `LayoutBuilder` de
+/// dentro, también cuando le piden el tamaño intrínseco (un `AlertDialog`, un `IntrinsicWidth`).
+class _CajaEscena extends SingleChildRenderObjectWidget {
+  const _CajaEscena({required this.arte, required this.dpr, required super.child});
+
+  final Size arte;
+  final double dpr;
+
+  @override
+  _RenderCajaEscena createRenderObject(BuildContext context) => _RenderCajaEscena(arte, dpr);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderCajaEscena renderObject) {
+    renderObject
+      ..arte = arte
+      ..dpr = dpr;
+  }
+}
+
+class _RenderCajaEscena extends RenderProxyBox {
+  _RenderCajaEscena(this._arte, this._dpr);
+
+  Size _arte;
+  set arte(Size valor) {
+    if (valor == _arte) return;
+    _arte = valor;
+    markNeedsLayout();
+  }
+
+  double _dpr;
+  set dpr(double valor) {
+    if (valor == _dpr) return;
+    _dpr = valor;
+    markNeedsLayout();
+  }
+
+  /// Píxeles físicos enteros por píxel del dibujo que caben en [disponible] puntos de [lado] píxeles del dibujo.
+  double _fisicos(double disponible, double lado) => math.max(1, (disponible * _dpr / lado + 1e-6).floorToDouble());
+
+  @override
+  double computeMinIntrinsicWidth(double height) => _arte.width / _dpr;
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      height.isFinite ? _arte.width * _fisicos(height, _arte.height) / _dpr : _arte.width * EscenaPixel.escalaLibre;
+
+  @override
+  double computeMinIntrinsicHeight(double width) => _arte.height / _dpr;
+
+  @override
+  double computeMaxIntrinsicHeight(double width) =>
+      width.isFinite ? _arte.height * _fisicos(width, _arte.width) / _dpr : _arte.height * EscenaPixel.escalaLibre;
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) => EscenaPixel.tamanoPara(constraints, _arte, _dpr);
+
+  @override
+  double? computeDryBaseline(BoxConstraints constraints, TextBaseline baseline) => null;
+
+  @override
+  void performLayout() {
+    size = EscenaPixel.tamanoPara(constraints, _arte, _dpr);
+    child?.layout(BoxConstraints.tight(size));
+  }
+}
+
 class _PintorEscena extends CustomPainter {
   _PintorEscena({
     required this.fondo,
     required this.elementos,
     required this.encaje,
     required this.colorMarco,
+    required this.contorno,
     required this.reloj,
-  }) : super(repaint: reloj);
+    required Listenable repintar,
+  }) : super(repaint: repintar);
 
   final Sprite fondo;
   final List<ElementoEscena> elementos;
   final EncajePixel encaje;
   final Color colorMarco;
+  final bool contorno;
   final RelojPixel? reloj;
 
   int _fotograma(int i, Sprite sprite) => reloj?.fotograma(i) ?? sprite.animacion?.descanso?.fotograma ?? 0;
@@ -270,10 +374,15 @@ class _PintorEscena extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = colorMarco);
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..color = colorMarco
+        ..isAntiAlias = false,
+    );
     canvas
       ..save()
-      ..clipRect(encaje.rect);
+      ..clipRect(encaje.rect, doAntiAlias: false);
     ImagenesPixel.pintar(
       canvas,
       ImagenesPixel.de(fondo, _fotograma(0, fondo)),
@@ -300,7 +409,21 @@ class _PintorEscena extends CustomPainter {
         espejo: elemento.espejo,
       );
     }
+    if (contorno) _pintarContorno(canvas);
     canvas.restore();
+  }
+
+  /// Un píxel del dibujo de azul noche por dentro de cada borde, encima de todo.
+  void _pintarContorno(Canvas canvas) {
+    final tinta = Paint()
+      ..color = PaletaPixel.noche.color
+      ..isAntiAlias = false;
+    final ancho = fondo.ancho, alto = fondo.alto;
+    canvas
+      ..drawRect(encaje.rectDe(0, 0, ancho, 1), tinta)
+      ..drawRect(encaje.rectDe(0, alto - 1, ancho, 1), tinta)
+      ..drawRect(encaje.rectDe(0, 1, 1, alto - 2), tinta)
+      ..drawRect(encaje.rectDe(ancho - 1, 1, 1, alto - 2), tinta);
   }
 
   @override
@@ -309,5 +432,6 @@ class _PintorEscena extends CustomPainter {
       !listEquals(antiguo.elementos, elementos) ||
       antiguo.encaje != encaje ||
       antiguo.colorMarco != colorMarco ||
+      antiguo.contorno != contorno ||
       antiguo.reloj != reloj;
 }

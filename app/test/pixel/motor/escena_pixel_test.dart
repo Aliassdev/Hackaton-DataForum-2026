@@ -23,6 +23,7 @@ void main() {
     ValueChanged<String>? alPulsar,
     String? descripcion,
     Color? colorMarco,
+    bool? contorno = false,
     bool animar = true,
   }) => SizedBox(
     width: 400,
@@ -38,6 +39,7 @@ void main() {
       alPulsar: alPulsar,
       descripcion: descripcion,
       colorMarco: colorMarco,
+      contorno: contorno,
       animar: animar,
     ),
   );
@@ -75,6 +77,69 @@ void main() {
       expect(lamina.en(400, 120), colorDe('h'));
     });
 
+    testWidgets('sobre el papel lleva un contorno azul noche de un píxel; con otro color de margen, no', (
+      tester,
+    ) async {
+      await montar(tester, escena(contorno: null), dpr: 2);
+      var lamina = await leerPixeles(tester);
+      final noche = PaletaPixel.noche.color;
+      // Por dentro de los cuatro bordes del dibujo (de (0, 100) a (800, 500)), un píxel del dibujo: 20 físicos.
+      expect(lamina.colores(0, 100, 800, 120), {noche.toARGB32()});
+      expect(lamina.colores(0, 480, 800, 500), {noche.toARGB32()});
+      expect(lamina.colores(0, 120, 20, 480), {noche.toARGB32()});
+      expect(lamina.colores(780, 120, 800, 480), {noche.toARGB32()});
+      expect(lamina.en(30, 130), colorDe('h'));
+      expect(lamina.en(400, 20), PaletaPixel.papel.color);
+      // Con el margen azul noche de un marco, sobra.
+      await montar(tester, escena(contorno: null, colorMarco: noche), dpr: 2);
+      lamina = await leerPixeles(tester);
+      expect(lamina.en(10, 110), colorDe('h'));
+      // Y se puede pedir a mano.
+      await montar(tester, escena(contorno: true, colorMarco: PaletaPixel.blanco.color), dpr: 2);
+      expect((await leerPixeles(tester)).en(10, 110), noche);
+    });
+
+    testWidgets('aunque la caja empiece a medio píxel de la pantalla, el dibujo cae en su rejilla', (tester) async {
+      // Un tablero en el que cada píxel es distinto de sus vecinos: un píxel de 5 o de 7 se notaría enseguida.
+      final tablero = Sprite('tablero', [
+        for (var y = 0; y < 20; y++) [for (var x = 0; x < 40; x++) 'NYAr'[(x + 2 * y) % 4]].join(),
+      ]);
+      for (final (dpr, izquierda, arriba) in [(2.75, 18.0, 7.3), (2.625, 16.4, 9.1), (2.75, 16 + 0.5 / 2.75, 3.0)]) {
+        await montar(
+          tester,
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: izquierda, top: arriba),
+              child: SizedBox(width: 352, height: 212, child: EscenaPixel(fondo: tablero, contorno: false)),
+            ),
+          ),
+          dpr: dpr,
+          centrar: false,
+        );
+        final lamina = await leerPixeles(tester);
+        final papel = PaletaPixel.papel.color;
+        final k = EncajePixel(caja: const Size(352, 212), arte: const Size(40, 20), dpr: dpr).fisicos.toInt();
+        // Dónde empieza el dibujo: el primer píxel que no es papel, por el medio de la caja.
+        final medioX = ((izquierda + 176) * dpr).round(), medioY = ((arriba + 106) * dpr).round();
+        var x0 = 0, y0 = 0;
+        while (lamina.en(x0, medioY) == papel) {
+          x0++;
+        }
+        while (lamina.en(medioX, y0) == papel) {
+          y0++;
+        }
+        for (var j = 0; j < 20; j++) {
+          for (var i = 0; i < 40; i++) {
+            final x = x0 + i * k, y = y0 + j * k;
+            expect(lamina.colores(x, y, x + k, y + k), {
+              colorDe(tablero.fotogramas.first[j][i]).toARGB32(),
+            }, reason: 'a densidad $dpr, el píxel ($i, $j) no es un bloque de $k × $k de un solo color');
+          }
+        }
+      }
+    });
+
     testWidgets('en espejo, el sprite se da la vuelta alrededor de su ancla', (tester) async {
       final flecha = Sprite('flecha', List.filled(2, 'NYYY'), ancla: (x: 1, y: 2));
       await montar(tester, escena(elementos: [ElementoEscena(sprite: flecha, x: 10, y: 10, espejo: true)]), dpr: 2);
@@ -109,6 +174,53 @@ void main() {
     testWidgets('sin ningún límite, 4 puntos por píxel', (tester) async {
       await montar(tester, UnconstrainedBox(child: EscenaPixel(fondo: fondo)));
       expect(tester.getSize(find.byType(EscenaPixel)), const Size(160, 80));
+    });
+
+    testWidgets('sabe su tamaño intrínseco: cabe en un AlertDialog y en un IntrinsicWidth', (tester) async {
+      await montar(
+        tester,
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: AlertDialog(
+                title: const Text('Carta nueva'),
+                content: EscenaPixel(fondo: fondo),
+              ),
+            ),
+          ),
+        ),
+        dpr: 2,
+      );
+      expect(tester.takeException(), isNull);
+      final tamano = tester.getSize(find.byType(EscenaPixel));
+      // El ancho que deja el diálogo y el alto justo para su escala entera: 20 píxeles del dibujo por cada 40 de ancho.
+      expect(tamano.width, greaterThan(100));
+      final fisicos = (tamano.width * 2 / 40 + 1e-6).floorToDouble();
+      expect(tamano.height, 20 * fisicos / 2);
+
+      // A lo alto de la pantalla (800) cabría a 80 físicos por píxel: más ancha que la pantalla, así que la llena.
+      await montar(tester, IntrinsicWidth(child: EscenaPixel(fondo: fondo)), dpr: 2);
+      expect(tester.takeException(), isNull);
+      expect(tester.getSize(find.byType(EscenaPixel)), const Size(400, 200));
+      await montar(
+        tester,
+        SizedBox(
+          height: 50,
+          child: IntrinsicWidth(child: EscenaPixel(fondo: fondo)),
+        ),
+        dpr: 2,
+      );
+      expect(tester.getSize(find.byType(EscenaPixel)), const Size(100, 50));
+      await montar(
+        tester,
+        SizedBox(
+          width: 400,
+          child: IntrinsicHeight(child: EscenaPixel(fondo: fondo)),
+        ),
+        dpr: 2,
+      );
+      expect(tester.takeException(), isNull);
+      expect(tester.getSize(find.byType(EscenaPixel)), const Size(400, 200));
     });
   });
 
@@ -206,6 +318,30 @@ void main() {
       expect(tocados, ['jueza']);
       semantica.dispose();
     });
+
+    testWidgets('quien lleva el halo se anuncia como seleccionado', (tester) async {
+      final semantica = tester.ensureSemantics();
+      await montar(
+        tester,
+        escena(
+          alPulsar: (_) {},
+          elementos: [
+            ElementoEscena(sprite: persona, x: 10, y: 15, id: 'jueza', etiqueta: 'La jueza', resaltado: true),
+            ElementoEscena(sprite: otra, x: 30, y: 15, id: 'fiscal', etiqueta: 'El fiscal'),
+          ],
+        ),
+        dpr: 2,
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('La jueza')),
+        isSemantics(label: 'La jueza', isButton: true, isSelected: true, hasSelectedState: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('El fiscal')),
+        isSemantics(label: 'El fiscal', isButton: true, hasSelectedState: false),
+      );
+      semantica.dispose();
+    });
   });
 
   group('animación', () {
@@ -271,6 +407,25 @@ void main() {
 
     testWidgets('con animar: false tampoco se mueve nada', (tester) async {
       await montar(tester, escena(elementos: [ElementoEscena(sprite: ojos, x: 10, y: 15)], animar: false));
+      expect(RelojPixel.debugEnMarcha, 0);
+    });
+
+    testWidgets('con la app en segundo plano el reloj se para, y vuelve al volver', (tester) async {
+      await montar(tester, escena(elementos: [ElementoEscena(sprite: ojos, x: 10, y: 15)]), dpr: 2);
+      expect(RelojPixel.debugEnMarcha, 1);
+      for (final estado in [AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]) {
+        tester.binding.handleAppLifecycleStateChanged(estado);
+      }
+      await tester.pump();
+      expect(RelojPixel.debugEnMarcha, 0);
+      await tester.pump(const Duration(seconds: 5));
+      expect(tester.binding.hasScheduledFrame, isFalse);
+      for (final estado in [AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]) {
+        tester.binding.handleAppLifecycleStateChanged(estado);
+      }
+      await tester.pump();
+      expect(RelojPixel.debugEnMarcha, 1);
+      await tester.pumpWidget(const SizedBox());
       expect(RelojPixel.debugEnMarcha, 0);
     });
 

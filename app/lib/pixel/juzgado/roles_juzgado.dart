@@ -4,6 +4,9 @@
 // Las citas son literales («(...)» marca lo que se omite) y se comprobaron el 22/10/2026 contra los textos
 // consolidados del BOE (boe.es). Las de LOPIVI, art. 14, LECrim, art. 520.2 bis y LO 5/2000, art. 4, son también las de
 // docs/MARCO_LEGAL.md. Si un detalle no se podía comprobar, no está.
+//
+// Los textos son orientativos y están pendientes de que los revise alguien con formación jurídica ([DatosJuzgado.validado]
+// es false): hasta entonces, la actividad lleva la franja «Borrador» y el juego solo debería enseñarla en modo DEMO.
 import 'package:flutter/material.dart' show IconData, Icons;
 import 'package:flutter/foundation.dart';
 
@@ -26,8 +29,15 @@ class FuenteJuzgado {
   /// Identificador de la norma en el BOE: «BOE-A-1978-31229».
   final String boe;
 
-  /// «art. 117.1» o, si es una disposición, «disposición adicional primera».
-  String get referencia => articulo.startsWith('disposición') ? articulo : 'art. $articulo';
+  /// «art. 117.1», «arts. 656 y 708» (con varios artículos) o, si es una disposición, «disposición adicional primera».
+  /// Varios apartados del mismo artículo («118.2 y 118.4», «22.1 a), b) y d)») siguen siendo un solo artículo.
+  String get referencia {
+    if (articulo.startsWith('disposición')) return articulo;
+    final numeros = {
+      for (final m in RegExp(r'(?:^|,\s*|\sy\s)(\d+(?:\s(?:bis|ter))?)').allMatches(articulo)) m.group(1),
+    };
+    return '${numeros.length > 1 ? 'arts.' : 'art.'} $articulo';
+  }
 
   /// «Constitución, art. 117.1».
   String get etiqueta => '$norma, $referencia';
@@ -65,6 +75,7 @@ class RolJuzgado {
     this.sabiasQue,
     required this.icono,
     required this.fuentes,
+    this.sitio,
   });
 
   /// El id de su puesto en la sala («jueza»).
@@ -89,17 +100,20 @@ class RolJuzgado {
 
   /// Las normas de las que salen [quienEs], [queHace] y [sabiasQue].
   final List<FuenteJuzgado> fuentes;
+
+  /// Dónde está en la sala, para decírselo a quien usa un lector de pantalla («en el estrado, arriba en el centro»).
+  final String? sitio;
 }
 
-/// Un aviso sobre la sala (que hoy no hay público, dónde está Sergio…), con su fuente.
+/// Un aviso sobre la sala (que hoy no hay público, dónde está Sergio…), con sus fuentes.
 @immutable
 class NotaJuzgado {
-  const NotaJuzgado({required this.titulo, required this.texto, required this.icono, required this.fuente});
+  const NotaJuzgado({required this.titulo, required this.texto, required this.icono, required this.fuentes});
 
   final String titulo;
   final String texto;
   final IconData icono;
-  final FuenteJuzgado fuente;
+  final List<FuenteJuzgado> fuentes;
 }
 
 /// Lo que cambia de un montaje a otro: los títulos, quién está y los avisos.
@@ -111,6 +125,7 @@ class DatosJuzgado {
     required this.descripcion,
     required this.roles,
     this.notas = const [],
+    this.validado = false,
   });
 
   /// Los datos de [modo].
@@ -132,6 +147,11 @@ class DatosJuzgado {
   final List<RolJuzgado> roles;
 
   final List<NotaJuzgado> notas;
+
+  /// Si alguien con formación jurídica ha revisado los textos (como el «validado» del contenido, CLAUDE.md). Mientras
+  /// sea false, [JuzgadoExplorable] enseña la franja «Borrador: pendiente de revisión jurídica» y el juego solo debería
+  /// abrir la actividad en modo DEMO, con el interruptor de borradores.
+  final bool validado;
 
   /// El rol [id], o null si no está.
   RolJuzgado? rol(String id) => roles.where((rol) => rol.id == id).firstOrNull;
@@ -173,6 +193,7 @@ const datosSalaVistas = DatosJuzgado(
   roles: [
     RolJuzgado(
       id: 'jueza',
+      sitio: 'en el estrado, arriba en el centro',
       titulo: 'La jueza',
       corto: 'Jueza',
       quienEs:
@@ -224,17 +245,17 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'fiscal',
+      sitio: 'a la izquierda, en la primera silla de la mesa',
       titulo: 'El fiscal',
       corto: 'Fiscal',
       quienEs:
           'Trabaja en el Ministerio Fiscal (la Fiscalía). Su misión es defender la ley, los derechos de las personas y '
           'el interés de toda la sociedad.',
       queHace:
-          'En un juicio penal, acusa a quien cree que ha cometido un delito. Tiene que actuar con objetividad y velar '
-          'por que las víctimas y los testigos estén protegidos.',
+          'En un juicio penal, acusa a quien cree que ha cometido un delito. Tiene que actuar con objetividad, sin '
+          'favorecer a nadie, y cuidar de que las víctimas y los testigos estén protegidos.',
       sabiasQue:
-          'Además de acusar, el fiscal pide que se repare el daño a la víctima, salvo que ella renuncie a eso de forma '
-          'expresa.',
+          'Además de acusar, el fiscal pide que se repare el daño a la víctima, salvo que ella diga que no lo quiere.',
       icono: Icons.policy_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -275,6 +296,7 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'abogadaVictima',
+      sitio: 'a la izquierda, en la mesa, junto al fiscal',
       titulo: 'La abogada de la víctima',
       corto: 'Abogada de la víctima',
       subtitulo: 'Acusación particular',
@@ -285,8 +307,8 @@ const datosSalaVistas = DatosJuzgado(
           'Habla en nombre de la víctima: acusa, propone pruebas, hace preguntas a los testigos y pide que se repare '
           'el daño causado.',
       sabiasQue:
-          'Si la víctima es menor y ha sufrido violencia, puede tener abogado gratis en los casos que marca la ley, y '
-          'se le asigna con urgencia.',
+          'Si la víctima es menor y ha sufrido violencia, puede tener abogado gratis en los casos que marca la ley. Y se '
+          'le asigna con urgencia.',
       icono: Icons.volunteer_activism_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -329,15 +351,17 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'abogadoDefensa',
+      sitio: 'a la derecha, en la silla del extremo de la mesa',
       titulo: 'El abogado de la defensa',
       corto: 'Abogado de la defensa',
       quienEs:
-          'Es el abogado de la persona investigada. Todo el mundo tiene derecho a defenderse con un abogado: si no elige '
-          'uno, se le asigna uno de oficio.',
+          'Es el abogado de la persona investigada. Todo el mundo tiene derecho a defenderse con un abogado. Si no elige '
+          'uno, le nombran uno sin que tenga que buscarlo: es el abogado «de oficio».',
       queHace:
           'Habla con ella en privado y la defiende en el juicio: propone pruebas, hace preguntas a los testigos y da '
           'sus razones a la jueza.',
-      sabiasQue: 'Lo que la persona investigada habla con su abogado es confidencial.',
+      sabiasQue:
+          'Por regla general, lo que la persona investigada habla con su abogado es confidencial: la ley lo protege.',
       icono: Icons.shield_rounded,
       fuentes: [
         _ce24,
@@ -362,14 +386,15 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'letrada',
+      sitio: 'en el estrado, a la derecha de la jueza',
       titulo: 'La letrada de la Administración de Justicia',
       corto: 'Letrada',
       quienEs:
           'Es una funcionaria experta en derecho que dirige la oficina del juzgado. Antes, este puesto se llamaba '
           '«secretario judicial».',
       queHace:
-          'Da fe pública: garantiza que lo que pasa en el juicio queda registrado, en una grabación o en un acta, y que '
-          'la grabación es auténtica y está completa.',
+          'Da fe pública: garantiza que lo que pasa en el juicio queda registrado, en una grabación o en un acta. '
+          'También garantiza que la grabación es auténtica y está completa.',
       sabiasQue:
           'Si el juicio se graba, no siempre tiene que estar en la sala: con su firma electrónica garantiza que la '
           'grabación es la de verdad.',
@@ -417,17 +442,20 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'testigo',
+      sitio: 'en el centro, en el sitio de quien declara',
       titulo: 'El testigo',
       corto: 'Testigo',
       quienEs:
           'Es una persona que vio u oyó algo relacionado con el caso. No está acusado de nada: viene a contar lo que '
           'sabe.',
       queHace:
-          'Responde a las preguntas de las partes y de la jueza. Tiene que decir la verdad: mentir como testigo en un '
-          'juicio es un delito, el falso testimonio.',
+          'Responde a las preguntas de las partes y de la jueza. Tiene que decir la verdad: si no sabe algo o no se '
+          'acuerda, puede decirlo, porque equivocarse no es mentir. Mentir a propósito sí es un delito, el falso '
+          'testimonio.',
       sabiasQue:
-          'Si un testigo es menor de 18 años, se puede evitar que vea a la persona acusada; por ejemplo, declarando '
-          'desde otra sala por videoconferencia.',
+          'Si quien declara es menor de 18 años, se puede evitar que vea a la persona acusada: por ejemplo, declarando '
+          'por videoconferencia desde otra sala. Y si tiene menos de 14 años y es un caso de violencia, su entrevista se '
+          'graba antes: normalmente no viene al juicio.',
       icono: Icons.record_voice_over_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -452,9 +480,13 @@ const datosSalaVistas = DatosJuzgado(
           norma: 'Código Penal',
           articulo: '458.1',
           boe: _cp,
-          cita:
-              'El testigo que faltare a la verdad en su testimonio en causa judicial, será castigado con las penas de '
-              'prisión de seis meses a dos años y multa de tres a seis meses.',
+          cita: 'El testigo que faltare a la verdad en su testimonio en causa judicial (...)',
+        ),
+        FuenteJuzgado(
+          norma: 'Código Penal',
+          articulo: '12',
+          boe: _cp,
+          cita: 'Las acciones u omisiones imprudentes sólo se castigarán cuando expresamente lo disponga la Ley.',
         ),
         FuenteJuzgado(
           norma: 'LECrim',
@@ -467,15 +499,36 @@ const datosSalaVistas = DatosJuzgado(
               'inculpada. (...) incluyéndose la posibilidad de que los testigos puedan ser oídos sin estar presentes en '
               'la sala mediante la utilización de tecnologías de la comunicación accesible.',
         ),
+        FuenteJuzgado(
+          norma: 'LECrim',
+          articulo: '449 ter',
+          boe: _lecrim,
+          cita:
+              'Cuando una persona menor de catorce años (...) deba intervenir en condición de testigo en un procedimiento '
+              'judicial que tenga por objeto la instrucción de un delito de homicidio, lesiones, contra la libertad, '
+              'contra la integridad moral (...), la autoridad judicial acordará, en todo caso, practicar la audiencia del '
+              'menor como prueba preconstituida (...)',
+        ),
+        FuenteJuzgado(
+          norma: 'LECrim',
+          articulo: '703 bis',
+          boe: _lecrim,
+          cita:
+              '(...) se procederá, a instancia de la parte interesada, a la reproducción en la vista de la grabación '
+              'audiovisual (...) sin que sea necesaria la presencia del testigo en la vista. En los supuestos previstos '
+              'en el artículo 449 ter, la autoridad judicial solo podrá acordar la intervención del testigo en el acto '
+              'del juicio, con carácter excepcional (...)',
+        ),
       ],
     ),
     RolJuzgado(
       id: 'investigada',
+      sitio: 'a la derecha, en la mesa, junto a su abogado',
       titulo: 'La persona investigada',
       corto: 'Persona investigada',
       quienEs:
-          'Es la persona a la que se acusa del delito (en el juicio se la llama «acusada»). Para la ley es inocente '
-          'mientras no se demuestre lo contrario.',
+          'Es la persona a la que se investiga por un delito. En el juicio se la llama «acusada». Para la ley es '
+          'inocente mientras no se demuestre lo contrario.',
       queHace:
           'Escucha el juicio junto a su abogado. Tiene derechos: puede declarar o quedarse en silencio, y no está '
           'obligada a declarar contra sí misma ni a confesarse culpable.',
@@ -507,6 +560,7 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'policia',
+      sitio: 'de pie, abajo a la derecha',
       titulo: 'El agente de policía',
       corto: 'Policía',
       quienEs:
@@ -559,6 +613,7 @@ const datosSalaVistas = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'publico',
+      sitio: 'abajo a la izquierda, en el primer banco',
       titulo: 'El público',
       corto: 'Público',
       subtitulo: 'Familias y otras personas',
@@ -566,8 +621,8 @@ const datosSalaVistas = DatosJuzgado(
           'Son personas que vienen a ver el juicio: familiares, amistades, estudiantes, periodistas… Por regla general, '
           'los juicios son públicos.',
       queHace:
-          'Mira y escucha sin intervenir. La jueza puede hacer salir a quien altere el orden, y también celebrar el '
-          'juicio a puerta cerrada para proteger, por ejemplo, la intimidad de la víctima.',
+          'Mira y escucha sin intervenir. La jueza puede hacer salir a quien altere el orden. También puede celebrar el '
+          'juicio a puerta cerrada, por ejemplo, para proteger la intimidad de la víctima.',
       sabiasQue: 'Está prohibido publicar el nombre, los datos o las fotos de una víctima menor de edad.',
       icono: Icons.groups_rounded,
       fuentes: [
@@ -645,21 +700,30 @@ const datosMenores = DatosJuzgado(
   roles: [
     RolJuzgado(
       id: 'juezMenores',
+      sitio: 'en el estrado, arriba en el centro',
       titulo: 'El juez de menores',
       corto: 'Juez de menores',
       quienEs:
-          'Es el juez que se encarga de los casos en los que un chico o una chica de 14 a 17 años está acusado de '
-          'cometer un delito.',
+          'Es el juez que se encarga de los casos de chicos y chicas de 14 a 17 años acusados de un delito. Desde 2025, '
+          'la ley llama a estos juzgados «Sección de Menores» del Tribunal de Instancia.',
       queHace:
           'Dirige la audiencia (así se llama aquí el juicio) y escucha a todos; al chico, el último. Si se demuestra que '
-          'lo hizo, le pone una medida, como hacer tareas educativas, pensando en su edad, su familia, su forma de ser '
-          'y lo que más le conviene.',
+          'lo hizo, le pone una medida, como hacer tareas educativas. Para elegirla, piensa en su edad, su familia, su '
+          'forma de ser y lo que más le conviene.',
       sabiasQue:
           'Una de las medidas son las prestaciones en beneficio de la comunidad: actividades sin cobrar que ayudan a '
           'otras personas. Solo se pueden poner si el chico está de acuerdo.',
       icono: Icons.balance_rounded,
       fuentes: [
         _lorpm1,
+        FuenteJuzgado(
+          norma: 'LOPJ',
+          articulo: '84.2 f)',
+          boe: _lopj,
+          cita:
+              'Además de las anteriores, los Tribunales de Instancia podrán estar integrados por alguna o varias de las '
+              'siguientes Secciones: (...) f) De Menores.',
+        ),
         FuenteJuzgado(
           norma: 'LO 5/2000',
           articulo: '2.1',
@@ -685,17 +749,19 @@ const datosMenores = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'fiscalMenores',
+      sitio: 'a la izquierda, en la primera silla de la mesa',
       titulo: 'El fiscal de menores',
       corto: 'Fiscal de menores',
       quienEs:
-          'Es un fiscal especialista en menores. Defiende los derechos de los chicos y chicas y, junto al juez, vela por '
+          'Es un fiscal especialista en menores. Defiende los derechos de los chicos y chicas y, junto al juez, protege '
           'los derechos de las víctimas, como Sergio.',
       queHace:
-          'Dirige la investigación y, si hay pruebas, acusa y propone una medida. En todo lo que hace tiene que buscar '
-          'el interés superior del menor.',
+          'Dirige la investigación y, si hay pruebas, acusa y propone una medida. Tiene que buscar lo mejor para el chico '
+          'investigado (el «interés superior del menor») sin dejar de proteger a Sergio.',
       sabiasQue:
-          'Si el chico reconoce el daño, pide perdón y Sergio acepta sus disculpas, hay conciliación. En los casos '
-          'menos graves, la Fiscalía puede entonces no seguir con el expediente.',
+          'Si el chico reconoce el daño y pide perdón, Sergio decide si acepta sus disculpas: nadie le puede obligar. Si '
+          'las acepta, hay conciliación; como Sergio es menor, el acuerdo lo asumen sus padres y lo aprueba el juez. En '
+          'los casos menos graves, la Fiscalía puede entonces cerrar el caso.',
       icono: Icons.policy_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -734,27 +800,32 @@ const datosMenores = DatosJuzgado(
         ),
         FuenteJuzgado(
           norma: 'LO 5/2000',
-          articulo: '19.1 y 19.2',
+          articulo: '19.1, 19.2 y 19.6',
           boe: _lorpm,
           cita:
               'También podrá el Ministerio Fiscal desistir de la continuación del expediente (...) a la circunstancia de '
               'que además el menor se haya conciliado con la víctima (...) El desistimiento en la continuación del '
               'expediente sólo será posible cuando el hecho imputado al menor constituya delito menos grave o falta. '
               '2. (...) se entenderá producida la conciliación cuando el menor reconozca el daño causado y se disculpe '
-              'ante la víctima, y ésta acepte sus disculpas (...)',
+              'ante la víctima, y ésta acepte sus disculpas (...) 6. En los casos en los que la víctima del delito o falta '
+              'fuere menor de edad o incapaz, el compromiso al que se refiere el presente artículo habrá de ser asumido '
+              'por el representante legal de la misma, con la aprobación del Juez de Menores.',
         ),
       ],
     ),
     RolJuzgado(
       id: 'letradaMenor',
+      sitio: 'a la derecha, en la mesa',
       titulo: 'La abogada del chico',
       corto: 'Abogada del chico',
       subtitulo: 'Letrada del menor',
       quienEs:
           'Es la abogada que defiende al chico investigado. Él tiene derecho a tener abogado desde el principio y a '
-          'hablar con su abogada en privado.',
+          'hablar con su abogada en privado. Aquí, «letrada» quiere decir abogada.',
       queHace: 'Le defiende en la audiencia: propone pruebas, opina sobre las medidas que se piden y da sus razones al juez.',
-      sabiasQue: 'Si el chico y su familia no eligen abogado, se le nombra uno de oficio, especialista en menores.',
+      sabiasQue:
+          'Si el chico y su familia no eligen abogado, el Colegio de Abogados le nombra uno «de oficio», especialista en '
+          'menores.',
       icono: Icons.shield_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -781,6 +852,7 @@ const datosMenores = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'equipoTecnico',
+      sitio: 'a la izquierda, en la mesa, junto al fiscal',
       titulo: 'El equipo técnico',
       corto: 'Equipo técnico',
       quienEs:
@@ -790,8 +862,8 @@ const datosMenores = DatosJuzgado(
           'Estudian cómo está el chico: su situación psicológica, sus estudios, su familia y su entorno. Lo explican en '
           'un informe y en la audiencia, para ayudar a elegir la medida que más le conviene.',
       sabiasQue:
-          'Si lo ven bueno para el chico, pueden proponer que repare el daño o que se concilie con la víctima. Cuando '
-          'hay mediación, son quienes la llevan.',
+          'Si lo ven bueno para el chico, pueden proponer que repare el daño o que se concilie con la víctima. Si hay '
+          'mediación, la llevan ellos, solo si la víctima y su familia quieren, y sin verse si la víctima lo pide.',
       icono: Icons.psychology_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -821,11 +893,24 @@ const datosMenores = DatosJuzgado(
               'El correspondiente equipo técnico realizará las funciones de mediación entre el menor y la víctima o '
               'perjudicado (...)',
         ),
+        FuenteJuzgado(
+          norma: 'RD 1774/2004',
+          articulo: '5.1 d) y e)',
+          boe: _rlorpm,
+          cita:
+              'd) El equipo técnico se pondrá en contacto con la víctima para que manifieste su conformidad o '
+              'disconformidad a participar en un procedimiento de mediación (...) Si la víctima fuese menor de edad o '
+              'incapaz, este consentimiento deberá ser confirmado por sus representantes legales y ser puesto en '
+              'conocimiento del juez de menores competente. e) (...) la conciliación y la reparación también podrán '
+              'llevarse a cabo sin encuentro, a petición de la víctima, por cualquier otro medio que permita dejar '
+              'constancia de los acuerdos.',
+        ),
         _lorpm372,
       ],
     ),
     RolJuzgado(
       id: 'menor',
+      sitio: 'en el centro, en el banco, a la izquierda',
       titulo: 'El chico investigado',
       corto: 'Chico investigado',
       quienEs:
@@ -866,15 +951,16 @@ const datosMenores = DatosJuzgado(
     ),
     RolJuzgado(
       id: 'familia',
-      titulo: 'Su familia',
-      corto: 'Su familia',
-      subtitulo: 'Su madre',
+      sitio: 'en el centro, en el banco, junto al chico',
+      titulo: 'La madre del chico',
+      corto: 'Madre del chico',
+      subtitulo: 'Su familia',
       quienEs:
-          'Es su madre. El chico tiene derecho a que sus padres, u otra persona que él elija, le den apoyo durante el '
-          'proceso, si el juez lo autoriza.',
+          'Es la madre del chico investigado. Él tiene derecho a que sus padres, u otra persona que elija, le apoyen '
+          'durante el proceso, si el juez lo autoriza.',
       queHace:
-          'Puede acompañarle durante la audiencia, salvo que el juez decida lo contrario. Y si hay daños que reparar, '
-          'sus padres responden junto a él.',
+          'Puede acompañarle durante la audiencia, salvo que el juez decida lo contrario. Y si hay daños que pagar, sus '
+          'padres pueden tener que pagarlos junto a él.',
       icono: Icons.family_restroom_rounded,
       fuentes: [
         FuenteJuzgado(
@@ -913,31 +999,47 @@ const datosMenores = DatosJuzgado(
           'El juez de menores puede decidir que la audiencia no sea pública, para proteger al chico o a la víctima. Y los '
           'medios de comunicación nunca pueden difundir imágenes ni datos que permitan saber quién es el menor.',
       icono: Icons.lock_rounded,
-      fuente: FuenteJuzgado(
-        norma: 'LO 5/2000',
-        articulo: '35.2',
-        boe: _lorpm,
-        cita:
-            'El Juez podrá acordar, en interés de la persona imputada o de la víctima, que las sesiones no sean públicas '
-            'y en ningún caso se permitirá que los medios de comunicación social obtengan o difundan imágenes del menor '
-            'ni datos que permitan su identificación.',
-      ),
+      fuentes: [
+        FuenteJuzgado(
+          norma: 'LO 5/2000',
+          articulo: '35.2',
+          boe: _lorpm,
+          cita:
+              'El Juez podrá acordar, en interés de la persona imputada o de la víctima, que las sesiones no sean '
+              'públicas y en ningún caso se permitirá que los medios de comunicación social obtengan o difundan imágenes '
+              'del menor ni datos que permitan su identificación.',
+        ),
+      ],
     ),
     NotaJuzgado(
       titulo: '¿Y Sergio?',
       texto:
-          'No tiene que estar en la sala. Como es menor, lo normal es que declare a distancia, por videoconferencia.',
+          'Lo normal es que no esté en la sala. Como tiene menos de 14 años, su declaración se grabó antes, con '
+          'garantías, para que no tenga que repetirla. Y si tuviera que declarar, lo normal es hacerlo a distancia, por '
+          'videoconferencia.',
       icono: Icons.videocam_rounded,
-      fuente: FuenteJuzgado(
-        norma: 'LO 5/2000',
-        articulo: '4',
-        boe: _lorpm,
-        cita:
-            'Se garantizará especialmente que las declaraciones o interrogatorios de las partes acusadoras, testigos o '
-            'peritos se realicen de forma telemática en los siguientes supuestos, salvo que el Juez, Tribunal o '
-            'Ministerio Fiscal, mediante resolución motivada, en atención a las circunstancias del caso concreto, estime '
-            'necesaria su presencia física: Cuando sean (...) víctimas menores de edad (...)',
-      ),
+      fuentes: [
+        FuenteJuzgado(
+          norma: 'LO 5/2000',
+          articulo: '23.4 b)',
+          boe: _lorpm,
+          cita:
+              'El Ministerio Fiscal, de oficio o a petición de cualquiera de las partes personadas, instará al Juzgado de '
+              'menores, la práctica de la declaración de la víctima o de un cualquier otro testigo, con las garantías de '
+              'la prueba preconstituida (...) b) Cuando se trate de una persona especialmente vulnerable. En todo caso, '
+              'tendrá esa consideración toda persona menor de catorce años (...)',
+        ),
+        FuenteJuzgado(
+          norma: 'LO 5/2000',
+          articulo: '4',
+          boe: _lorpm,
+          cita:
+              'Se garantizará especialmente que las declaraciones o interrogatorios de las partes acusadoras, testigos o '
+              'peritos se realicen de forma telemática en los siguientes supuestos, salvo que el Juez, Tribunal o '
+              'Ministerio Fiscal, mediante resolución motivada, en atención a las circunstancias del caso concreto, '
+              'estime necesaria su presencia física: Cuando sean (...) víctimas menores de edad (...)',
+        ),
+      ],
     ),
   ],
 );

@@ -1,5 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/pixel/juzgado/juzgado.dart';
 import 'package:tuturno/pixel/motor/motor.dart';
@@ -102,21 +105,18 @@ void main() {
         semantica.dispose();
       });
 
-      testWidgets('las chispas señalan a quien falta y desaparecen al conocerle, sin reiniciar las animaciones', (
+      testWidgets('las chispas señalan a quien falta y se van al conocerle (una invisible seguiría repintando)', (
         tester,
       ) async {
         await montarJuzgado(tester, modo: modo);
-        List<ElementoEscena> chispas() => _elementos(tester)
-            .where((e) => identical(e.sprite, MueblesJuzgado.chispa) || identical(e.sprite, MueblesJuzgado.sinChispa))
-            .toList();
-        int visibles() => chispas().where((e) => identical(e.sprite, MueblesJuzgado.chispa)).length;
-        expect(chispas(), hasLength(total));
-        expect(visibles(), total);
-        final antes = [for (final e in _elementos(tester)) e.sprite.animacion];
+        int chispas() => _elementos(tester).where((e) => identical(e.sprite, MueblesJuzgado.chispa)).length;
+        expect(chispas(), total);
         await tocarRol(tester, datos.roles.first.id, modo: modo);
-        expect(visibles(), total - 1);
-        // Las mismas animaciones en el mismo orden: el reloj de la escena no se reinicia y nadie da un salto.
-        expect(listEquals([for (final e in _elementos(tester)) e.sprite.animacion], antes), isTrue);
+        expect(chispas(), total - 1);
+        // Las personas siguen en su sitio y con su animación.
+        expect(_elementos(tester).where((e) => e.id != null).map((e) => e.id).toSet(), {
+          for (final rol in datos.roles) rol.id,
+        });
       });
     });
   }
@@ -166,6 +166,77 @@ void main() {
     await tester.tap(find.text('Letrada'));
     await tester.pumpAndSettle();
     expect(_carta('La letrada de la Administración de Justicia'), findsOneWidget);
+  });
+
+  testWidgets('con «reducir animaciones», abrir y cerrar «Qué dice la ley» no salta ningún assert', (tester) async {
+    await montarJuzgado(tester, reducir: true);
+    await tocarRol(tester, 'jueza');
+    await tester.ensureVisible(find.text('Qué dice la ley'));
+    await tester.tap(find.text('Qué dice la ley'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('La justicia emana del pueblo'), findsOneWidget);
+    await tester.ensureVisible(find.text('Ocultar qué dice la ley'));
+    await tester.tap(find.text('Ocultar qué dice la ley'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('La justicia emana del pueblo'), findsNothing);
+  });
+
+  testWidgets('el progreso guardado que llega tarde se suma, sin volver a celebrar', (tester) async {
+    var celebraciones = 0;
+    const clave = Key('juzgado');
+    await montarJuzgado(tester, clave: clave, onTodosDescubiertos: () => celebraciones++);
+    expect(progreso(0, 9), findsOneWidget);
+    await montarJuzgado(
+      tester,
+      clave: clave,
+      descubiertosIniciales: {'jueza', 'fiscal', 'letrada'},
+      onTodosDescubiertos: () => celebraciones++,
+    );
+    expect(progreso(3, 9), findsOneWidget);
+    final todos = {for (final rol in datosSalaVistas.roles) rol.id};
+    await montarJuzgado(tester, clave: clave, descubiertosIniciales: todos, onTodosDescubiertos: () => celebraciones++);
+    await tester.pumpAndSettle();
+    expect(progreso(9, 9), findsOneWidget);
+    expect(celebraciones, 0);
+  });
+
+  testWidgets('con lector de pantalla, la ficha de quien falta abre su carta; sin él, dice dónde está', (tester) async {
+    final anuncios = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<dynamic>(SystemChannels.accessibility, (
+      mensaje,
+    ) async {
+      final datos = (mensaje as Map)['data'] as Map?;
+      if (mensaje['type'] == 'announce') anuncios.add(datos!['message'] as String);
+      return null;
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<dynamic>(
+        SystemChannels.accessibility,
+        null,
+      ),
+    );
+    await montarJuzgado(tester);
+    await tester.ensureVisible(find.text('Letrada'));
+    await tester.tap(find.text('Letrada'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CartaRol), findsNothing);
+    expect(anuncios, ['La letrada de la Administración de Justicia: en el estrado, a la derecha de la jueza.']);
+
+    tester.platformDispatcher.accessibilityFeaturesTestValue = const _NavegacionAccesible();
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Fiscal'));
+    await tester.tap(find.text('Fiscal'));
+    await tester.pumpAndSettle();
+    expect(_carta('El fiscal'), findsOneWidget);
+    expect(progreso(1, 9), findsOneWidget);
+  });
+
+  testWidgets('mientras los textos no estén revisados, lo dice una franja de borrador', (tester) async {
+    await montarJuzgado(tester);
+    expect(find.text('Borrador: textos pendientes de revisión jurídica.'), findsOneWidget);
   });
 
   testWidgets('«Qué dice la ley» enseña las citas literales del BOE', (tester) async {
@@ -234,11 +305,39 @@ void main() {
   });
 
   testWidgets('en un móvil de 1080 píxeles la sala sale nítida, a 6 píxeles de pantalla por píxel', (tester) async {
-    await montarJuzgado(tester);
-    final caja = tester.getRect(find.byType(EscenaPixel));
-    final encaje = EncajePixel(caja: caja.size, arte: const Size(160, 96), dpr: 2.75);
-    expect(encaje.nitido, isTrue);
-    expect(encaje.fisicos, 6);
+    for (final modo in ModoJuzgado.values) {
+      await montarJuzgado(tester, modo: modo);
+      final caja = tester.getRect(find.byType(EscenaPixel));
+      final encaje = EncajePixel(caja: caja.size, arte: const Size(160, 96), dpr: 2.75);
+      expect(encaje.nitido, isTrue);
+      expect(encaje.fisicos, 6);
+      // Y en la pantalla de verdad: cada píxel del dibujo es un bloque de 6 × 6 de un solo color.
+      final capa = tester.binding.renderViews.first.debugLayer! as OffsetLayer;
+      final datos = await tester.runAsync(() async {
+        final imagen = await capa.toImage(Offset.zero & tester.view.physicalSize);
+        final bytes = await imagen.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
+        imagen.dispose();
+        return bytes!;
+      });
+      int color(int x, int y) => datos!.getUint32((y * 1080 + x) * 4);
+      final x0 = (caja.left * 2.75).round() + (encaje.rect.left * 2.75).round();
+      final y0 = (caja.top * 2.75).round() + (encaje.rect.top * 2.75).round();
+      var mezclados = 0;
+      for (var j = 0; j < 96; j++) {
+        for (var i = 0; i < 160; i++) {
+          // Las esquinas escalonadas del marco (MarcoPixel recorta la pantalla con esquinas de pixel) tapan un trozo de
+          // los píxeles del dibujo que tienen debajo: no es suavizado, es el marco.
+          if ((i < 3 || i >= 157) && (j < 3 || j >= 93)) continue;
+          final esquina = color(x0 + i * 6, y0 + j * 6);
+          for (var dy = 0; dy < 6; dy++) {
+            for (var dx = 0; dx < 6; dx++) {
+              if (color(x0 + i * 6 + dx, y0 + j * 6 + dy) != esquina) mezclados++;
+            }
+          }
+        }
+      }
+      expect(mezclados, 0, reason: '${modo.name}: píxeles de 5 o de 7, o bordes a medias');
+    }
   });
 
   group('animaciones', () {
@@ -264,4 +363,15 @@ void main() {
       expect(RelojPixel.debugEnMarcha, 0);
     });
   });
+}
+
+/// Lo que pone el sistema con TalkBack: navegación accesible.
+class _NavegacionAccesible implements ui.AccessibilityFeatures {
+  const _NavegacionAccesible();
+
+  @override
+  bool get accessibleNavigation => true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => false;
 }

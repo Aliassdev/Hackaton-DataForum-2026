@@ -230,6 +230,7 @@ void main() {
         (EscenariosPixel.salaObservacion, ['jueza', 'fiscal', 'abogada_victima', 'abogado_defensa', 'letrada']),
         (EscenariosPixel.fiscalia, ['fiscal']),
         (EscenariosPixel.comisaria, ['policia']),
+        (EscenariosPixel.juzgado, ['recepcion']),
       ];
       for (final (escenario, puestos) in detras) {
         for (final nombre in puestos) {
@@ -277,6 +278,7 @@ void main() {
       expect(conPiezas['sala_observacion'], 1);
       expect(conPiezas['fiscalia'], 1);
       expect(conPiezas['comisaria'], 1);
+      expect(conPiezas['juzgado'], 1);
       expect(conPiezas['casa'], 0);
     });
   });
@@ -285,7 +287,7 @@ void main() {
     test('pinta antes a quien está detrás de un mueble y después a quien está delante', () {
       final sala = EscenariosPixel.salaVistas;
       final juez = sala.colocar('jueza', jueza, id: 'jueza');
-      final testigo = sala.colocar('testigo', nina, id: 'testigo');
+      final testigo = sala.colocar('testigo', adulta, id: 'testigo');
       final delPublico = sala.colocar('publico', publico, id: 'publico');
       final centro = sala.colocar('centro', adulta, id: 'centro');
       final orden = sala.componer([centro, delPublico, testigo, juez]);

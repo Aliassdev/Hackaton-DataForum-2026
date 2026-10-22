@@ -32,8 +32,18 @@ void main() {
           }
         }
         for (final nota in datos.notas) {
-          expect(nota.fuente.cita, isNotEmpty);
+          expect(nota.fuentes, isNotEmpty, reason: nota.titulo);
+          for (final fuente in nota.fuentes) {
+            expect(fuente.cita, isNotEmpty);
+            expect(fuente.boe, matches(RegExp(r'^BOE-A-\d{4}-\d+$')));
+          }
         }
+        // Cada persona sabe decir dónde está, para el lector de pantalla.
+        for (final rol in datos.roles) {
+          expect(rol.sitio, isNotNull, reason: rol.id);
+        }
+        // Hasta que alguien con formación jurídica los revise, son un borrador.
+        expect(datos.validado, isFalse);
       });
 
       test('${modo.name}: cada rol tiene su sitio en la sala y en la sala solo hay roles con carta', () {
@@ -47,15 +57,46 @@ void main() {
     }
 
     test('los textos son para chicos y chicas: frases cortas y sin «etc.» ni abreviaturas de leyes', () {
+      final notas = [
+        for (final nota in [...datosSalaVistas.notas, ...datosMenores.notas]) nota.texto,
+      ];
       for (final rol in [...datosSalaVistas.roles, ...datosMenores.roles]) {
-        for (final texto in [rol.quienEs, rol.queHace, ?rol.sabiasQue]) {
+        for (final texto in [rol.quienEs, rol.queHace, ?rol.sabiasQue, ...notas]) {
           for (final frase in texto.split(RegExp(r'(?<=[.:;?!])\s+'))) {
-            expect(frase.split(' ').length, lessThanOrEqualTo(32), reason: '${rol.id}: «$frase»');
+            expect(frase.split(' ').length, lessThanOrEqualTo(22), reason: '${rol.id}: «$frase»');
           }
           expect(texto, isNot(contains('etc.')));
           expect(texto, isNot(matches(RegExp(r'\b(LO|LECrim|LOPJ|EOMF|art\.)\b'))), reason: rol.id);
         }
       }
+    });
+
+    test('a un chico de 11 años no le asustan: equivocarse no es mentir y no se habla de cárcel', () {
+      final testigo = datosSalaVistas.rol('testigo')!;
+      expect(testigo.queHace, contains('equivocarse no es mentir'));
+      for (final rol in [...datosSalaVistas.roles, ...datosMenores.roles]) {
+        for (final texto in [rol.quienEs, rol.queHace, ?rol.sabiasQue, for (final f in rol.fuentes) f.cita]) {
+          expect(texto, isNot(contains(RegExp('prisión|cárcel'))), reason: rol.id);
+        }
+      }
+      // Nadie le puede obligar a Sergio a aceptar unas disculpas, y una mediación es solo si su familia y él quieren.
+      expect(datosMenores.rol('fiscalMenores')!.sabiasQue, contains('nadie le puede obligar'));
+      expect(datosMenores.rol('equipoTecnico')!.sabiasQue, contains('solo si la víctima y su familia quieren'));
+      // La confidencialidad con el abogado, por regla general (tiene excepciones).
+      expect(datosSalaVistas.rol('abogadoDefensa')!.sabiasQue, startsWith('Por regla general'));
+    });
+
+    test('la fuente dice «arts.» si cita varios artículos y «art.» si son apartados de uno', () {
+      FuenteJuzgado fuente(String articulo) => FuenteJuzgado(norma: 'LECrim', articulo: articulo, cita: '', boe: '');
+      expect(fuente('656 y 708').etiqueta, 'LECrim, arts. 656 y 708');
+      expect(fuente('1, 12.3 y 13').etiqueta, 'LECrim, arts. 1, 12.3 y 13');
+      expect(fuente('35 y 36.1').etiqueta, 'LECrim, arts. 35 y 36.1');
+      expect(fuente('118.2 y 118.4').etiqueta, 'LECrim, art. 118.2 y 118.4');
+      expect(fuente('22.1 a), b) y d)').etiqueta, 'LECrim, art. 22.1 a), b) y d)');
+      expect(fuente('7.1 k) y l) y 7.3').etiqueta, 'LECrim, art. 7.1 k) y l) y 7.3');
+      expect(fuente('520.2 bis').etiqueta, 'LECrim, art. 520.2 bis');
+      expect(fuente('449 ter').etiqueta, 'LECrim, art. 449 ter');
+      expect(fuente('disposición adicional primera').etiqueta, 'LECrim, disposición adicional primera');
     });
 
     test('la sala de vistas tiene a las nueve personas que se piden', () {
@@ -131,12 +172,23 @@ void main() {
       expect(spriteDeReserva('juezMenores'), same(RepartoJuzgado.juezMenores));
     });
 
-    test('la chispa visible y la invisible comparten animación y ancla', () {
-      expect(MueblesJuzgado.chispa.animacion, MueblesJuzgado.sinChispa.animacion);
-      expect(MueblesJuzgado.chispa.ancla, MueblesJuzgado.sinChispa.ancla);
+    test('la chispa late, y quieta es la grande; solo la llevan quienes faltan por conocer', () {
       expect(MueblesJuzgado.chispa.animacion!.descanso!.fotograma, 0, reason: 'quieta, la chispa grande');
-      for (final fila in MueblesJuzgado.sinChispa.fotogramas.expand((f) => f)) {
-        expect(fila, '.......');
+      expect(MueblesJuzgado.chispa.ancla, (x: 3, y: 3));
+      final montaje = MontajeJuzgado.de(ModoJuzgado.salaVistas);
+      int chispas(Set<String> descubiertos) =>
+          montaje.elementos(descubiertos: descubiertos).where((e) => identical(e.sprite, MueblesJuzgado.chispa)).length;
+      expect(chispas({}), montaje.puestos.length);
+      expect(chispas({'jueza', 'fiscal'}), montaje.puestos.length - 2);
+      expect(chispas({for (final puesto in montaje.puestos) puesto.id}), 0);
+    });
+
+    test('la cámara de la audiencia es la misma que la de la Sala Gesell', () {
+      final filas = pintarSalaMenores();
+      for (final (j, fila) in camaraPared.indexed) {
+        for (final (i, clave) in fila.split('').indexed) {
+          if (clave != '.') expect(filas[3 + j][146 + i], clave, reason: '($i, $j)');
+        }
       }
     });
 

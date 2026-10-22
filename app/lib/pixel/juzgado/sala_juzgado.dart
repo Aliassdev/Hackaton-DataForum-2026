@@ -132,9 +132,9 @@ class MontajeJuzgado {
   PuntoPixel? cara(String id) => puesto(id)?.cara;
 
   /// Todo lo que se pinta encima del fondo: las personas (que se pueden tocar, con la [etiqueta] de cada una para los
-  /// lectores de pantalla) y los muebles, de más al fondo a más cerca, y, encima de todo, una chispa por persona. La de
-  /// los [descubiertos] es invisible: así la lista y sus animaciones no cambian al descubrir a alguien y nadie da un
-  /// salto. El [seleccionado] lleva el halo de resaltar.
+  /// lectores de pantalla) y los muebles, de más al fondo a más cerca, y, encima de todo, una chispa por cada persona
+  /// que falta por conocer (las de los [descubiertos] no están: una chispa invisible seguiría repintando la escena en
+  /// cada latido). El [seleccionado] lleva el halo de resaltar.
   List<ElementoEscena> elementos({
     Set<String> descubiertos = const {},
     String? seleccionado,
@@ -152,11 +152,8 @@ class MontajeJuzgado {
         ),
     ]),
     for (final puesto in puestos)
-      ElementoEscena(
-        sprite: descubiertos.contains(puesto.id) ? MueblesJuzgado.sinChispa : MueblesJuzgado.chispa,
-        x: puesto.chispa.x,
-        y: puesto.chispa.y,
-      ),
+      if (!descubiertos.contains(puesto.id))
+        ElementoEscena(sprite: MueblesJuzgado.chispa, x: puesto.chispa.x, y: puesto.chispa.y),
   ];
 }
 
@@ -250,22 +247,12 @@ abstract final class MueblesJuzgado {
     ancla: _centro,
   );
 
-  /// La misma chispa, invisible y con la misma animación: ocupa su sitio en la escena cuando ya se conoce a esa persona.
-  static final sinChispa = Sprite.animado(
-    'sin chispa',
-    [_chispaVacia, _chispaVacia],
-    animacion: animacionChispa,
-    ancla: _centro,
-  );
-
   static const PuntoPixel _centro = (x: 3, y: 3);
 }
 
 const _chispaGrande = ['...N...', '..NYN..', '.NYWYN.', 'NYWWWYN', '.NYWYN.', '..NYN..', '...N...'];
 
 const _chispaPequena = ['.......', '...N...', '..NYN..', '.NYyYN.', '..NYN..', '...N...', '.......'];
-
-const _chispaVacia = ['.......', '.......', '.......', '.......', '.......', '.......', '.......'];
 
 List<String> _pintarEstrado() {
   const ancho = 104, alto = 18;
@@ -370,9 +357,6 @@ const _emblema = [
   '....NNNNN....',
 ];
 
-/// La cámara que graba la audiencia, arriba a la derecha, con su luz encendida.
-const _camara = ['NNNNNN..', 'NKKKKNN.', 'NrcKKKcN', 'NKKKKNN.', 'NNNNNN..', '..NN....', '.NNNN...'];
-
 /// El fondo de la sala del Juzgado de Menores: pared de piedra clara con dos ventanas con cortinas azules, la balanza
 /// de la justicia sobre el estrado, una puerta al fondo, la cámara que graba, zócalo y suelo de madera, la tarima del
 /// estrado, una alfombra azul en el pasillo y la barandilla del público, con un cordón que cierra el paso: hoy no hay
@@ -437,7 +421,8 @@ List<String> pintarSalaMenores() {
     ..pegar(_emblema, 74, 1);
   _puerta(l, 3, 12, 11, _suelo - 12);
   l
-    ..pegar(_camara, 150, 4)
+    // La cámara que graba la audiencia, la misma que la de la Sala Gesell.
+    ..pegar(camaraPared, 146, 3)
     // Tarima del estrado.
     ..rect(30, _suelo, 100, 5, 'm')
     ..lineaH(30, _suelo, 100, 'o')

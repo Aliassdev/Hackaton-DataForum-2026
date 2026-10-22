@@ -1,10 +1,13 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../tema.dart' show duracion;
 import '../motor/motor.dart';
+import '../ui/ui.dart' show ColoresUiPixel, MarcoPixel, unidadPixel;
 import 'carta_rol.dart';
 import 'roles_juzgado.dart';
 import 'sala_juzgado.dart';
@@ -17,7 +20,11 @@ import 'sala_juzgado.dart';
 /// Con [modo] = [ModoJuzgado.menores], la sala es la de la audiencia del caso de Sergio en el Juzgado de Menores.
 ///
 /// Si el padre le da un alto fijo (una pantalla entera), la sala y la barra se quedan arriba y la carta se desplaza
-/// debajo; dentro de una lista, ocupa lo que necesita. Las animaciones respetan «reducir animaciones».
+/// debajo; dentro de una lista, ocupa lo que necesita. Las animaciones respetan «reducir animaciones». La sala va en
+/// el marco de la pantalla de juego (`MarcoPixel`), como las escenas del caso, y a la mayor escala entera que cabe.
+///
+/// Los textos están pendientes de revisión jurídica (`DatosJuzgado.validado`): mientras tanto, la actividad lo dice en
+/// una franja y el juego solo debería abrirla en modo DEMO.
 class JuzgadoExplorable extends StatefulWidget {
   const JuzgadoExplorable({
     super.key,
@@ -37,7 +44,8 @@ class JuzgadoExplorable extends StatefulWidget {
   /// Se llama con el id del rol (el de `RolJuzgado.id`) la primera vez que se descubre a cada persona.
   final ValueChanged<String>? onDescubierto;
 
-  /// Ids de los roles que ya se conocían (para seguir donde se dejó). Si ya están todos, no se vuelve a celebrar.
+  /// Ids de los roles que ya se conocían (para seguir donde se dejó). Si ya están todos, no se vuelve a celebrar. Si
+  /// llegan más tarde (el progreso guardado se lee de forma asíncrona), se suman a los que ya se habían descubierto.
   final Set<String> descubiertosIniciales;
 
   /// Con el título («¿Quién es quién en el juzgado?») y la indicación de arriba.
@@ -78,7 +86,14 @@ class _JuzgadoExplorableState extends State<JuzgadoExplorable> {
   @override
   void didUpdateWidget(JuzgadoExplorable antiguo) {
     super.didUpdateWidget(antiguo);
-    if (antiguo.modo != widget.modo) _reiniciar();
+    if (antiguo.modo != widget.modo) {
+      _reiniciar();
+    } else if (!setEquals(antiguo.descubiertosIniciales, widget.descubiertosIniciales)) {
+      final ids = {for (final rol in _datos.roles) rol.id};
+      _descubiertos.addAll(widget.descubiertosIniciales.where(ids.contains));
+      // Lo que ya estaba guardado no se celebra otra vez.
+      if (_descubiertos.length == ids.length) _celebrado = true;
+    }
   }
 
   @override
@@ -113,12 +128,19 @@ class _JuzgadoExplorableState extends State<JuzgadoExplorable> {
   }
 
   /// Una ficha: si ya se conoce a esa persona, se abre su carta; si no, se ilumina en la sala para que la encuentre.
+  /// Con lector de pantalla (TalkBack), buscarla en el dibujo no sirve de nada: se abre su carta directamente. Y si
+  /// hay un lector de pantalla sin navegación accesible, se le dice dónde está.
   void _tocarFicha(String id) {
-    if (_descubiertos.contains(id)) {
+    if (_descubiertos.contains(id) || MediaQuery.accessibleNavigationOf(context)) {
       _pulsar(id);
-    } else {
-      HapticFeedback.selectionClick();
-      setState(() => _pista = id);
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _pista = id);
+    final rol = _datos.rol(id);
+    final sitio = rol?.sitio;
+    if (rol != null && sitio != null) {
+      SemanticsService.sendAnnouncement(View.of(context), '${rol.titulo}: $sitio.', Directionality.of(context));
     }
   }
 
@@ -202,19 +224,35 @@ class _JuzgadoExplorableState extends State<JuzgadoExplorable> {
               children: [
                 if (completo) EnhorabuenaJuzgado(total: total) else const IndicacionJuzgado(),
                 const SizedBox(height: _l),
-                FichasJuzgado(roles: datos.roles, descubiertos: _descubiertos, pista: _pista, alTocar: _tocarFicha),
+                FichasJuzgado(
+                  roles: datos.roles,
+                  descubiertos: _descubiertos,
+                  pista: _pista,
+                  alTocar: _tocarFicha,
+                  accesible: MediaQuery.accessibleNavigationOf(context),
+                ),
                 for (final nota in datos.notas) ...[const SizedBox(height: _m), NotaSala(nota: nota)],
               ],
             ),
     );
     const relleno = EdgeInsets.fromLTRB(_margen, _m + _xs, _margen, _l);
     // Una caja invisible del alto de la cabecera de la carta, para poder desplazarse hasta ella.
-    final conCabecera = Stack(
+    final carta = Stack(
       children: [
         Positioned(top: 0, left: 0, right: 0, height: 120, child: SizedBox(key: _cabeceraCarta)),
         detalle,
       ],
     );
+    final conCabecera = datos.validado
+        ? carta
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const _Borrador(),
+              const SizedBox(height: _m),
+              carta,
+            ],
+          );
 
     return LayoutBuilder(
       builder: (context, limites) {
@@ -261,10 +299,11 @@ class _JuzgadoExplorableState extends State<JuzgadoExplorable> {
   /// cabe debajo con la sala fija o si mejor se desplaza todo junto).
   double _altoArriba(BuildContext context, double ancho) {
     final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1;
+    final u = unidadPixel(context);
     final arte = _montaje.fondo;
-    final interior = ancho - 2 * (_margenPantalla + _bordePantalla + _rellenoPantalla);
+    final interior = ancho - 2 * (_margenPantalla + MarcoPixel.grosor * u);
     final fisicos = math.max(1, (interior * dpr / arte.ancho + 1e-6).floor());
-    final sala = arte.alto * fisicos / dpr + 2 * (_bordePantalla + _rellenoPantalla);
+    final sala = arte.alto * fisicos / dpr + (2 * MarcoPixel.grosor + 1) * u;
     final letra = MediaQuery.textScalerOf(context).scale(20);
     return (widget.conCabecera ? 3.6 * letra + _m : _m) + sala + 2.5 * letra + _m;
   }
@@ -275,11 +314,9 @@ const _m = 16.0;
 const _l = 24.0;
 const _margen = 16.0;
 
-/// La pantalla de juego: margen, borde y relleno alrededor de la sala. Con 12 + 2 + 6 por lado, en un móvil de 1080
-/// píxeles la sala sale a 6 píxeles de pantalla por píxel del dibujo.
-const _margenPantalla = 12.0;
-const _bordePantalla = 2.0;
-const _rellenoPantalla = 6.0;
+/// El margen a los lados del marco de la sala: con el marco de la pantalla de juego (5 unidades pixel por lado), en un
+/// móvil de 1080 píxeles la sala sale a 6 píxeles de pantalla por píxel del dibujo (con 12, saldría a 5).
+const _margenPantalla = 4.0;
 
 class _Cabecera extends StatelessWidget {
   const _Cabecera({required this.titulo, required this.subtitulo});
@@ -328,7 +365,8 @@ class _DesvanecerArriba extends StatelessWidget {
   );
 }
 
-/// La sala, enmarcada como la pantalla de una consola: azul noche, con el borde redondeado.
+/// La sala en el marco de la pantalla de juego, como las escenas del caso. El marco (`MarcoPixel`) y la escena se
+/// ajustan a la rejilla de píxeles de la pantalla, así que la sala sale nítida aunque quede a medio píxel.
 class _Pantalla extends StatelessWidget {
   const _Pantalla({
     required this.montaje,
@@ -345,24 +383,47 @@ class _Pantalla extends StatelessWidget {
   final bool animar;
 
   @override
+  Widget build(BuildContext context) => MarcoPixel(
+    child: EscenaPixel(
+      fondo: montaje.fondo,
+      elementos: elementos,
+      alPulsar: alPulsar,
+      descripcion: descripcion,
+      colorMarco: ColoresUiPixel.noche,
+      animar: animar,
+    ),
+  );
+}
+
+/// «Borrador: pendiente de revisión jurídica», mientras nadie con formación jurídica haya revisado los textos.
+class _Borrador extends StatelessWidget {
+  const _Borrador();
+
+  @override
   Widget build(BuildContext context) {
-    final noche = PaletaPixel.noche.color;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: noche,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: PaletaPixel.marino.color, width: _bordePantalla),
-        boxShadow: [BoxShadow(color: noche.withValues(alpha: 0.25), offset: const Offset(0, 4))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(_rellenoPantalla),
-        child: EscenaPixel(
-          fondo: montaje.fondo,
-          elementos: elementos,
-          alPulsar: alPulsar,
-          descripcion: descripcion,
-          colorMarco: noche,
-          animar: animar,
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    return MergeSemantics(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: esquema.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: esquema.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: _m - _xs, vertical: _xs + 2),
+          child: Row(
+            children: [
+              Icon(Icons.edit_note_rounded, color: esquema.onSurfaceVariant),
+              const SizedBox(width: _xs + 4),
+              Expanded(
+                child: Text(
+                  'Borrador: textos pendientes de revisión jurídica.',
+                  style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

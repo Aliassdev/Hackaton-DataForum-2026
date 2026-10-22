@@ -55,8 +55,9 @@ final _comisaria = _pintarComisaria();
     ..apoyar(plantaGrande, 86, 66)
     ..sombraSuelo(91, 64, 12, filas: 1);
 
-  // La placa con la estrella, en la pared detrás del mostrador.
-  l.pegar(_placa, 115, 6);
+  // La placa con la estrella, en la pared entre la ventana y el mostrador (detrás de la cabeza de quien atiende
+  // parecía una aureola).
+  l.pegar(_placa, 88, 5);
 
   final mostrador = _dibujarMostrador();
   l.pegar(mostrador, _mostradorX, _mostradorY);

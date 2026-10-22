@@ -82,6 +82,76 @@ void main() {
     });
   });
 
+  group('rejilla de la pantalla', () {
+    testWidgets('a medio píxel de la pantalla, cada píxel del dibujo sigue siendo un bloque entero', (tester) async {
+      for (final (dpr, izquierda) in [(2.75, 18.0), (2.625, 16 + 0.5 / 2.625)]) {
+        await montar(
+          tester,
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: izquierda, top: 7.3),
+              child: SpritePixel(sprite: tablero, ancho: 104, alto: 104, animar: false),
+            ),
+          ),
+          dpr: dpr,
+          centrar: false,
+        );
+        final lamina = await leerPixeles(tester);
+        final papel = PaletaPixel.papel.color;
+        final k = EncajePixel(caja: const Size(104, 104), arte: const Size(4, 4), dpr: dpr).fisicos.toInt();
+        final medio = ((7.3 + 52) * dpr).round();
+        var x0 = 0, y0 = 0;
+        while (lamina.en(x0, medio) == papel) {
+          x0++;
+        }
+        while (lamina.en(((izquierda + 52) * dpr).round(), y0) == papel) {
+          y0++;
+        }
+        for (var j = 0; j < 4; j++) {
+          for (var i = 0; i < 4; i++) {
+            final x = x0 + i * k, y = y0 + j * k;
+            expect(lamina.colores(x, y, x + k, y + k), {
+              colorDe(tableroFilas[j][i]).toARGB32(),
+            }, reason: 'a densidad $dpr, el píxel ($i, $j)');
+          }
+        }
+      }
+    });
+
+    testWidgets('si se anima, se repinta solo: lo de al lado no se vuelve a pintar', (tester) async {
+      var pintados = 0;
+      await montar(
+        tester,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CustomPaint(size: const Size(10, 10), painter: _Contador(() => pintados++)),
+            SpritePixel(sprite: semaforo, ancho: 10, alto: 10),
+          ],
+        ),
+      );
+      final antes = pintados;
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 600));
+      }
+      expect(pintados, antes, reason: 'cada cambio de fotograma del sprite repinta también al vecino');
+    });
+
+    testWidgets('con la app en segundo plano, su reloj se para', (tester) async {
+      await montar(tester, SpritePixel(sprite: semaforo, ancho: 10, alto: 10));
+      expect(RelojPixel.debugEnMarcha, 1);
+      for (final estado in [AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]) {
+        tester.binding.handleAppLifecycleStateChanged(estado);
+      }
+      expect(RelojPixel.debugEnMarcha, 0);
+      for (final estado in [AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]) {
+        tester.binding.handleAppLifecycleStateChanged(estado);
+      }
+      expect(RelojPixel.debugEnMarcha, 1);
+    });
+  });
+
   group('animación en reposo', () {
     testWidgets('cambia de fotograma a su tiempo', (tester) async {
       await montar(tester, SpritePixel(sprite: semaforo, ancho: 10, alto: 10), dpr: 1);
@@ -189,4 +259,17 @@ void main() {
       semantica.dispose();
     });
   });
+}
+
+/// Cuenta las veces que se pinta.
+class _Contador extends CustomPainter {
+  _Contador(this.alPintar);
+
+  final VoidCallback alPintar;
+
+  @override
+  void paint(Canvas canvas, Size size) => alPintar();
+
+  @override
+  bool shouldRepaint(_Contador antiguo) => false;
 }

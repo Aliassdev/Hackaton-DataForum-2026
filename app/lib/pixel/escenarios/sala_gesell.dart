@@ -58,8 +58,9 @@ List<String> _pintarSalaGesell() {
   // Mesa baja con papeles, ceras y un vaso de agua.
   _mesaBaja(l, 86, 66);
 
-  // La cámara pequeña, arriba en la esquina.
-  l.pegar(_camara, 144, 3);
+  // La cámara pequeña, arriba en la esquina, mirando al sofá: oscura y con su lucecita roja, para que se vea (el texto
+  // de la escena la nombra).
+  l.pegar(camaraPared, 144, 3);
   return l.filas;
 }
 
@@ -147,17 +148,3 @@ void _mesaBaja(LienzoPixel l, int x, int y) {
     ..lineaV(x + 24, y + 5, 6, 'N')
     ..sombraSuelo(x + 2, y + 11, 24, filas: 1);
 }
-
-/// Una cámara pequeña en un soporte de pared, mirando hacia el sofá: cuerpo blanco, objetivo redondo y una lucecita
-/// verde.
-const _camara = [
-  '.........NNN',
-  '.........NgN',
-  '..NNNNNNNNgN',
-  '.NNNWWWWWNgN',
-  'NNcWNWWWWhNN',
-  'NcWcNWWWWhN.',
-  'NNcNNWWvWhN.',
-  '.NNNhhhhhhN.',
-  '..NNNNNNNNN.',
-];

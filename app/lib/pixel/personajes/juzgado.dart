@@ -98,6 +98,55 @@ final _fichaFiscal = PersonajePixel(
   sprite: _personaje('fiscal', filas: _fiscalFilas, ojos: 9, pecho: 22, piel: '2', ms: 840),
 );
 
+/// El mismo fiscal en su despacho de la Fiscalía de Menores, sin toga (la toga solo se lleva en audiencia pública y en
+/// los actos solemnes, LOPJ, art. 187.1): traje gris oscuro con dos botones, camisa blanca, la misma corbata azul y la
+/// carpeta azul cielo en la mano.
+const _fiscalDespachoFilas = <String>[
+  '........NNNNNNNN........',
+  '......NNttTTTTTTNN......',
+  '.....NttTTTTTTTTzzN.....',
+  '.....NtTTTTTTTTTTzN.....',
+  '.....NTTTzTTTTTTTTN.....',
+  '.....NTT2222TTTTTTN.....',
+  '.....NT222222222TTN.....',
+  '.....NT2222222223TN.....',
+  '.....NT2gg2222gg3TN.....',
+  '....N2TgWNggggWNgT3N....',
+  '....N32gNNg22gNNg33N....',
+  '.....N2sgg2222ggs3N.....',
+  '......N2222RR2223N......',
+  '.......NN222233NN.......',
+  '........NN3333NN........',
+  '......NNKWW33WWKNN......',
+  '.....NGKKGWAAWGKKKN.....',
+  '....NGKKKKGAAGKKKKKN....',
+  '....NGNKKKKAAKKKKNKN....',
+  '....NGNKKKKDDKKKKNKN....',
+  '....NGNKKKKKKKKKKNKN....',
+  '...NGKNKKKKGKKKKKNKKN...',
+  '...NGKNKKKKKKKKKKNKKN...',
+  '...NKKNKKKKGKKKKKNKKN...',
+  '....N2NKKKKKKKKKKN3N....',
+  '.....NNKKKKKKKKKKNNNNN..',
+  '......NGKKKNNGKKKNhcaN..',
+  '......NGKKN..NGKKNWcaN..',
+  '......NGKKN..NGKKNhcaN..',
+  '......NGKKN..NGKKNaaaN..',
+  '......NGKKN..NGKKNNNNN..',
+  '......NGKKN..NGKKN......',
+  '......NGKKN..NGKKN......',
+  '.....NKzzzN..NKzzzN.....',
+  '.....NNNNNN..NNNNNN.....',
+  '......xxxxxxxxxxxx......',
+];
+
+final _fichaFiscalDespacho = PersonajePixel(
+  id: 'fiscal-despacho',
+  nombre: 'El fiscal',
+  descripcion: 'El fiscal en su despacho, con traje gris, gafas y una carpeta',
+  sprite: _personaje('fiscal-despacho', filas: _fiscalDespachoFilas, ojos: 9, pecho: 22, piel: '2', ms: 840),
+);
+
 /// La abogada de la víctima: pelo natural negro y voluminoso, toga sin puñetas y una carpeta amarilla contra el pecho.
 const _abogadaVictimaFilas = <String>[
   '.......NNNNNNNNNN.......',
@@ -111,7 +160,7 @@ const _abogadaVictimaFilas = <String>[
   '..Nzzz555555555556zzzN..',
   '..Nzzz55WN5555WN56zzzN..',
   '..Nzzz55NN5555NN66zzzN..',
-  '..NzzK5s55555555s6KzzN..',
+  '..NzzK5R55555555R6KzzN..',
   '..NzzzN5555RR5556NzzzN..',
   '...NzzzN55555566NzzzN...',
   '....NNNNNN6666NNNNNN....',
@@ -254,7 +303,7 @@ const _policiaFilas = <String>[
   '.....Nz6666666667zN.....',
   '....N6z6WN6666WN7z7N....',
   '....N766NN6666NN777N....',
-  '.....N6s66666666s7N.....',
+  '.....N6R66666666R7N.....',
   '......N6666RR6667N......',
   '.......NN666677NN.......',
   '........NN7777NN........',
@@ -336,8 +385,9 @@ final _fichaInvestigada = PersonajePixel(
   sprite: _personaje('investigada', filas: _investigadaFilas, ojos: 9, pecho: 21, piel: '3', ms: 900),
 );
 
-/// Un testigo: un chico joven en su silla de ruedas, de frente. Pelo rubio despeinado, chaqueta mostaza sobre una
-/// camiseta blanca, vaqueros y zapatillas. La silla: ruedas grandes con el aro plateado, empuñaduras, reposapiés y
+/// Un testigo: un hombre joven en su silla de ruedas, de frente. Pelo rubio despeinado y barba corta, chaqueta mostaza
+/// sobre una camiseta blanca, vaqueros y zapatillas. Es adulto a propósito: en la sala de vistas no sale ningún menor
+/// declarando (los menores de 14 años declaran antes, en la prueba preconstituida). La silla: ruedas grandes con el aro plateado, empuñaduras, reposapiés y
 /// ruedas pequeñas delante. Mide 28 × 32: al respirar solo se mueve él (columnas 7 a 20), no la silla.
 const _testigoFilas = <String>[
   '............................',
@@ -352,8 +402,8 @@ const _testigoFilas = <String>[
   '.......Nu1WN1111WN2oN.......',
   '.......Nu1NN1111NN2oN.......',
   '.......N1s11111111s2N.......',
-  '........N1111RR1112N........',
-  '....NNN..NN111122NN..NNN....',
+  '........Nu111RR111oN........',
+  '....NNN..NNuuuuooNN..NNN....',
   '....NzN...NN2222NN...NzN....',
   '....NKN.NNooW22WooNN.NKN....',
   '....NKNNYoooWWWWooooNNKN....',
@@ -377,6 +427,6 @@ const _testigoFilas = <String>[
 final _fichaTestigo = PersonajePixel(
   id: 'testigo',
   nombre: 'El testigo',
-  descripcion: 'Un testigo, un chico en silla de ruedas con chaqueta mostaza',
+  descripcion: 'Un testigo, un hombre joven con barba, en silla de ruedas y con chaqueta mostaza',
   sprite: _personaje('testigo', filas: _testigoFilas, ojos: 9, pecho: 19, piel: '1', ms: 850, desde: 7, hasta: 21),
 );

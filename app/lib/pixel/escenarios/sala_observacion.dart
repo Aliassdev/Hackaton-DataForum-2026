@@ -9,7 +9,7 @@ final escenarioSalaObservacion = EscenarioPixel(
   lugar: 'sala_observacion',
   descripcion:
       'La sala de observación: una pantalla grande en la que se ve la Sala Gesell y una mesa larga desde la que la '
-      'jueza, la fiscal y los abogados siguen la entrevista.',
+      'jueza y las demás personas del juicio siguen la entrevista.',
   fondo: Sprite('sala_observacion', _salaObservacion.fondo),
   delante: [piezaEn(Sprite('sala_observacion: mesa', _salaObservacion.mesa), _mesaX, _mesaY)],
   puestos: const {

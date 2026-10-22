@@ -3,13 +3,14 @@ import 'escenario_pixel.dart';
 import 'teselas.dart';
 
 /// El despacho de la Fiscalía de Menores: estantería de libros de derecho, un diploma y un dibujo, una ventana con
-/// persiana, un perchero con la toga y la mesa del fiscal con una pantalla, expedientes atados con cinta y una lámpara
-/// verde. La mesa tapa a quien se sienta detrás (el puesto «fiscal»).
+/// persiana, un archivador y la mesa del fiscal con una pantalla, expedientes atados con cinta y una lámpara verde. La
+/// mesa tapa a quien se sienta detrás (el puesto «fiscal»). En su despacho, el fiscal va sin toga: para la escena, el
+/// personaje 'fiscal-despacho' de lib/pixel/personajes.
 final escenarioFiscalia = EscenarioPixel(
   lugar: 'fiscalia',
   descripcion:
-      'El despacho de la Fiscalía de Menores: una mesa con expedientes y una lámpara, una estantería con libros, una '
-      'ventana y un perchero con la toga.',
+      'El despacho de la Fiscalía de Menores: una mesa con expedientes y una lámpara, una estantería con libros, un '
+      'diploma y un dibujo en la pared, una ventana con persiana y un archivador.',
   fondo: Sprite('fiscalia', _fiscalia.fondo),
   delante: [piezaEn(Sprite('fiscalia: mesa', _fiscalia.mesa), _mesaX, _mesaY)],
   puestos: const {

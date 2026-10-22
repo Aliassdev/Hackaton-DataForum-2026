@@ -435,7 +435,8 @@ const _juezMenores = [
   '....xxxxxxxxxxxxxxxx....',
 ];
 
-/// La abogada del menor: pelo afro, piel 6, toga y blusa amarilla.
+/// La abogada del menor: pelo afro, piel 6, toga y corbata coral (la defensa va siempre en coral, como el abogado de
+/// lib/pixel/personajes; en amarillo se confundía con la medalla y el cordón dorado del juez de menores).
 const _letradaMenor = [
   '.......NNNNNNNNNN.......',
   '.....NNKKKzzzzzzNNN.....',
@@ -453,9 +454,9 @@ const _letradaMenor = [
   '.......NN666677NN.......',
   '........NN7777NN........',
   '......NNzWW66WWzNN......',
-  '.....NKzzzWYYWzzzzN.....',
-  '....NKzzzzzYYzzzzzzN....',
-  '....NKNzzzzYYzzzzNzN....',
+  '.....NKzzzWrrWzzzzN.....',
+  '....NKzzzzzrrzzzzzzN....',
+  '....NKNzzzzrRzzzzNzN....',
   '....NKNzzzzzzzzzzNzN....',
   '....NKNzzzzzzzzzzNzN....',
   '...NKzNzzzzzzzzzzNzzN...',
@@ -555,24 +556,25 @@ const _menor = [
   '......xxxxxxxxxxxx......',
 ];
 
-/// Su madre: moño castaño, piel 2, jersey coral.
+/// La madre del chico: adulta a simple vista, con un moño alto castaño bien visible sujeto con una cinta lila, mechones
+/// a los lados de la cara, pendientes dorados, piel 2, jersey coral y pantalón gris oscuro.
 const _madre = [
-  '..........NNNN..........',
-  '.........NtTTzN.........',
-  '........NNTTzzNN........',
-  '......NNttTTTTTTNN......',
-  '.....NttTTTTTTTTzzN.....',
-  '.....NtTTTTTTTTTTzN.....',
-  '.....NTTz2222222zzN.....',
-  '.....NTz222222222zN.....',
-  '.....NT2222222223zN.....',
-  '.....NT2WN2222WN3zN.....',
-  '.....N22NN2222NN33N.....',
-  '.....N2s2222222s23N.....',
-  '......N2222RR2223N......',
+  '.........NNNNNN.........',
+  '........NtTTTTzN........',
+  '........NTTTTzzN........',
+  '.......NNLLLLLLNN.......',
+  '.....NNttTTTTTTTzNN.....',
+  '....NttTTTTTTTTTTzzN....',
+  '....NtTz222222222zzN....',
+  '....NTz2222222222TzN....',
+  '....NTz2222222223TzN....',
+  '....NTz2WN2222WN3TzN....',
+  '....NT22NN2222NN33zN....',
+  '....NTYs222222222sYN....',
+  '.....NN2222RR2223NN.....',
   '.......NN222233NN.......',
   '........NN3333NN........',
-  '......NsrrR22RrrRN......',
+  '......NNrrR33RrrNN......',
   '.....NsrrrrRRrrrrRN.....',
   '....NsrrrrrrrrrrrRRN....',
   '....NrNrrrrrrrrrRNRN....',

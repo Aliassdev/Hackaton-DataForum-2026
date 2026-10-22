@@ -13,9 +13,9 @@ enum PuestoVista {
   letrada('letrada', 'La letrada', 109, 51),
 
   /// En la mesa de la izquierda, la más cercana a la pared.
-  fiscal('fiscal', 'La fiscal', 18, 72),
+  fiscal('fiscal', 'El fiscal', 18, 72),
 
-  /// En la mesa de la izquierda, junto a la fiscal: la acusación particular.
+  /// En la mesa de la izquierda, junto al fiscal: la acusación particular.
   abogadaVictima('abogada_victima', 'La abogada de la víctima', 43, 72),
 
   /// En la mesa de la derecha, junto a la pared.
@@ -28,7 +28,7 @@ enum PuestoVista {
   testigo('testigo', 'Quien declara', 80, 83),
 
   /// De pie a la derecha, junto a la puerta.
-  policia('policia', 'La policía', 148, 86),
+  policia('policia', 'El agente de policía', 148, 86),
 
   /// Sentado en el primer banco del público, a la izquierda: se le ve de los hombros para arriba, por encima del
   /// respaldo (los pies quedan fuera de la imagen).
@@ -49,14 +49,14 @@ enum PuestoVista {
 }
 
 /// La sala de vistas, al estilo de las de España: al fondo, el estrado (una tarima con la mesa de la jueza y la de la
-/// letrada) y el escudo encima; a la izquierda, la mesa de la fiscal y de la abogada de la víctima; a la derecha, la
-/// del abogado de la defensa y la persona investigada; en el centro, el sitio de quien declara, y delante, los bancos
-/// del público. Los sitios de cada uno están en [PuestoVista].
+/// letrada) y el escudo encima; a la izquierda, la mesa de la acusación (el fiscal y la abogada de la víctima); a la
+/// derecha, la de la defensa (el abogado y la persona investigada); en el centro, el sitio de quien declara, y delante,
+/// los bancos del público. Los sitios de cada uno están en [PuestoVista].
 final escenarioSalaVistas = EscenarioPixel(
   lugar: 'sala_vistas',
   descripcion:
       'La sala de vistas: al fondo, el estrado con la mesa de la jueza y el escudo; a los lados, las mesas de la '
-      'fiscal y de los abogados; en el centro, el sitio de quien declara, y delante, los bancos del público.',
+      'acusación y de la defensa; en el centro, el sitio de quien declara, y delante, los bancos del público.',
   fondo: Sprite('sala_vistas', _salaVistas.fondo),
   delante: [for (final mueble in _salaVistas.muebles) piezaEn(Sprite(mueble.nombre, mueble.filas), mueble.x, mueble.y)],
   puestos: {
@@ -92,7 +92,7 @@ final _salaVistas = _pintarSalaVistas();
   for (var x = 41; x < 122; x += 6) {
     l.lineaV(x, 6, 45, 'T');
   }
-  l.pegar(_escudo, 71, 0);
+  l.pegar(_escudo, 76, -2);
 
   // La tarima.
   l
@@ -246,22 +246,23 @@ List<String> _bancoPublico() {
   return l.filas;
 }
 
-/// El escudo de España sencillo (19 × 15): corona, cuarteles (Castilla, León, Aragón y Navarra), Granada en la punta,
-/// el óvalo azul en el centro y las columnas a los lados con su cinta.
+/// El escudo de España sencillo (9 × 15): corona, cuarteles (Castilla, León, Aragón y Navarra), Granada en la punta y
+/// el óvalo azul en el centro. Sin las columnas de los lados: a este tamaño parecían dos velas encendidas. Se pega dos
+/// filas por encima del borde (el orbe de la corona queda fuera), así no toca la cabeza de la jueza ni al respirar.
 const _escudo = [
-  '.........Y.........',
-  '........YoY........',
-  '......N.NYN.N......',
-  '.....NYNYYYNYN.....',
-  '.....NYYYYYYYN.....',
-  '.Y...NRYvYvYRN...Y.',
-  'NYN..NNNNNNNNN..NYN',
-  'NWN..NRRRNWWWN..NWN',
-  'RWR..NRYRNWLWN..RWR',
-  'NWN..NRRRNWWWN..NWN',
-  'NWN..NNNNANNNN..NWN',
-  'NWN..NYRYNRYRN..NWN',
-  'NWN..NYRYNRRRN..NWN',
-  'NgN...NWvrvWN...NgN',
-  'NNN....NNNNN....NNN',
+  '....Y....',
+  '...YoY...',
+  '.N.NYN.N.',
+  'NYNYYYNYN',
+  'NYYYYYYYN',
+  'NRYvYvYRN',
+  'NNNNNNNNN',
+  'NRRRNWWWN',
+  'NRYRNWLWN',
+  'NRRRNWWWN',
+  'NNNNANNNN',
+  'NYRYNRYRN',
+  'NYRYNRRRN',
+  '.NWvrvWN.',
+  '..NNNNN..',
 ];

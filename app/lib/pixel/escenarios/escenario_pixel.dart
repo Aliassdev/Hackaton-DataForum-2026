@@ -6,16 +6,23 @@ import '../motor/motor.dart';
 /// detrás ([delante]: el estrado, las mesas) y los [puestos] donde se colocan los personajes.
 ///
 /// ```dart
-/// final lugar = EscenariosPixel.de(escena.lugar);
-/// EscenaPixel(
-///   fondo: lugar.fondo,
-///   descripcion: lugar.descripcion,
-///   elementos: lugar.componer([
-///     lugar.colocar('jueza', jueza, id: 'jueza', etiqueta: 'La jueza'),
-///     lugar.colocar('testigo', lucia, id: 'lucia', etiqueta: 'Lucía', resaltado: true),
-///   ]),
+/// final lugar = EscenariosPixel.de('sala_vistas');
+/// MarcoPixel( // lib/pixel/ui: el marco de la pantalla de juego
+///   child: EscenaPixel(
+///     fondo: lugar.fondo,
+///     descripcion: lugar.descripcion,
+///     colorMarco: ColoresUiPixel.noche,
+///     elementos: lugar.componer([
+///       lugar.colocar('jueza', PersonajesPixel.jueza, id: 'jueza', etiqueta: 'La jueza'),
+///       lugar.colocar('testigo', PersonajesPixel.testigo, id: 'testigo', etiqueta: 'El testigo', resaltado: true),
+///     ]),
+///   ),
 /// );
+/// // Lucía no va a la sala de vistas: su entrevista es prueba preconstituida (LECrim, arts. 449 ter y 703 bis).
 /// ```
+///
+/// Para una escena del contenido (lugar y nombres de las personas), `EscenaCasoPixel` de lib/pixel/escenas ya hace
+/// todo esto.
 @immutable
 class EscenarioPixel {
   const EscenarioPixel({

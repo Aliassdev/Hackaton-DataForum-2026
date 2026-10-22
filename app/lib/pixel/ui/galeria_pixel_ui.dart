@@ -30,10 +30,14 @@ class GaleriaPixelUi extends StatefulWidget {
 }
 
 class _GaleriaPixelUiState extends State<GaleriaPixelUi> {
+  // Frases de muestra sin afirmaciones jurídicas nuevas: lo que se promete sale de las cartas validadas del caso.
   static const _frases = [
     ('Lucía', 'Hoy vengo al juzgado con mi tía Elena. Me han dicho que solo tendré que contarlo una vez.'),
-    ('Ana', 'Hola, Lucía. Soy Ana, la psicóloga. Hablaremos en una sala tranquila y puedes parar cuando quieras.'),
-    (null, 'La sala tiene sofás, cojines y un espejo grande. Lucía respira hondo.'),
+    (
+      'Ana',
+      'Hola, Lucía. Soy Ana, la psicóloga. Hablaremos en una sala tranquila y, si necesitas un descanso, me lo dices.',
+    ),
+    (null, 'La sala tiene un sofá, una mesa y una cámara pequeña. Lucía respira hondo.'),
   ];
 
   static const _pregunta = '¿Qué es este papel?';
@@ -347,17 +351,18 @@ class _Cartas extends StatelessWidget {
     final u = unidadPixel(context);
     final escala = escalaTextoPixel(context);
     List<Widget> cartas(FormatoCartaPixel formato) => [
+      // Las cartas R-entender y R-a-distancia de los casos, tal cual (con fuente y validadas en el contenido).
       CartaPixel(
         numero: 1,
-        titulo: 'Derecho a entender',
-        texto: 'Si no entiendes algo, pide que te lo expliquen.',
+        titulo: 'Tienes derecho a entender',
+        texto: 'Te tienen que hablar claro. Si no entiendes algo, pide que te lo repitan o te lo expliquen.',
         formato: formato,
         onPressed: () {},
       ),
       CartaPixel(
         numero: 2,
-        titulo: 'Ir acompañada',
-        texto: 'Puedes estar con un adulto de confianza.',
+        titulo: 'Puedes declarar a distancia',
+        texto: 'Al ser menor, lo normal es declarar por videoconferencia, sin estar en la misma sala que los acusados.',
         formato: formato,
         bloqueada: true,
       ),
@@ -430,10 +435,11 @@ class _SobreElFondo extends StatelessWidget {
             SizedBox(height: 4 * u),
             const TicketPixel(talon: RotuloPixel('B-12'), child: Text('Caso 2 · Sergio, 13 años')),
             SizedBox(height: 4 * u),
+            // La carta R-proteccion del caso de Sergio, tal cual.
             const CartaPixel(
               numero: 4,
-              titulo: 'Fiscalía de Menores',
-              texto: 'Protege a los chicos y chicas mientras dura el proceso.',
+              titulo: 'Pueden prohibir que se te acerquen',
+              texto: 'El fiscal puede pedir al juez, en cualquier momento, que no se te acerquen ni te escriban.',
               formato: FormatoCartaPixel.horizontal,
               color: ColoresUiPixel.verdeOscuro,
               luz: ColoresUiPixel.verde,

@@ -7,7 +7,11 @@
 /// SpritePixel(sprite: PersonajesPixel.jueza, alto: 120, etiqueta: 'La jueza');
 /// ElementoEscena(sprite: PersonajesPixel.porId('lucia')!, x: 80, y: 90, id: 'lucia', resaltado: true);
 /// final id = PersonajesPixel.buscar('Ana, la psicóloga'); // 'ana': de los nombres del contenido a un sprite
+/// final fiscal = PersonajesPixel.buscar('El fiscal', lugar: 'fiscalia'); // 'fiscal-despacho': sin toga
+/// final padres = PersonajesPixel.buscarTodos('Sus padres'); // ['padre-sergio', 'madre-sergio']
 /// ```
+///
+/// Para montar una escena entera del contenido (lugar y personajes) ya hay `EscenaCasoPixel`, en lib/pixel/escenas.
 ///
 /// Cada personaje tiene tres fotogramas con la animación en reposo de [AnimacionPixel.reposo]: 0, quieto (la pose de
 /// descanso, la que se ve con «reducir animaciones»); 1, respira (la cabeza y los hombros bajan un píxel); y 2,
@@ -18,6 +22,9 @@
 /// La rejilla es la de lib/pixel/LEEME.md: niños de 24 × 32, adolescentes de 24 × 34, adultos de 24 × 36, el testigo
 /// en su silla de ruedas de 28 × 32 y Tut de 24 × 22. El ancla es la de siempre (los pies: el centro del borde de
 /// abajo), y la última fila es la sombra en el suelo.
+///
+/// Dos ids son el mismo personaje en otra situación: 'fiscal-despacho' es el fiscal sin toga, en su despacho (la toga
+/// es para la audiencia, LOPJ, art. 187.1), y 'tut-feliz' es Tut sonriendo (la expresión «feliz» de MascotaTut).
 library;
 
 import 'package:flutter/foundation.dart';
@@ -57,15 +64,18 @@ abstract final class PersonajesPixel {
   /// Todos los ids, en el orden de [todos]: los tres casos, el juzgado y Tut.
   static const ids = <String>[
     'lucia',
+    'tutora',
     'elena',
     'ana',
     'sergio',
     'padre-sergio',
+    'madre-sergio',
     'laura',
     'sara',
     'amiga-sara',
     'jueza',
     'fiscal',
+    'fiscal-despacho',
     'abogada-victima',
     'abogado-defensa',
     'letrada',
@@ -73,20 +83,24 @@ abstract final class PersonajesPixel {
     'investigada',
     'testigo',
     'tut',
+    'tut-feliz',
   ];
 
   /// Las fichas de todos los personajes, en el orden de [ids].
   static final List<PersonajePixel> todos = List.unmodifiable([
     _fichaLucia,
+    _fichaTutora,
     _fichaElena,
     _fichaAna,
     _fichaSergio,
     _fichaPadreSergio,
+    _fichaMadreSergio,
     _fichaLaura,
     _fichaSara,
     _fichaAmigaSara,
     _fichaJueza,
     _fichaFiscal,
+    _fichaFiscalDespacho,
     _fichaAbogadaVictima,
     _fichaAbogadoDefensa,
     _fichaLetrada,
@@ -94,6 +108,7 @@ abstract final class PersonajesPixel {
     _fichaInvestigada,
     _fichaTestigo,
     _fichaTut,
+    _fichaTutFeliz,
   ]);
 
   static final Map<String, PersonajePixel> _porId = {for (final ficha in todos) ficha.id: ficha};
@@ -118,12 +133,16 @@ abstract final class PersonajesPixel {
   static Sprite? retrato(String id) {
     final ficha = _porId[id];
     if (ficha == null) return null;
-    return _retratos[id] ??= _recortarRetrato(ficha.sprite);
+    return _retratos[id] ??= _recortarRetrato(ficha.sprite, columnas: _columnasRetrato[id]);
   }
 
   static final _retratos = <String, Sprite>{};
 
-  static Sprite _recortarRetrato(Sprite sprite) {
+  /// Las columnas del sprite que entran en el retrato, si no son todas: del testigo, solo él (las mismas que se mueven
+  /// al respirar), sin las empuñaduras ni las ruedas de la silla, que en el recorte parecían barrotes.
+  static const _columnasRetrato = <String, (int, int)>{'testigo': (7, 21)};
+
+  static Sprite _recortarRetrato(Sprite sprite, {(int, int)? columnas}) {
     final quieto = sprite.fotogramas.first;
     final parpadea = sprite.fotogramas.last;
     // Los ojos están en la primera fila que cambia al parpadear (si nada cambia, se recorta desde arriba).
@@ -135,9 +154,13 @@ abstract final class PersonajesPixel {
     final arriba = ojos - filaOjosRetrato;
     final izquierda = (sprite.ancho - anchoRetrato) ~/ 2;
     final vacia = '.' * anchoRetrato;
+    final (desde, hasta) = columnas ?? (0, sprite.ancho);
+    String fila(String original) => String.fromCharCodes([
+      for (var x = izquierda; x < izquierda + anchoRetrato; x++)
+        x >= desde && x < hasta ? original.codeUnitAt(x) : 0x2E, // «.»
+    ]);
     List<String> recortar(List<String> filas) => [
-      for (var y = arriba; y < arriba + altoRetrato; y++)
-        y < 0 || y >= filas.length ? vacia : filas[y].substring(izquierda, izquierda + anchoRetrato),
+      for (var y = arriba; y < arriba + altoRetrato; y++) y < 0 || y >= filas.length ? vacia : fila(filas[y]),
     ];
     return Sprite.animado('${sprite.nombre} (retrato)', [
       for (final filas in sprite.fotogramas) recortar(filas),
@@ -145,23 +168,26 @@ abstract final class PersonajesPixel {
   }
 
   /// El id del personaje al que se refiere un nombre como los de las escenas del contenido («Su tía Elena», «Ana, la
-  /// psicóloga», «El fiscal», «Sus padres»), o null si no hay ningún personaje para él (por ejemplo, «Su tutora»).
-  /// No distingue mayúsculas ni tildes.
-  static String? buscar(String nombre) {
-    final palabras = _normalizar(nombre).split(RegExp('[^a-z0-9]+')).where((palabra) => palabra.isNotEmpty).toSet();
+  /// psicóloga», «El fiscal», «Su tutora»), o null si no hay ningún personaje para él. No distingue mayúsculas ni
+  /// tildes. Con [lugar] (el de la escena, tal como viene en el contenido), el fiscal va sin toga fuera de la sala:
+  /// en la Fiscalía es 'fiscal-despacho'. Para un plural («Sus padres»), [buscarTodos].
+  static String? buscar(String nombre, {String? lugar}) {
+    final palabras = _palabras(nombre);
     bool hay(String raiz) => palabras.any((palabra) => palabra.startsWith(raiz));
     // De lo más concreto a lo más general: «la amiga de Sara» antes que «Sara», «el abogado de la persona
     // investigada» antes que «la persona investigada» y «el padre de Sergio» antes que «Sergio».
     if (palabras.contains('tut')) return 'tut';
     if (hay('amig')) return 'amiga-sara';
-    if (hay('padre') || hay('papa')) return 'padre-sergio';
+    if (hay('tutor') || hay('maestr') || hay('profe')) return 'tutora';
+    if (hay('madre') || palabras.contains('mama')) return 'madre-sergio';
+    if (hay('padre') || palabras.contains('papa')) return 'padre-sergio';
     if (hay('abogad') || hay('letrad')) {
       if (hay('defens') || hay('investigad') || hay('acusad')) return 'abogado-defensa';
       // «La letrada» a secas es la de la Administración de Justicia; «el letrado de la víctima», un abogado.
       return hay('abogad') || hay('victim') ? 'abogada-victima' : 'letrada';
     }
     if (hay('juez') || hay('juec')) return 'jueza';
-    if (hay('fiscal')) return 'fiscal';
+    if (hay('fiscal')) return lugar != null && _esDespacho(lugar) ? 'fiscal-despacho' : 'fiscal';
     if (hay('polic') || hay('agente')) return 'policia';
     if (hay('investigad')) return 'investigada';
     if (hay('testig')) return 'testigo';
@@ -172,6 +198,25 @@ abstract final class PersonajesPixel {
     if (palabras.contains('sergio')) return 'sergio';
     if (palabras.contains('sara')) return 'sara';
     return null;
+  }
+
+  /// Los ids de todos los personajes a los que se refiere [nombre]: dos para «Sus padres» o «Los padres de Sergio»
+  /// (el padre y la madre) y para «Los abogados» (las dos partes); para el resto, el de [buscar] (o ninguno).
+  static List<String> buscarTodos(String nombre, {String? lugar}) {
+    final palabras = _palabras(nombre);
+    if (palabras.contains('padres')) return const ['padre-sergio', 'madre-sergio'];
+    if (palabras.contains('abogados')) return const ['abogada-victima', 'abogado-defensa'];
+    final id = buscar(nombre, lugar: lugar);
+    return id == null ? const [] : [id];
+  }
+
+  static Set<String> _palabras(String texto) =>
+      _normalizar(texto).split(RegExp('[^a-z0-9]+')).where((palabra) => palabra.isNotEmpty).toSet();
+
+  /// Si [lugar] es un despacho (la Fiscalía): ahí nadie lleva toga.
+  static bool _esDespacho(String lugar) {
+    final palabras = _palabras(lugar.replaceAllMapped(RegExp('([a-z])([A-Z])'), (m) => '${m[1]} ${m[2]}'));
+    return palabras.any((palabra) => palabra.startsWith('fiscal') || palabra.startsWith('despacho'));
   }
 
   static String _normalizar(String texto) {
@@ -189,6 +234,9 @@ abstract final class PersonajesPixel {
   /// Lucía, 11 años, la protagonista del caso oficial.
   static Sprite get lucia => _fichaLucia.sprite;
 
+  /// La tutora de Lucía, en el colegio.
+  static Sprite get tutora => _fichaTutora.sprite;
+
   /// Elena, la tía de Lucía: la persona adulta de su confianza.
   static Sprite get elena => _fichaElena.sprite;
 
@@ -201,6 +249,9 @@ abstract final class PersonajesPixel {
   /// El padre de Sergio.
   static Sprite get padreSergio => _fichaPadreSergio.sprite;
 
+  /// La madre de Sergio.
+  static Sprite get madreSergio => _fichaMadreSergio.sprite;
+
   /// Laura, coordinadora de bienestar y protección del instituto.
   static Sprite get laura => _fichaLaura.sprite;
 
@@ -211,7 +262,12 @@ abstract final class PersonajesPixel {
   static Sprite get amigaSara => _fichaAmigaSara.sprite;
 
   static Sprite get jueza => _fichaJueza.sprite;
+
+  /// El fiscal con toga (en la sala de vistas, en la audiencia).
   static Sprite get fiscal => _fichaFiscal.sprite;
+
+  /// El mismo fiscal en su despacho de la Fiscalía, con traje y sin toga.
+  static Sprite get fiscalDespacho => _fichaFiscalDespacho.sprite;
   static Sprite get abogadaVictima => _fichaAbogadaVictima.sprite;
   static Sprite get abogadoDefensa => _fichaAbogadoDefensa.sprite;
 
@@ -223,11 +279,14 @@ abstract final class PersonajesPixel {
   /// La persona investigada: una figura neutra.
   static Sprite get investigada => _fichaInvestigada.sprite;
 
-  /// Un testigo, en silla de ruedas.
+  /// Un testigo adulto, en silla de ruedas.
   static Sprite get testigo => _fichaTestigo.sprite;
 
-  /// Tut, la mascota de TuTurno.
+  /// Tut, la mascota de TuTurno, con su cara de siempre (la expresión neutral de MascotaTut).
   static Sprite get tut => _fichaTut.sprite;
+
+  /// Tut sonriendo (la expresión «feliz» de MascotaTut).
+  static Sprite get tutFeliz => _fichaTutFeliz.sprite;
 }
 
 /// Un sprite de personaje con sus tres fotogramas a partir de su pose quieta, [filas]:

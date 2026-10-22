@@ -1,13 +1,16 @@
 import 'package:flutter/widgets.dart';
 
-import '../../tema.dart' show duracion;
 import 'encaje_pixel.dart';
 import 'imagenes_pixel.dart';
+import 'marcha_pixel.dart';
+import 'rejilla_pixel.dart';
 import 'reloj_pixel.dart';
 import 'sprite.dart';
 
-/// Un sprite a la mayor escala entera que cabe en su sitio, nítido (sin suavizado) y con su animación en reposo si la
-/// tiene. Con «reducir animaciones» (`duracion()` del tema) o [animar] a false se queda quieto en su pose de descanso.
+/// Un sprite a la mayor escala entera que cabe en su sitio, nítido (sin suavizado, en la rejilla de píxeles de la
+/// pantalla) y con su animación en reposo si la tiene. Con «reducir animaciones» (`duracion()` del tema) o [animar] a
+/// false se queda quieto en su pose de descanso; con la app en segundo plano, parado. Si se anima, se repinta solo:
+/// los cambios de fotograma no repintan la tarjeta o el diálogo en el que está.
 ///
 /// Ocupa [ancho] × [alto] (si solo se da uno, el otro sale de la proporción del sprite) o, sin ninguno, lo que le
 /// obligue el padre; si el padre le deja elegir, [escalaLibre] puntos por píxel del sprite. Dentro de ese sitio, el
@@ -52,11 +55,13 @@ class SpritePixel extends StatefulWidget {
 
 class _SpritePixelState extends State<SpritePixel> {
   RelojPixel? _reloj;
+  late final AppLifecycleListener _ciclo;
 
   @override
   void initState() {
     super.initState();
     _reloj = _nuevoReloj();
+    _ciclo = AppLifecycleListener(onStateChange: (_) => _ponerEnMarcha());
   }
 
   RelojPixel? _nuevoReloj() {
@@ -82,19 +87,12 @@ class _SpritePixelState extends State<SpritePixel> {
   }
 
   void _ponerEnMarcha() {
-    final reloj = _reloj;
-    if (reloj == null) return;
-    if (!widget.animar || duracion(context, const Duration(seconds: 1)) == Duration.zero) {
-      reloj.reposo();
-    } else if (TickerMode.valuesOf(context).enabled) {
-      reloj.arrancar();
-    } else {
-      reloj.parar();
-    }
+    if (mounted) ponerEnMarcha(context, _reloj, animar: widget.animar);
   }
 
   @override
   void dispose() {
+    _ciclo.dispose();
     _reloj?.dispose();
     super.dispose();
   }
@@ -106,16 +104,24 @@ class _SpritePixelState extends State<SpritePixel> {
     final ancho =
         widget.ancho ?? (widget.alto == null ? sprite.ancho * SpritePixel.escalaLibre : widget.alto! * proporcion);
     final alto = widget.alto ?? ancho / proporcion;
-    final dibujo = CustomPaint(
-      size: Size(ancho, alto),
-      painter: _PintorSprite(
-        sprite: sprite,
-        reloj: _reloj,
-        dpr: MediaQuery.maybeDevicePixelRatioOf(context) ?? View.of(context).devicePixelRatio,
-        espejo: widget.espejo,
-        alineacion: widget.alineacion,
+    final reloj = _reloj;
+    final ruta = ModalRoute.of(context);
+    Widget dibujo = RejillaPixel(
+      child: CustomPaint(
+        size: Size(ancho, alto),
+        painter: _PintorSprite(
+          sprite: sprite,
+          reloj: reloj,
+          // Al terminar una transición de página, otra vez en la rejilla de la pantalla (ver EscenaPixel).
+          repintar: Listenable.merge([reloj, ruta?.animation, ruta?.secondaryAnimation]),
+          dpr: MediaQuery.maybeDevicePixelRatioOf(context) ?? View.of(context).devicePixelRatio,
+          espejo: widget.espejo,
+          alineacion: widget.alineacion,
+        ),
       ),
     );
+    // Con animación, en su propia capa: cada parpadeo repinta solo el sprite.
+    if (reloj != null) dibujo = RejillaPixel(child: RepaintBoundary(child: dibujo));
     final etiqueta = widget.etiqueta;
     return etiqueta == null ? dibujo : Semantics(image: true, label: etiqueta, child: dibujo);
   }
@@ -125,10 +131,11 @@ class _PintorSprite extends CustomPainter {
   _PintorSprite({
     required this.sprite,
     required this.reloj,
+    required Listenable repintar,
     required this.dpr,
     required this.espejo,
     required this.alineacion,
-  }) : super(repaint: reloj);
+  }) : super(repaint: repintar);
 
   final Sprite sprite;
   final RelojPixel? reloj;

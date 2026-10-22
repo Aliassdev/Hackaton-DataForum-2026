@@ -5,17 +5,22 @@
 /// import 'package:tuturno/pixel/escenarios/escenarios.dart';
 ///
 /// final lugar = EscenariosPixel.de(escena.lugar); // acepta «Sala de espera», «salaEspera»… y si no, uno neutro
-/// EscenaPixel(
-///   fondo: lugar.fondo,
-///   descripcion: lugar.descripcion,
-///   elementos: lugar.componer([
-///     lugar.colocar('izquierda', lucia, id: 'lucia', etiqueta: 'Lucía'),
-///     lugar.colocar('derecha', tia, id: 'tia', etiqueta: 'Su tía Elena'),
-///   ]),
+/// MarcoPixel( // lib/pixel/ui: sin marco, los fondos claros se funden con el papel de la página
+///   child: EscenaPixel(
+///     fondo: lugar.fondo,
+///     descripcion: lugar.descripcion,
+///     colorMarco: ColoresUiPixel.noche,
+///     elementos: lugar.componer([
+///       lugar.colocar('izquierda', PersonajesPixel.lucia, id: 'lucia', etiqueta: 'Lucía'),
+///       lugar.colocar('derecha', PersonajesPixel.elena, id: 'elena', etiqueta: 'Su tía Elena'),
+///     ]),
+///   ),
 /// );
 /// ```
 ///
-/// En la sala de vistas, los sitios de cada uno están en [PuestoVista] (también en `puestos`, por su clave).
+/// Para las escenas del juego, `EscenaCasoPixel` (lib/pixel/escenas) monta todo esto a partir de `escena.lugar` y
+/// `escena.personajes`. En la sala de vistas, los sitios de cada uno están en [PuestoVista] (también en `puestos`, por
+/// su clave). [camaraPared] es la cámara que graba, la misma en la Sala Gesell y en la sala de menores.
 library;
 
 import '../motor/motor.dart';
@@ -36,6 +41,7 @@ import 'sala_vistas.dart';
 
 export 'escenario_pixel.dart' show EscenarioPixel;
 export 'sala_vistas.dart' show PuestoVista;
+export 'teselas.dart' show camaraPared;
 
 /// Todos los lugares con fondo. Cada fondo se pinta la primera vez que se pide y se guarda.
 abstract final class EscenariosPixel {

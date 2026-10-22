@@ -4,9 +4,10 @@
 //
 // Deja en la carpeta indicada (build/ no se sube a git):
 // - galeria-N.png: todos los fondos en un móvil de 1080 × 2400 (densidad 2,75), como se verán en la app;
-// - reparto-N.png: algunos fondos con figurantes en sus puestos, también a tamaño de móvil;
+// - reparto-N.png: algunos fondos con los personajes de verdad (lib/pixel/personajes) en sus puestos, también a tamaño
+//   de móvil;
 // - fondos/<lugar>.png: cada fondo suelto a 6 píxeles por píxel (y sus otros fotogramas, si se mueve);
-// - fondos/<lugar>-reparto.png: el fondo con figurantes en todos sus puestos, para comprobarlos.
+// - fondos/<lugar>-reparto.png: el fondo con personajes en todos sus puestos, para comprobarlos.
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -15,10 +16,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/pixel/escenarios/escenarios.dart';
+import 'package:tuturno/pixel/juzgado/juzgado.dart' show RepartoJuzgado;
 import 'package:tuturno/pixel/motor/motor.dart';
+import 'package:tuturno/pixel/personajes/personajes.dart';
 import 'package:tuturno/tema.dart' show temaTuTurno;
-
-import 'figurantes.dart';
 
 final _destino = Platform.environment['CAPTURAS'];
 
@@ -91,20 +92,22 @@ Future<void> _montar(WidgetTester tester, Widget pantalla) async {
   await tester.pump();
 }
 
-/// Un figurante para cada puesto de un lugar: en la sala de vistas, el reparto entero; en los demás, adultos y niños.
-Sprite _figuranteDe(String puesto) => switch (puesto) {
-  'jueza' => jueza,
-  'letrada' => letrada,
-  'fiscal' => fiscal,
-  'abogada_victima' => abogadaVictima,
-  'abogado_defensa' => abogadoDefensa,
-  'persona_investigada' => investigada,
-  'testigo' => nina,
-  'policia' => policia,
-  'publico' => publico,
-  'centro' || 'sofa' => nino,
-  'izquierda' => tia,
-  _ => adulta,
+/// Quién se pone en cada puesto de un lugar: en la sala de vistas, el reparto entero (el testigo es un adulto: los
+/// menores de 14 años declaran antes, en la prueba preconstituida, y no van al juicio); en la Fiscalía, el fiscal sin
+/// toga; en los demás, Lucía, su tía Elena y Ana.
+Sprite _figuranteDe(String puesto, String lugar) => switch (puesto) {
+  'jueza' => PersonajesPixel.jueza,
+  'letrada' => PersonajesPixel.letrada,
+  'fiscal' => lugar == 'fiscalia' ? PersonajesPixel.fiscalDespacho : PersonajesPixel.fiscal,
+  'abogada_victima' => PersonajesPixel.abogadaVictima,
+  'abogado_defensa' => PersonajesPixel.abogadoDefensa,
+  'persona_investigada' => PersonajesPixel.investigada,
+  'testigo' => PersonajesPixel.testigo,
+  'policia' => PersonajesPixel.policia,
+  'publico' => RepartoJuzgado.publico,
+  'centro' || 'sofa' => PersonajesPixel.lucia,
+  'izquierda' => PersonajesPixel.elena,
+  _ => PersonajesPixel.ana,
 };
 
 /// Lugares y quién se pone en cada uno para las capturas de reparto.
@@ -115,7 +118,7 @@ const _repartos = <(String, List<String>)>[
   ('fiscalia', ['fiscal', 'izquierda', 'centro']),
   ('comisaria', ['policia', 'izquierda', 'centro']),
   ('sala_gesell', ['sofa', 'sillon']),
-  ('juzgado', ['izquierda', 'centro']),
+  ('juzgado', ['izquierda', 'centro', 'recepcion']),
   ('casa', ['izquierda', 'centro', 'derecha']),
 ];
 
@@ -167,7 +170,7 @@ class _Reparto extends StatelessWidget {
                     for (final puesto in puestos)
                       escenario.colocar(
                         puesto,
-                        _figuranteDe(puesto),
+                        _figuranteDe(puesto, lugar),
                         id: puesto,
                         resaltado: puesto == 'testigo' || puesto == 'centro' || puesto == 'sofa',
                       ),
@@ -220,7 +223,7 @@ void main() {
         '$lugar-reparto',
         escenario.fondo,
         elementos: escenario.componer([
-          for (final puesto in escenario.puestos.keys) escenario.colocar(puesto, _figuranteDe(puesto)),
+          for (final puesto in escenario.puestos.keys) escenario.colocar(puesto, _figuranteDe(puesto, lugar)),
         ]),
       );
     }

@@ -452,8 +452,8 @@ void main() {
         titulo: 'Personajes',
         subtitulo: 'Los tres casos oficiales, a la misma escala (11 píxeles de pantalla por píxel del dibujo).',
         filas: [
-          ['lucia', 'elena', 'ana'],
-          ['sergio', 'padre-sergio', 'laura'],
+          ['lucia', 'tutora', 'elena', 'ana'],
+          ['sergio', 'padre-sergio', 'madre-sergio', 'laura'],
           ['sara', 'amiga-sara'],
         ],
       ),
@@ -467,11 +467,13 @@ void main() {
       const _Galeria(
         titulo: 'En el juzgado',
         subtitulo:
-            'Toga para la jueza, el fiscal, las abogadas y la letrada; puñetas blancas solo en las tres primeras.',
+            'En la sala, toga; puñetas blancas en la jueza, el fiscal y la letrada. En su despacho, el fiscal va de '
+            'traje. Tut, con su cara de siempre y sonriendo.',
         filas: [
-          ['jueza', 'fiscal', 'letrada'],
-          ['abogada-victima', 'abogado-defensa', 'policia'],
-          ['investigada', 'testigo', 'tut'],
+          ['jueza', 'fiscal', 'fiscal-despacho'],
+          ['letrada', 'abogada-victima', 'abogado-defensa'],
+          ['policia', 'investigada', 'testigo'],
+          ['tut', 'tut-feliz'],
         ],
       ),
     );
@@ -479,10 +481,11 @@ void main() {
   }, skip: _destino == null);
 
   testWidgets('fotogramas', (tester) async {
-    await _montar(tester, _Fotogramas(PersonajesPixel.ids.sublist(0, 9)));
-    await _capturar(tester, 'personajes-03-fotogramas-1');
-    await _montar(tester, _Fotogramas(PersonajesPixel.ids.sublist(9)));
-    await _capturar(tester, 'personajes-03-fotogramas-2');
+    for (var i = 0; i * 7 < PersonajesPixel.ids.length; i++) {
+      final ids = PersonajesPixel.ids.skip(i * 7).take(7).toList();
+      await _montar(tester, _Fotogramas(ids));
+      await _capturar(tester, 'personajes-03-fotogramas-${i + 1}');
+    }
   }, skip: _destino == null);
 
   testWidgets('retratos', (tester) async {

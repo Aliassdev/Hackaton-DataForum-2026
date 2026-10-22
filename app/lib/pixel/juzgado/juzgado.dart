@@ -14,6 +14,10 @@
 ///   onTodosDescubiertos: () => ref.read(progresoProvider.notifier).desbloquear('R-quien-es-quien'),
 /// );
 /// ```
+///
+/// Los textos están pendientes de revisión jurídica: `DatosJuzgado.de(modo).validado` es false y la actividad lo dice
+/// en una franja. Hasta que alguien con formación jurídica los revise, el juego solo debería abrirla en modo DEMO, con
+/// el interruptor de borradores (la misma regla que el contenido con «validado»).
 library;
 
 export 'carta_rol.dart' show CartaRol, EnhorabuenaJuzgado, IndicacionJuzgado, NotaSala;

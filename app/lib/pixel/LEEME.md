@@ -2,6 +2,16 @@
 
 Dentro de «Vive el caso», los personajes y los lugares son pixel art, como en un juego retro (Stardew Valley, Undertale): con encanto, cálido, fácil de leer y nunca inquietante. Todo se dibuja con código, sin imágenes: cada sprite son filas de texto, un carácter por píxel. El motor está en `lib/pixel/motor/` (`import '../motor/motor.dart';`).
 
+Lo que ya está hecho:
+
+| Carpeta | Qué hay |
+| --- | --- |
+| `lib/pixel/personajes/` | `PersonajesPixel`: los personajes de los casos, del juzgado y Tut, con `buscar` y `buscarTodos` (de los nombres del contenido a un sprite) y `retrato` para los diálogos. |
+| `lib/pixel/escenarios/` | `EscenariosPixel`: los fondos de 160 × 96 de cada lugar, con sus puestos y los muebles que tapan (`componer`). |
+| `lib/pixel/escenas/` | `EscenaCasoPixel`: una escena del contenido (`escena.lugar` y `escena.personajes`) montada y enmarcada, lista para el juego. |
+| `lib/pixel/juzgado/` | `JuzgadoExplorable`: «¿Quién es quién en el juzgado?». |
+| `lib/pixel/ui/` | El kit de interfaz del juego; de él, `MarcoPixel`, el marco de la pantalla de juego. |
+
 ## En un minuto
 
 ```dart
@@ -27,7 +37,9 @@ EscenaPixel(fondo: sala, elementos: [...], alPulsar: (id) {}); // un lugar con p
 | Qué | Tamaño (ancho × alto) | Notas |
 | --- | --- | --- |
 | Chicos y chicas | 24 × 32 | Cabeza grande (unas 15 filas), cuerpo de unas 16. |
+| Adolescentes | 24 × 34 | Entre los chicos y los adultos (Sara y su amiga). |
 | Personas adultas | 24 × 36 o 32 × 40 | Más altas que los chicos; cabeza algo más pequeña. |
+| En silla de ruedas | 28 × 32 | La silla, más ancha; al respirar solo se mueve la persona. |
 | Objetos | múltiplos de 8 (8 × 8, 16 × 16, 16 × 24) | Un banco, una mesa, una planta. |
 | Fondos | 160 × 96 | El suelo empieza hacia la fila 60. |
 
@@ -81,7 +93,8 @@ Las claves que se confunden al leer (`l`, `I`, `O`, `0`) no existen. Para el bri
 - **Luz de arriba a la izquierda**: el brillo, arriba a la izquierda (el pelo, el hombro); la sombra, abajo y a la derecha, con el tono de la columna «sombra». La sombra en el suelo (`x`) va justo debajo de los pies.
 - **Los fondos se leen menos que los personajes**: paredes y suelos sin contorno y con poco contraste; el contorno, solo en los objetos importantes (ventanas, muebles). Así los personajes destacan.
 - **Solo colores de la paleta**, sin degradados ni antialiasing a mano. Sin píxeles sueltos que no formen nada.
-- **Caras**: ojos de 2 × 2 en `N` con el brillo `W` arriba a la izquierda, mejillas `s` y boca de 2 píxeles en `R` (mira el chico de `test/pixel/motor/muestras.dart`). Expresiones tranquilas y amables.
+- **Caras**: ojos de 2 × 2 en `N` con el brillo `W` arriba a la izquierda, mejillas `s` y boca de 2 píxeles en `R` (mira el chico de `test/pixel/motor/muestras.dart`). En las pieles oscuras (`4`, `5` y `6`) las mejillas van en `R`: el rosa parece una pegatina. Expresiones tranquilas y amables.
+- **Gafas**: aros finos y claros (`c` o `g`) alrededor del ojo. Unas gafas de un azul saturado pegadas al ojo parecen un antifaz.
 - **Diversidad**: tonos de piel y pelo variados, cuerpos y edades distintas, gafas, pañuelos, sillas de ruedas… Las variantes de un mismo personaje se hacen con `recolorear` y `PaletaPixel.cambio`, que cambia un color y su sombra a la vez:
 
   ```dart
@@ -97,6 +110,8 @@ Las claves que se confunden al leer (`l`, `I`, `O`, `0`) no existen. Para el bri
 - Nada de violencia, heridas, sangre, armas ni esposas. El coral es ropa, no otra cosa.
 - Los agresores no aparecen. La persona investigada, si sale, es una figura neutra: ropa gris, cara tranquila, sin rasgos de enfado ni de miedo.
 - Nadie llora ni da miedo: los personajes están serenos, escuchan o sonríen un poco.
+- Ningún menor declara en la sala de vistas: los menores de 14 años declaran antes, en la prueba preconstituida (LECrim, arts. 449 ter y 703 bis). El testigo de la sala es una persona adulta.
+- La toga solo en la sala, en la audiencia (LOPJ, art. 187.1). En un despacho (la Fiscalía), traje: `PersonajesPixel.buscar('El fiscal', lugar: 'fiscalia')` ya da el fiscal sin toga.
 
 ## Fotogramas y animaciones en reposo
 
@@ -120,26 +135,40 @@ En una escena, cada personaje va desfasado: no parpadean todos a la vez.
 
 ## Escenas
 
+Para una escena del contenido, lo más sencillo es `EscenaCasoPixel` (lib/pixel/escenas): elige el fondo, busca a cada persona, la pone en su sitio y enmarca la escena.
+
 ```dart
-EscenaPixel(
-  fondo: sala, // 160 × 96
-  descripcion: 'La sala de espera del juzgado', // para los lectores de pantalla
-  alPulsar: (id) => abrirDialogo(id),
-  elementos: [
-    ElementoEscena(sprite: jueza, x: 40, y: 88, id: 'jueza', etiqueta: 'La jueza. Toca para hablar con ella'),
-    ElementoEscena(sprite: chico, x: 84, y: 93, id: 'tu', etiqueta: 'Tú', resaltado: true),
-    ElementoEscena(sprite: mesa, x: 40, y: 92), // delante de la jueza: va después
-  ],
+EscenaCasoPixel(lugar: escena.lugar, personajes: escena.personajes)
+```
+
+A mano, dentro del marco de la pantalla de juego y con el margen azul noche:
+
+```dart
+MarcoPixel(
+  child: EscenaPixel(
+    fondo: sala, // 160 × 96
+    descripcion: 'La sala de espera del juzgado', // para los lectores de pantalla
+    colorMarco: ColoresUiPixel.noche,
+    alPulsar: (id) => abrirDialogo(id),
+    elementos: [
+      ElementoEscena(sprite: jueza, x: 40, y: 88, id: 'jueza', etiqueta: 'La jueza. Toca para hablar con ella'),
+      ElementoEscena(sprite: chico, x: 84, y: 93, id: 'tu', etiqueta: 'Tú', resaltado: true),
+      ElementoEscena(sprite: mesa, x: 40, y: 92), // delante de la jueza: va después
+    ],
+  ),
 )
 ```
 
 - `x` e `y` son píxeles del fondo, donde va el ancla (los pies). Se pintan en el orden de la lista: el último queda delante. Pon detrás los que están más arriba (y menor).
 - Los elementos con `id` se pueden tocar: su zona es su sprite (48 × 48 puntos como mínimo) y los lectores de pantalla los leen como botones con su `etiqueta`.
 - `espejo: true` da la vuelta al sprite (que se miren entre ellos). `resaltado: true` le pone un halo amarillo para señalar a quién tocar.
-- La escena se escala entera, centrada; lo que sobra alrededor es del color del papel (o `colorMarco`, por ejemplo azul noche en el tema oscuro). En una columna ocupa todo el ancho.
+- La escena se escala entera, centrada; lo que sobra alrededor es del color del papel (o `colorMarco`, azul noche dentro de `MarcoPixel` y en el tema oscuro). En una columna ocupa todo el ancho; en un `Center` o en un diálogo, lo justo para su escala.
+- Suelta sobre el papel (sin `colorMarco`), lleva un contorno azul noche de un píxel del dibujo (`contorno`): así un fondo claro no se funde con la página. Dentro de un marco sobra.
+- El dibujo cae siempre en la rejilla de píxeles de la pantalla, aunque la escena quede a medio píxel (un margen de 18 puntos, una lista desplazada): `EscenaPixel` y `SpritePixel` lo ajustan solos con `RejillaPixel`. Si pintas pixel art con un `CustomPaint` propio, envuélvelo en `RejillaPixel`.
+- Las animaciones se paran con «reducir animaciones», en una ruta tapada y con la app en segundo plano.
 - Para pintar fondos grandes sin escribir 96 filas a mano, `LienzoPixel`: `rect`, `marco`, `lineaH`, `lineaV`, `linea`, `pegar` (un dibujo pequeño; sus `.` no tapan) y `mosaico` (una tesela repetida). Mira `_pintarSala` en `test/pixel/motor/muestras.dart`.
 
 ## Comprobar
 
 - `flutter analyze lib/pixel test/pixel` y `flutter test test/pixel`.
-- Capturas a tamaño de móvil: `CAPTURAS=build/capturas flutter test test/pixel/motor/capturas_test.dart` (deja los PNG en `build/capturas`). Míralas antes de dar un dibujo por bueno.
+- Capturas a tamaño de móvil: `CAPTURAS=build/capturas flutter test test/pixel/motor/capturas_test.dart` (deja los PNG en `build/capturas`). Míralas antes de dar un dibujo por bueno. Hay capturas igual en `test/pixel/personajes`, `test/pixel/escenarios`, `test/pixel/escenas` (las escenas de los casos, como en el juego) y `test/pixel/juzgado`.

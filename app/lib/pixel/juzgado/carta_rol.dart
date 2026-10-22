@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tema.dart' show duracion;
+import '../../tema.dart' show duracionTamano;
 import '../motor/motor.dart' show PaletaPixel;
 import 'roles_juzgado.dart';
 
@@ -272,7 +272,8 @@ class _FuentesState extends State<_Fuentes> {
           label: Text(_abiertas ? 'Ocultar qué dice la ley' : 'Qué dice la ley'),
         ),
         AnimatedSize(
-          duration: duracion(context, const Duration(milliseconds: 260)),
+          // Nunca cero: con «reducir animaciones», AnimatedSize con duración cero salta un assert en debug.
+          duration: duracionTamano(context, const Duration(milliseconds: 260)),
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: !_abiertas
@@ -360,7 +361,7 @@ class IndicacionJuzgado extends StatelessWidget {
   }
 }
 
-/// Un aviso sobre la sala («Hoy no hay público»), con su fuente.
+/// Un aviso sobre la sala («Hoy no hay público»), con sus fuentes.
 class NotaSala extends StatelessWidget {
   const NotaSala({super.key, required this.nota});
 
@@ -394,7 +395,7 @@ class NotaSala extends StatelessWidget {
                   Text(nota.texto, style: texto.bodyLarge?.copyWith(color: esquema.onSurface, height: 1.4)),
                   const SizedBox(height: _xs),
                   Text(
-                    'Fuente: ${nota.fuente.etiqueta}',
+                    'Fuente: ${nota.fuentes.map((fuente) => fuente.etiqueta).join(' · ')}',
                     style: texto.bodyMedium?.copyWith(color: esquema.onSurfaceVariant),
                   ),
                 ],
@@ -452,9 +453,17 @@ class EnhorabuenaJuzgado extends StatelessWidget {
 }
 
 /// Las personas de la sala como una colección de fichas: amarillas las que ya se conocen (al tocarlas se abre su
-/// carta) y en blanco las que faltan (al tocarlas, esa persona se ilumina en la sala para encontrarla).
+/// carta) y en blanco las que faltan (al tocarlas, esa persona se ilumina en la sala para encontrarla; con lector de
+/// pantalla, [accesible], se abre su carta).
 class FichasJuzgado extends StatelessWidget {
-  const FichasJuzgado({super.key, required this.roles, required this.descubiertos, required this.alTocar, this.pista});
+  const FichasJuzgado({
+    super.key,
+    required this.roles,
+    required this.descubiertos,
+    required this.alTocar,
+    this.pista,
+    this.accesible = false,
+  });
 
   final List<RolJuzgado> roles;
   final Set<String> descubiertos;
@@ -464,6 +473,9 @@ class FichasJuzgado extends StatelessWidget {
 
   /// La persona que está iluminada en la sala.
   final String? pista;
+
+  /// Con navegación accesible (TalkBack): la ficha de quien falta abre su carta en vez de iluminarle en el dibujo.
+  final bool accesible;
 
   @override
   Widget build(BuildContext context) {
@@ -488,6 +500,7 @@ class FichasJuzgado extends StatelessWidget {
                 rol: rol,
                 descubierta: descubiertos.contains(rol.id),
                 iluminada: rol.id == pista,
+                accesible: accesible,
                 alTocar: () => alTocar(rol.id),
               ),
           ],
@@ -498,11 +511,18 @@ class FichasJuzgado extends StatelessWidget {
 }
 
 class _Ficha extends StatelessWidget {
-  const _Ficha({required this.rol, required this.descubierta, required this.iluminada, required this.alTocar});
+  const _Ficha({
+    required this.rol,
+    required this.descubierta,
+    required this.iluminada,
+    required this.accesible,
+    required this.alTocar,
+  });
 
   final RolJuzgado rol;
   final bool descubierta;
   final bool iluminada;
+  final bool accesible;
   final VoidCallback alTocar;
 
   @override
@@ -533,6 +553,8 @@ class _Ficha extends StatelessWidget {
       button: true,
       label: descubierta
           ? '${rol.titulo}. Ya sabes quién es: toca para ver su carta.'
+          : accesible
+          ? '${rol.titulo}. Todavía no: toca para saber quién es.'
           : '${rol.titulo}. Todavía no: toca para ver dónde está en la sala.',
       onTap: alTocar,
       excludeSemantics: true,

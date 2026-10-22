@@ -870,3 +870,18 @@ List<String> cojinSofa(String color) {
 
 /// Un vaso de agua (4 × 5).
 const vaso = ['NNNN', 'NhcN', 'NccN', 'NccN', '.NN.'];
+
+/// La cámara que graba (12 × 9), en su soporte de pared y mirando hacia abajo a la izquierda: cuerpo gris oscuro con
+/// la luz arriba, el objetivo azul cielo con su brillo y la lucecita roja de que graba. La misma en la Sala Gesell y en
+/// la sala del Juzgado de Menores (lib/pixel/juzgado).
+const camaraPared = [
+  '.........NNN',
+  '.........NgN',
+  '..NNNNNNNNgN',
+  '.NNGGGGGGGNN',
+  'NNWcNKKKKKKN',
+  'NcccNKKKKrKN',
+  'NNcNNKKKKKKN',
+  '.NNNKKKKKKKN',
+  '...NNNNNNNNN',
+];

@@ -1,6 +1,6 @@
 part of 'personajes.dart';
 
-// El caso de Sergio (13 años), su padre y Laura, la coordinadora de bienestar y protección del instituto.
+// El caso de Sergio (13 años), su padre, su madre y Laura, la coordinadora de bienestar y protección del instituto.
 
 /// Sergio, 13 años: pelo negro rizado y corto, sudadera azul con capucha y cordones amarillos, pantalón de chándal
 /// gris y zapatillas blancas.
@@ -16,7 +16,7 @@ const _sergioFilas = <String>[
   '...Nz55555555555556zN...',
   '..N5z555WN5555WN556z5N..',
   '..N65555NN5555NN55666N..',
-  '...N555s55555555s566N...',
+  '...N555R55555555R566N...',
   '....N555555RR555566N....',
   '.....NN5555555566NN.....',
   '......NNNN6666NNNN......',
@@ -94,8 +94,56 @@ final _fichaPadreSergio = PersonajePixel(
   sprite: _personaje('padre-sergio', filas: _padreSergioFilas, ojos: 9, pecho: 19, piel: '5', ms: 940),
 );
 
-/// Laura, la coordinadora de bienestar y protección: pelirroja con coleta alta, gafas azules, blusa verde y una carpeta
-/// con pinza apretada contra el pecho.
+/// La madre de Sergio: piel 5, como Sergio y su padre; melena negra rizada por la barbilla con una cinta amarilla,
+/// pendientes dorados, jersey coral, vaqueros y zapatillas blancas.
+const _madreSergioFilas = <String>[
+  '........................',
+  '........NNNNNNNN........',
+  '......NNKzzKzzzKNN......',
+  '.....NKzzzzKzzzzzzN.....',
+  '....NKzzKzzzzzzKzzzN....',
+  '...NKzzYYYYYYYYYYzzzN...',
+  '...NzKz5555555555zKzN...',
+  '...NzzK5555555556KzzN...',
+  '...NKz55555555556zKzN...',
+  '...NzK55WN5555WN56KzN...',
+  '...NzK55NN5555NN66KzN...',
+  '...NzK5R5555555R56KzN...',
+  '...NzzN5555RR5556NzzN...',
+  '....NzYN55555566NYzN....',
+  '....NNNNNN6666NNNNNN....',
+  '......NNrrr66rrrNN......',
+  '.....NrrrrrrrrrrrRN.....',
+  '....NrrrrrrrrrrrrRRN....',
+  '....NrNrrrrrrrrrRNRN....',
+  '....NrNrrrrrrrrrRNRN....',
+  '....NrNrrrrrrrrrRNRN....',
+  '....NrNrrrrrrrrrRNRN....',
+  '....NRNrrrrrrrrrRNRN....',
+  '....N5NRRRRRRRRRRN6N....',
+  '.....NNaAAAAAAAADNN.....',
+  '......NaAAAAAAAADN......',
+  '......NaAAANNaAADN......',
+  '......NaADN..NaADN......',
+  '......NaADN..NaADN......',
+  '......NaADN..NaADN......',
+  '......NaADN..NaADN......',
+  '......NaADN..NaADN......',
+  '......NaADN..NaADN......',
+  '.....NWWWgN..NWWWgN.....',
+  '.....NNNNNN..NNNNNN.....',
+  '......xxxxxxxxxxxx......',
+];
+
+final _fichaMadreSergio = PersonajePixel(
+  id: 'madre-sergio',
+  nombre: 'La madre de Sergio',
+  descripcion: 'La madre de Sergio, con el pelo rizado, una cinta amarilla y jersey coral',
+  sprite: _personaje('madre-sergio', filas: _madreSergioFilas, ojos: 9, pecho: 18, piel: '5', ms: 870),
+);
+
+/// Laura, la coordinadora de bienestar y protección: pelirroja con coleta alta, gafas azul cielo, blusa verde y una
+/// carpeta con pinza apretada contra el pecho.
 const _lauraFilas = <String>[
   '........................',
   '........NNNNNNNN........',
@@ -105,10 +153,10 @@ const _lauraFilas = <String>[
   '.....NffffffffffffNYfN..',
   '.....Nff11111111fRNffN..',
   '.....Nf1111111112RNfRN..',
-  '.....Nf1aa1111aa2RNfRN..',
-  '.....NfaWNaaaaWNaRNfRN..',
-  '.....NfaNNa11aNNaRNRN...',
-  '.....N1saa1111aas2NRN...',
+  '.....Nf1cc1111cc2RNfRN..',
+  '.....NfcWNccccWNcRNfRN..',
+  '.....NfcNNc11cNNcRNRN...',
+  '.....N1scc1111ccs2NRN...',
   '......N1111RR1112N.N....',
   '.......NN111122NN.......',
   '........NN2222NN........',

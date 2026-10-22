@@ -1,17 +1,30 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/pixel/motor/motor.dart';
 import 'package:tuturno/pixel/personajes/personajes.dart';
 
+/// Los ids de Tut, con sus dos caras.
+const _idsTut = {'tut', 'tut-feliz'};
+
 /// Los personajes con cara de persona (todos menos Tut).
 final _personas = [
   for (final ficha in PersonajesPixel.todos)
-    if (ficha.id != 'tut') ficha,
+    if (!_idsTut.contains(ficha.id)) ficha,
 ];
+
+/// Las dos caras de Tut.
+final _tuts = [PersonajesPixel.tut, PersonajesPixel.tutFeliz];
 
 /// Tamaño de cada personaje según la rejilla de lib/pixel/LEEME.md.
 const _tamanos = <String, (int, int)>{
   'lucia': (24, 32),
+  'tutora': (24, 36),
+  'madre-sergio': (24, 36),
+  'fiscal-despacho': (24, 36),
+  'tut-feliz': (24, 22),
   'sergio': (24, 32),
   'sara': (24, 34),
   'amiga-sara': (24, 34),
@@ -43,8 +56,8 @@ int _primeraFila(List<String> filas) => filas.indexWhere((fila) => fila.contains
 void main() {
   group('Registro', () {
     test('hay un id por personaje, sin repetir y en el orden de todos', () {
-      expect(PersonajesPixel.ids, hasLength(17));
-      expect(PersonajesPixel.ids.toSet(), hasLength(17));
+      expect(PersonajesPixel.ids, hasLength(21));
+      expect(PersonajesPixel.ids.toSet(), hasLength(21));
       expect([for (final ficha in PersonajesPixel.todos) ficha.id], PersonajesPixel.ids);
       for (final id in PersonajesPixel.ids) {
         expect(id, matches(RegExp(r'^[a-z]+(-[a-z]+)*$')), reason: 'los ids van en minúsculas, sin tildes');
@@ -67,15 +80,18 @@ void main() {
     test('los accesos directos dan los mismos sprites que porId', () {
       final accesos = <String, Sprite>{
         'lucia': PersonajesPixel.lucia,
+        'tutora': PersonajesPixel.tutora,
         'elena': PersonajesPixel.elena,
         'ana': PersonajesPixel.ana,
         'sergio': PersonajesPixel.sergio,
         'padre-sergio': PersonajesPixel.padreSergio,
+        'madre-sergio': PersonajesPixel.madreSergio,
         'laura': PersonajesPixel.laura,
         'sara': PersonajesPixel.sara,
         'amiga-sara': PersonajesPixel.amigaSara,
         'jueza': PersonajesPixel.jueza,
         'fiscal': PersonajesPixel.fiscal,
+        'fiscal-despacho': PersonajesPixel.fiscalDespacho,
         'abogada-victima': PersonajesPixel.abogadaVictima,
         'abogado-defensa': PersonajesPixel.abogadoDefensa,
         'letrada': PersonajesPixel.letrada,
@@ -83,6 +99,7 @@ void main() {
         'investigada': PersonajesPixel.investigada,
         'testigo': PersonajesPixel.testigo,
         'tut': PersonajesPixel.tut,
+        'tut-feliz': PersonajesPixel.tutFeliz,
       };
       expect(accesos.keys, unorderedEquals(PersonajesPixel.ids));
       accesos.forEach((id, sprite) => expect(sprite, same(PersonajesPixel.porId(id)), reason: id));
@@ -116,7 +133,7 @@ void main() {
         for (final filas in ficha.sprite.fotogramas) {
           expect(filas.last, matches(RegExp(r'^\.*x+\.*$')), reason: '${ficha.id}: la sombra');
           final encima = filas[filas.length - 2];
-          if (ficha.id == 'tut') {
+          if (_idsTut.contains(ficha.id)) {
             expect(encima, matches(RegExp(r'^\.+$')), reason: 'Tut flota sobre su sombra');
           } else {
             expect(encima, contains('N'), reason: '${ficha.id}: las suelas tocan la sombra');
@@ -184,9 +201,34 @@ void main() {
     });
 
     test('Tut es amarillo: el ticket es del amarillo de la marca con la cara azul noche', () {
-      final claves = {for (final fila in PersonajesPixel.tut.fotogramas.first) ...fila.split('')};
-      expect(claves, containsAll(['Y', 'y', 'o', 'N']));
-      expect(claves.difference({'.', 'x', 'N', 'W', 'Y', 'y', 'o', 's'}), isEmpty);
+      for (final tut in _tuts) {
+        final claves = {for (final fila in tut.fotogramas.first) ...fila.split('')};
+        expect(claves, containsAll(['Y', 'y', 'o', 'N']), reason: tut.nombre);
+        expect(claves.difference({'.', 'x', 'N', 'W', 'Y', 'y', 'o', 's'}), isEmpty, reason: tut.nombre);
+      }
+    });
+
+    test('el fiscal de la Fiscalía es el mismo, sin toga ni puñetas', () {
+      final toga = PersonajesPixel.fiscal.fotogramas.first;
+      final traje = PersonajesPixel.fiscalDespacho.fotogramas.first;
+      // La misma cabeza (cara, pelo y gafas).
+      expect(traje.sublist(0, 15), toga.sublist(0, 15));
+      // Del cuello a la cadera, nada negro (la toga) ni blanco en los puños (las puñetas).
+      for (var y = 15; y < 26; y++) {
+        expect(traje[y], isNot(contains('z')), reason: 'fila $y');
+      }
+      expect(traje[23], isNot(contains('W')));
+    });
+
+    test('pieles oscuras con colorete teja; las claras, con rosa', () {
+      for (final ficha in _personas) {
+        final quieto = ficha.sprite.fotogramas.first;
+        final piel = PaletaPixel.pieles.firstWhere((p) => quieto.any((fila) => fila.contains(p.clave))).clave;
+        final mejillas = quieto.sublist(8, 13).join();
+        if ('456'.contains(piel)) {
+          expect(mejillas, isNot(contains('s')), reason: '${ficha.id}: en la piel $piel, el rosa parece una pegatina');
+        }
+      }
     });
   });
 
@@ -239,15 +281,31 @@ void main() {
     });
 
     test('Tut flota: el ticket sube un píxel y la sombra se queda; al parpadear, solo quedan las barras de las T', () {
-      final [quieto, sube, parpadea] = PersonajesPixel.tut.fotogramas;
-      expect(_primeraFila(sube), _primeraFila(quieto) - 1);
-      expect(sube.last, quieto.last);
-      final cambios = _diferencias(quieto, parpadea);
-      expect(cambios, isNotEmpty);
-      for (final (x, y) in cambios) {
-        expect(quieto[y][x], anyOf('N', 'W'), reason: 'solo se van los palos de las T');
-        expect(parpadea[y][x], 'Y');
+      for (final tut in _tuts) {
+        final [quieto, sube, parpadea] = tut.fotogramas;
+        expect(_primeraFila(sube), _primeraFila(quieto) - 1, reason: tut.nombre);
+        expect(sube.last, quieto.last);
+        final cambios = _diferencias(quieto, parpadea);
+        expect(cambios, isNotEmpty);
+        for (final (x, y) in cambios) {
+          expect(quieto[y][x], anyOf('N', 'W'), reason: '${tut.nombre}: solo se van los palos de las T');
+          expect(parpadea[y][x], 'Y');
+        }
       }
+    });
+
+    test('Tut sonriendo: la barra de cada T se separa del palo y la sonrisa es más ancha', () {
+      final neutral = PersonajesPixel.tut.fotogramas.first;
+      final feliz = PersonajesPixel.tutFeliz.fotogramas.first;
+      // Las barras, una fila más arriba, con una fila amarilla entre la barra y el ojo.
+      expect(feliz[4], neutral[5]);
+      expect(feliz[5].substring(3, 21), isNot(contains('N')));
+      // La boca: el tramo azul noche más largo en la zona de la boca (columnas 7 a 16).
+      int boca(List<String> filas) => [
+        for (final fila in filas.sublist(8, 12))
+          for (final tramo in RegExp('N+').allMatches(fila.substring(7, 17))) tramo.end - tramo.start,
+      ].fold(0, (maximo, largo) => largo > maximo ? largo : maximo);
+      expect(boca(feliz), greaterThan(boca(neutral)));
     });
   });
 
@@ -273,6 +331,17 @@ void main() {
       }
     });
 
+    test('el retrato del testigo es solo él: sin las empuñaduras ni las ruedas de la silla', () {
+      final retrato = PersonajesPixel.retrato('testigo')!;
+      for (final filas in retrato.fotogramas) {
+        for (final fila in filas) {
+          // Columnas 7 a 20 del sprite (28 de ancho, recortado desde la 2): 5 a 18 del retrato.
+          expect(fila.substring(0, 5), '.....');
+          expect(fila.substring(19), '.....');
+        }
+      }
+    });
+
     test('la cara entra entera: el pelo de arriba no se corta', () {
       for (final id in PersonajesPixel.ids) {
         final quieto = PersonajesPixel.retrato(id)!.fotogramas.first;
@@ -290,6 +359,10 @@ void main() {
         'Sergio': 'sergio',
         'Sus padres': 'padre-sergio',
         'Su padre': 'padre-sergio',
+        'Su madre': 'madre-sergio',
+        'La madre de Sergio': 'madre-sergio',
+        'Su tutora': 'tutora',
+        'Su maestra': 'tutora',
         'El padre de Sergio': 'padre-sergio',
         'Laura, coordinadora de bienestar': 'laura',
         'Sara': 'sara',
@@ -322,10 +395,43 @@ void main() {
     });
 
     test('null si no hay ningún personaje para ese nombre', () {
-      expect(PersonajesPixel.buscar('Su tutora'), isNull);
-      expect(PersonajesPixel.buscar('Su madre'), isNull);
+      expect(PersonajesPixel.buscar('Su perro'), isNull);
       expect(PersonajesPixel.buscar('Mariana'), isNull, reason: '«Ana» es una palabra entera');
       expect(PersonajesPixel.buscar(''), isNull);
+    });
+
+    test('en la Fiscalía, el fiscal va sin toga; en la sala de vistas, con ella', () {
+      for (final lugar in ['fiscalia', 'Fiscalía de Menores', 'despacho del fiscal']) {
+        expect(PersonajesPixel.buscar('El fiscal', lugar: lugar), 'fiscal-despacho', reason: lugar);
+      }
+      for (final lugar in ['sala_vistas', 'juzgado', null]) {
+        expect(PersonajesPixel.buscar('El fiscal', lugar: lugar), 'fiscal', reason: '$lugar');
+      }
+    });
+
+    test('buscarTodos: dos personas para un plural', () {
+      expect(PersonajesPixel.buscarTodos('Sus padres'), ['padre-sergio', 'madre-sergio']);
+      expect(PersonajesPixel.buscarTodos('Los padres de Sergio'), ['padre-sergio', 'madre-sergio']);
+      expect(PersonajesPixel.buscarTodos('Los abogados'), ['abogada-victima', 'abogado-defensa']);
+      expect(PersonajesPixel.buscarTodos('Su madre'), ['madre-sergio']);
+      expect(PersonajesPixel.buscarTodos('El fiscal', lugar: 'fiscalia'), ['fiscal-despacho']);
+      expect(PersonajesPixel.buscarTodos('Su perro'), isEmpty);
+    });
+
+    test('todas las personas de las escenas de los casos tienen dibujo', () {
+      for (final archivo in Directory('assets/mock/content/juego').listSync().whereType<File>()) {
+        if (!archivo.path.endsWith('.json')) continue;
+        final caso = jsonDecode(archivo.readAsStringSync()) as Map<String, dynamic>;
+        for (final escena in (caso['escenas'] as List).cast<Map<String, dynamic>>()) {
+          for (final nombre in (escena['personajes'] as List).cast<String>()) {
+            final ids = PersonajesPixel.buscarTodos(nombre, lugar: escena['lugar'] as String?);
+            expect(ids, isNotEmpty, reason: '${archivo.path}, ${escena['id']}: «$nombre»');
+            for (final id in ids) {
+              expect(PersonajesPixel.porId(id), isNotNull, reason: id);
+            }
+          }
+        }
+      }
     });
 
     test('cada id que devuelve existe', () {

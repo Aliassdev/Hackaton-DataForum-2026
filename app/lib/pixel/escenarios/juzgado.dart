@@ -3,13 +3,15 @@ import 'escenario_pixel.dart';
 import 'teselas.dart';
 
 /// El vestíbulo del juzgado: paredes de piedra clara con pilastras, dos ventanales en arco, una gran puerta de madera
-/// con una balanza dorada encima, un banco, plantas y el mostrador de información.
+/// con una balanza dorada encima, un banco, plantas y el mostrador de información, que tapa a quien atiende detrás (el
+/// puesto «recepcion»).
 final escenarioJuzgado = EscenarioPixel(
   lugar: 'juzgado',
   descripcion:
       'La entrada del juzgado: un vestíbulo grande y luminoso, con ventanales, una puerta de madera con una balanza '
       'encima y un mostrador de información.',
-  fondo: Sprite('juzgado', _pintarJuzgado()),
+  fondo: Sprite('juzgado', _juzgado.fondo),
+  delante: [piezaEn(Sprite('juzgado: mostrador', _juzgado.mostrador), _mostradorX, _mostradorY - _sobreMostrador)],
   puestos: const {
     'izquierda': (x: 44, y: 90),
     'centro': (x: 80, y: 91),
@@ -19,6 +21,13 @@ final escenarioJuzgado = EscenarioPixel(
 );
 
 const _suelo = 62;
+
+/// Dónde va el tablero del mostrador de información, y cuántas filas sobresale lo que hay encima (la planta).
+const _mostradorX = 120;
+const _mostradorY = 47;
+const _sobreMostrador = 13;
+
+final _juzgado = _pintarJuzgado();
 
 /// Una ventana de [ancho] × [alto] con el remate de arriba en medio punto.
 FormaPixel _arco(int ancho, int alto) {
@@ -32,7 +41,7 @@ FormaPixel _arco(int ancho, int alto) {
   };
 }
 
-List<String> _pintarJuzgado() {
+({List<String> fondo, List<String> mostrador}) _pintarJuzgado() {
   final l = LienzoPixel(anchoFondo, altoFondo, 'p');
   // Sillares de piedra: una línea clara cada 8 filas y juntas al tresbolillo.
   for (var y = 7; y < _suelo; y += 8) {
@@ -65,15 +74,18 @@ List<String> _pintarJuzgado() {
     ..apoyar(plantaAlta, 102, 64)
     ..sombraSuelo(104, 63, 9, filas: 1);
 
-  // Mostrador de información, con una pantalla, un timbre y una planta.
-  _mostrador(l, 120, 47);
+  // Mostrador de información, con una pantalla, un timbre y una planta: se dibuja aparte para que tape a quien atiende.
+  final mostrador = _dibujarMostrador();
+  l
+    ..pegar(mostrador, _mostradorX, _mostradorY - _sobreMostrador)
+    ..sombraSuelo(_mostradorX, _suelo + 4, _anchoMostrador, filas: 1);
   // Placas con flechas en las pilastras.
   l
     ..caja(42, 30, 12, 7, 'A')
     ..pegar(['..W.....', '.WWWWWW.', '..W.....'], 44, 32)
     ..caja(108, 30, 12, 7, 'A')
     ..pegar(['.....W..', '.WWWWWW.', '.....W..'], 110, 32);
-  return l.filas;
+  return (fondo: l.filas, mostrador: mostrador);
 }
 
 void _ventanal(LienzoPixel l, int x, int y, int ancho, int alto) {
@@ -187,30 +199,30 @@ void _banco(LienzoPixel l, int x, int y) {
   l.sombraSuelo(x + 1, y + 14, 32, filas: 1);
 }
 
-void _mostrador(LienzoPixel l, int x, int y) {
-  const ancho = 38;
-  final alto = _suelo + 4 - y;
-  // La pantalla y el timbre, encima.
-  l
-    ..caja(x + 4, y - 9, 13, 9, 'K')
-    ..rect(x + 5, y - 8, 11, 6, 'G')
-    ..rect(x + 9, y - 1, 3, 1, 'K')
-    ..pegar(['.NN.', 'NYYN', 'NNNN'], x + 22, y - 3)
-    ..apoyar(plantaPequena, x + 27, y);
-  l
-    ..caja(x, y, ancho, 3, 'm')
-    ..lineaH(x + 1, y + 1, ancho - 2, 'u')
-    ..caja(x + 1, y + 3, ancho - 2, alto - 3, 'A')
-    ..lineaV(x + 2, y + 4, alto - 5, 'a')
-    ..lineaV(x + ancho - 3, y + 4, alto - 5, 'D')
-    ..lineaH(x + 2, y + alto - 3, ancho - 4, 'D');
-  for (var px = x + 7; px < x + ancho - 4; px += 6) {
+const _anchoMostrador = 38;
+
+/// El mostrador de información (38 × 32): el tablero en la fila 13 y, encima, una pantalla, un timbre y una planta
+/// pequeña; debajo, el frente azul con un bocadillo de «pregunta aquí», sin letras.
+List<String> _dibujarMostrador() {
+  const ancho = _anchoMostrador, y = _sobreMostrador;
+  const alto = _suelo + 4 - _mostradorY;
+  final l = LienzoPixel(ancho, y + alto)
+    // La pantalla y el timbre, encima.
+    ..caja(4, y - 9, 13, 9, 'K')
+    ..rect(5, y - 8, 11, 6, 'G')
+    ..rect(9, y - 1, 3, 1, 'K')
+    ..pegar(['.NN.', 'NYYN', 'NNNN'], 22, y - 3)
+    ..apoyar(plantaPequena, 27, y)
+    ..caja(0, y, ancho, 3, 'm')
+    ..lineaH(1, y + 1, ancho - 2, 'u')
+    ..caja(1, y + 3, ancho - 2, alto - 3, 'A')
+    ..lineaV(2, y + 4, alto - 5, 'a')
+    ..lineaV(ancho - 3, y + 4, alto - 5, 'D')
+    ..lineaH(2, y + alto - 3, ancho - 4, 'D');
+  for (var px = 7; px < ancho - 4; px += 6) {
     l.lineaV(px, y + 5, alto - 9, 'D');
   }
-  // Un bocadillo con tres puntos: «pregunta aquí», sin letras.
-  l
-    ..pegar(_bocadillo, x + ancho ~/ 2 - 5, y + 5)
-    ..sombraSuelo(x, y + alto, ancho, filas: 1);
+  return (l..pegar(_bocadillo, ancho ~/ 2 - 5, y + 5)).filas;
 }
 
 const _bocadillo = ['.NNNNNNNN.', 'NWWWWWWWWN', 'NWAWWAWWAN', 'NWWWWWWWhN', '.NNWNNNNN.', '..NWN.....', '..NN......'];
