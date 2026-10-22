@@ -144,3 +144,12 @@ def test_con_menos_de_14_sin_juramento_ni_falso_testimonio():
     assert motivo == "falso_testimonio" and "falso testimonio" not in final
     assert revisar(frase, voz=False) == (frase, None)  # sin la edad o con 14 o más, se queda
     assert "juramento" not in "".join(verificar_stream(["Declararás bajo juramento. ", "Puedes ir con alguien."], menor_14=True))
+
+
+def test_sin_numeros_de_articulo_entre_parentesis():
+    """Norma 6: el LLM ponía «(artículo 20)» o «(Código Penal art. 197)»; en la voz se leía el número."""
+    assert verificar_texto("Deben garantizar tu seguridad (artículo 20). Puedes denunciar tú (artículo 50 e).") == (
+        "Deben garantizar tu seguridad. Puedes denunciar tú."
+    )
+    assert _verificar("Difundirla es delito (Código Penal art. 197). Te pueden ayudar.") == "Difundirla es delito. Te pueden ayudar."
+    assert verificar_texto("Tienes derechos (por ejemplo, a un abogado).") == "Tienes derechos (por ejemplo, a un abogado)."

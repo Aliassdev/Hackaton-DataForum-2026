@@ -145,7 +145,13 @@ def numero_a_letras(n: int) -> str:
     return str(n)
 
 
+# Norma 6 del prompt: sin números de artículo. El LLM a veces los pone entre paréntesis («(artículo 20)», «(Código Penal
+# art. 197)»): se quitan, y en la voz no se leen. Los que van en la frase («según el artículo 197») se quedan.
+RE_ARTICULO_ENTRE_PARENTESIS = re.compile(r"\s*\([^()\n]*\b(?:art[íi]culos?|arts?\.)\s*\d[^()\n]*\)", re.IGNORECASE)
+
+
 def para_texto(frase: str) -> str:
+    frase = RE_ARTICULO_ENTRE_PARENTESIS.sub("", frase)
     return re.sub(r"[*_#`>]+|^\s*[-•]\s*", "", frase)  # markdown y viñetas
 
 

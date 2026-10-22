@@ -353,3 +353,8 @@ def test_recordar_ayuda_con_fotos_intimas_o_acoso(pregunta):
 
 def test_fotos_de_mi_ex_no_es_hablar_de_mis_fotos():
     assert not orquestador.recordar_ayuda("tengo 16 y pasé las fotos de mi ex por insta, ¿iré a la cárcel?")
+
+
+def test_norma_9_no_supone_la_edad():
+    """Sin esto, a Lucía le decía «No, si tu tío es menor de 18 años no irá a una cárcel de adultos»."""
+    assert "Si no se sabe su edad, no la supongas." in prompts.sistema(PERFIL, [])
