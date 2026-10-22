@@ -44,6 +44,10 @@ MARGEN_REFORMULAR_S = 0.3  # la llamada ya tiene su plazo; esto cubre el reparto
 # Frase puente de la voz: corta, neutra y válida para cualquier pregunta. No se usa con saludos, agradecimientos ni
 # mensajes muy cortos («hola», «gracias», «vale»): ahí no pega un «te lo explico» y la respuesta ya es breve.
 FRASES_PUENTE = ("Vale, te lo explico.", "Vale, te cuento.")
+# Con malestar («tengo mucho miedo», «me pegaron en el baño»), en vez de «Vale, te lo explico.», que sonaría a no haber
+# escuchado. También al instante: sin un primer trozo rápido, si el LLM tarda más de cascade_timeout_seconds (4 s),
+# ElevenLabs pasa a su propio LLM de respaldo, que no tiene ninguna de nuestras capas.
+FRASE_PUENTE_MALESTAR = "Gracias por contármelo."
 MIN_PALABRAS_PUENTE = 3
 MAX_PALABRAS_SOCIAL = 6
 RE_SOCIAL = re.compile(r"^[\W_]*(hola|buenas|gracias|muchas gracias|vale|ok|okay|adi[oó]s|hasta luego|chao|genial|perfecto|de acuerdo|entendido)\b", re.IGNORECASE)
@@ -51,16 +55,17 @@ RE_SOCIAL = re.compile(r"^[\W_]*(hola|buenas|gracias|muchas gracias|vale|ok|okay
 # sonaría repetida. El prompt ya pide no usarlas; esto es la red de seguridad. Solo con puntuación detrás, para no
 # tocar frases como «Vale la pena preguntar...».
 RE_ECO_PUENTE = re.compile(
-    r"^\s*(?:(?:vale|claro|de acuerdo|por supuesto|muy bien)\s*[,.:;!]+\s*)?(?:te (?:lo )?(?:explico|cuento)\s*[,.:;!]+\s*)?",
+    r"^\s*(?:gracias por (?:cont[áa]rmelo|confiar(?:me| en m[íi])[^.!?]*|compartirlo|dec[íi]rmelo)\s*[,.:;!]+\s*)?"
+    r"(?:(?:vale|claro|de acuerdo|por supuesto|muy bien)\s*[,.:;!]+\s*)?(?:te (?:lo )?(?:explico|cuento)\s*[,.:;!]+\s*)?",
     re.IGNORECASE,
 )
 
 # Malestar que no llega a crisis (las reglas de crisis ya han pasado): «tengo mucho miedo», «lo estoy pasando fatal»,
-# «me acosan», «me pegaron en el baño». Sobre el texto normalizado del guardrail (sin tildes ni signos). Con malestar no
-# hay frase puente (un «Vale, te lo explico.» delante de «tengo mucho miedo» suena a no haber escuchado) y, si la
-# respuesta no ha nombrado a ANAR, se añade el recordatorio: la norma 7 del prompt lo pide, pero el LLM no siempre lo
-# hace. Si solo se habla del tema (acoso, fotos íntimas), también el recordatorio, pero con frase puente: «¿Qué hace la
-# Fiscalía de Menores si hay acoso escolar?» es uno de los ejemplos de la app.
+# «me acosan», «me pegaron en el baño». Sobre el texto normalizado del guardrail (sin tildes ni signos). Con malestar la
+# frase puente es FRASE_PUENTE_MALESTAR y, si la respuesta no ha nombrado a ANAR, se añade el recordatorio: la norma 7
+# del prompt lo pide, pero el LLM no siempre lo hace. Si solo se habla del tema (acoso, fotos íntimas), también el
+# recordatorio, con la frase puente de siempre: «¿Qué hace la Fiscalía de Menores si hay acoso escolar?» es uno de los
+# ejemplos de la app.
 RE_MALESTAR = re.compile(
     r"\b(miedo|panico|asustad[oa]s?|aterrad[oa]s?|agobiad[oa]s?|angustiad[oa]s?|desesperad[oa]s?|ansiedad|triste|tristeza"
     r"|llor(o|ando|ar|e)|me odio|odio mi vida|nadie me (quiere|entiende|ayuda|cree|escucha)"
@@ -123,9 +128,9 @@ def _ultima_pregunta(mensajes: list[dict]) -> str:
 
 
 def frase_puente(pregunta: str) -> str | None:
-    """Primer trozo de la voz mientras se prepara la respuesta, o None (desactivada, un saludo o un «gracias», o un
-    mensaje con malestar). Solo se llama cuando el guardrail ha dicho «normal»: nunca en crisis, hechos ni fuera de
-    ámbito."""
+    """Primer trozo de la voz mientras se prepara la respuesta, o None (desactivada, o un saludo o un «gracias»). Con
+    malestar, «Gracias por contármelo.». Solo se llama cuando el guardrail ha dicho «normal»: nunca en crisis, hechos ni
+    fuera de ámbito."""
     if not settings.voz_frase_puente:
         return None
     palabras = len(pregunta.split())
@@ -134,7 +139,7 @@ def frase_puente(pregunta: str) -> str | None:
     if RE_SOCIAL.match(pregunta) and palabras <= MAX_PALABRAS_SOCIAL and "?" not in pregunta:
         return None
     if malestar(pregunta):
-        return None
+        return FRASE_PUENTE_MALESTAR
     return random.choice(FRASES_PUENTE)
 
 

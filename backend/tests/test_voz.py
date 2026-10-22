@@ -151,7 +151,7 @@ def test_el_prompt_sabe_que_ya_hay_frase_puente(cliente, guardrail, recuperador,
     _conversar(cliente, _usuario("¿Puedo ir con alguien cuando declare?"))
     sistema = llm_voz[1][0]["mensajes"][0]["content"]
     assert "La voz ya ha dicho una frase corta" in sistema
-    assert not any(f in sistema for f in orquestador.FRASES_PUENTE)  # si se cita, el modelo la repite
+    assert not any(f in sistema for f in (*orquestador.FRASES_PUENTE, orquestador.FRASE_PUENTE_MALESTAR))  # si se cita, el modelo la repite
 
 
 def test_prompt_sin_puente_ni_en_voz_ni_en_texto():
@@ -172,6 +172,9 @@ def test_se_quita_la_muletilla_repetida(cliente, guardrail, recuperador, llm_voz
         ("Te cuento: primero vas al juzgado. ", "Primero vas al juzgado. "),
         ("Vale la pena preguntarlo. ", "Vale la pena preguntarlo. "),
         ("Sí, puedes ir. ", "Sí, puedes ir. "),
+        ("Gracias por contármelo, es importante que lo hables. ", "Es importante que lo hables. "),
+        ("Gracias por confiarme lo que pasó. ", ""),
+        ("Gracias a la ley puedes ir con alguien. ", "Gracias a la ley puedes ir con alguien. "),
     ],
 )
 def test_sin_eco_del_puente(frase, esperado):
@@ -196,9 +199,17 @@ def test_frase_puente_en_preguntas(pregunta):
 
 
 @pytest.mark.parametrize("pregunta", ["tengo miedo de ver al acusado", "lo estoy pasando fatal con lo del juicio", "me acosan en clase, ¿qué hago?", "estoy muy agobiada"])
-def test_sin_frase_puente_con_malestar(pregunta):
-    """Un «Vale, te lo explico.» delante de «tengo miedo...» suena a no haber escuchado."""
-    assert orquestador.frase_puente(pregunta) is None
+def test_con_malestar_la_frase_puente_es_empatica(pregunta):
+    """Un «Vale, te lo explico.» delante de «tengo miedo...» suena a no haber escuchado; pero sin un primer trozo rápido,
+    ElevenLabs podría pasar a su LLM de respaldo (sin nuestras capas) si el nuestro tarda más de 4 s."""
+    assert orquestador.frase_puente(pregunta) == orquestador.FRASE_PUENTE_MALESTAR
+
+
+def test_no_se_repite_el_agradecimiento_detras_de_la_frase_puente(cliente, guardrail, recuperador, llm_voz):
+    llm_voz[0]["trozos"] = ["Gracias por confiarme lo que pasó. ", "Puedes pedir que te acompañe alguien."]
+    texto = _texto(_conversar(cliente, _usuario("ayer me pegaron en el baño, ¿puedo ir con alguien a declarar?")))
+    assert texto.startswith("Gracias por contármelo. Puedes pedir que te acompañe alguien.")
+    assert texto.count("Gracias") == 1
 
 
 def test_cabeceras_para_que_ningun_proxy_acumule_el_sse(cliente, guardrail, recuperador, llm_voz):
@@ -294,7 +305,9 @@ def test_crisis_sin_nombrar_la_muerte_es_plantilla_sin_frase_puente(cliente, gua
 def test_voz_con_malestar_termina_recordando_anar(cliente, guardrail, recuperador, llm_voz):
     llm_voz[0]["trozos"] = ["La ley prevé medidas para protegerte. ", "El juez las decide."]
     texto = _texto(_conversar(cliente, _usuario("tengo mucho miedo de que me vuelvan a hacer bullying")))
-    assert texto == "La ley prevé medidas para protegerte. El juez las decide. " + orquestador.RECORDATORIO_ANAR["voz"] + " "
+    assert texto == (
+        "Gracias por contármelo. La ley prevé medidas para protegerte. El juez las decide. " + orquestador.RECORDATORIO_ANAR["voz"] + " "
+    )
 
 
 def test_voz_con_malestar_no_repite_anar(cliente, guardrail, recuperador, llm_voz):
