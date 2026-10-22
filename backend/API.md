@@ -122,9 +122,19 @@ Lo comprobamos el 22/10/2026 con Spaces públicos de httpbin (su `/ip` devuelve 
 
 El proxy de HF contesta él mismo al preflight (`OPTIONS`) y añade `Access-Control-Allow-Origin` con **cualquier** origen cuando la app no lo pone (comprobado). Si la app sí lo pone, el proxy no lo duplica. Por eso `CORSMiddleware` no basta para impedir que otra web use la API desde el navegador, y `limites.py` responde **403** si la petición trae un `Origin` no permitido. Las peticiones sin `Origin` (la APK, curl) pasan: contra los scripts protegen los límites. Por defecto se permiten `https://aliassdev.github.io` y localhost en cualquier puerto.
 
+## Custom LLM de la voz (`POST /v1/chat/completions`)
+
+El formato no cambia (Chat Completions de OpenAI en streaming, `data: {...}` y `data: [DONE]`). Lo que dice la voz:
+
+- Si el último turno de la conversación no es del usuario (ElevenLabs le da la palabra al agente sin mensaje nuevo), el stream sale vacío y correcto: el agente no dice nada. Antes decía la respuesta segura y, si el mensaje anterior del usuario era de crisis, repetía la plantilla. Los mensajes de sistema no cuentan como turno.
+- Si el guardrail dice «normal», el primer trozo es una frase puente («Vale, te lo explico.» o «Vale, te cuento.»), que sale en milisegundos, antes de reformular, buscar y generar. El prompt avisa al LLM y, si aun así abre con una muletilla, se quita. No sale en crisis, hechos ni fuera de ámbito, ni con saludos o agradecimientos cortos. Se desactiva con `VOZ_FRASE_PUENTE=false`.
+- Sin corchetes: las etiquetas de tono de las plantillas (`[slow]`) y cualquier cosa entre corchetes de lo generado se quitan, porque `eleven_flash_v2_5` las leería (`TTS_ETIQUETAS=true` las deja).
+- Si el LLM falla o se pasa del plazo (`LLM_PLAZO_VOZ_S`, 7 s contando el respaldo), la respuesta segura. Detrás de la frase puente empieza por «Perdona, …».
+- Cabeceras `Cache-Control: no-cache` y `X-Accel-Buffering: no`, para que ningún proxy acumule el SSE.
+
 ## Privacidad de los logs
 
 - Nunca va al log el texto del usuario. Tampoco la consulta jurídica reformulada (es una paráfrasis de la pregunta): solo si la hay.
 - Tampoco van la API key, el `agent_id` ni el token. httpx queda en WARNING porque registra las URL y la del token lleva el `agent_id`.
-- De los errores del proveedor solo se escribe el principio (`LLM 429`): en modo JSON, Groq devuelve en el cuerpo lo que había generado el modelo.
+- De los errores del proveedor solo se escribe el principio (`LLM 429`): en modo JSON, Groq devuelve en el cuerpo lo que había generado el modelo. Los fallos del LLM salen como `LLM principal (router.huggingface.co) ha fallado: LLM 429`, con el host y nunca la clave.
 - Las líneas de acceso de uvicorn salen sin IP (filtro en `app/main.py`). El Dockerfile, además, arranca con `--no-access-log`.

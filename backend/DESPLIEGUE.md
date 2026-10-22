@@ -51,6 +51,7 @@ hf auth login   # una vez, con el token de escritura
 - `--subir-secretos` lee `backend/.env` y sube como **secretos** `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `GROQ_API_KEY` (o `LLM_API_KEY`) y `CUSTOM_LLM_SECRET`. Como **variables** públicas sube `ALLOWED_ORIGINS`, `DEBUG_LLM_REQUESTS=false` y los límites de `app/config.py` (`LIMITE_*` y `PROXIES_DE_CONFIANZA`), con el valor de `.env` o el de `config.py`. Se suben antes que el código, para que la primera build ya los tenga.
 - Sin `--subir-secretos`, ponlos a mano en Settings → Variables and secrets. Las claves van siempre como secretos, nunca como variables (las variables son públicas).
 - La subida reconstruye la imagen: unos 10 minutos (torch para CPU y el modelo multilingual-e5-base, 1,1 GB, se descargan durante la build). La imagen ocupa unos 2,9 GB sin comprimir. Logs: `https://huggingface.co/spaces/aliassdev/tuturno-api?logs=build`.
+- Cada build instala las mismas versiones: `pip install -r requirements.txt -c constraints.txt`. `backend/constraints.txt` fija con `==` todo lo que instala `requirements.txt` (también las dependencias de las dependencias) con las versiones probadas (Python 3.12, Linux). Si cambias `requirements.txt`, regenéralo como dice su cabecera.
 - Para actualizar el backend más adelante, repite este comando (sin `--subir-secretos` si no han cambiado). El Space queda igual que la carpeta.
 
 ## 4. Comprobar el Space
@@ -100,6 +101,27 @@ curl -s https://aliassdev-tuturno-api.hf.space/api/session/token | python -c "im
 - **Sueño.** En CPU basic (gratis) el Space se duerme tras 48 horas sin visitas y se despierta con la primera petición, que tarda uno o dos minutos. Antes de la demo, abre `/api/health` unos minutos antes. Para los días del evento: `--hardware cpu-upgrade` (8 vCPU, 0,03 $/hora, no se duerme) y después vuelve a `cpu-basic` desde Settings.
 - **Reinicios.** Al cambiar secretos o variables en Settings, reinicia el Space (Settings → Restart) si no lo hace solo. El disco del contenedor no persiste, pero el backend no guarda nada.
 - **Límites.** Si aparecen respuestas 429, súbelos en Settings → Variables (`LIMITE_*`) sin reconstruir la imagen: solo hace falta reiniciar.
+- **LLM de respaldo.** Si el LLM principal da 429, 5xx, timeout o fallo de conexión, se prueba el respaldo, y durante 30 s va primero (así una caída no cuesta el timeout en cada llamada). Sin cambiar de clave, el mismo router con otro proveedor: variables `LLM_RESPALDO_BASE_URL=https://router.huggingface.co/v1` y `LLM_RESPALDO_MODELO=openai/gpt-oss-120b:groq` (sin `LLM_RESPALDO_API_KEY` se usa `LLM_API_KEY`, porque la URL es la misma). Para cubrir también una caída del router: Groq directo, con `LLM_RESPALDO_API_KEY` como **secreto**.
+- **Plazos.** Contando el respaldo: `LLM_PLAZO_VOZ_S=7` hasta el primer texto de la voz, `LLM_PLAZO_TEXTO_S=14` para la respuesta del modo texto (la app espera 20 s) y `REFORMULAR_PLAZO_S=2` para la reformulación (si tarda más, se busca solo con la pregunta). Pasado el plazo, la voz dice la respuesta segura y el modo texto devuelve 503; nunca se queda callado.
+- **Frase puente.** Con el guardrail en «normal», la voz empieza al instante con «Vale, te lo explico.» o «Vale, te cuento.» mientras se reformula, se busca y se genera (`VOZ_FRASE_PUENTE=false` la quita). No sale en crisis, hechos ni fuera de ámbito, ni con un saludo o un «gracias».
+- **ElevenLabs y su LLM de respaldo.** El agente TuTurno tiene `backup_llm_config: default` y `cascade_timeout_seconds: 4`: si el Custom LLM falla o no manda texto en 4 s, ElevenLabs puede contestar con su propio LLM, **sin guardrail, sin RAG y sin verificación**. La frase puente hace que el primer texto llegue en milisegundos, pero si el Space está caído o reiniciándose no hay frase que valga. Recomendado: `backup_llm_config: {"preference": "disabled"}` en el agente TuTurno (nunca en otro agente de la cuenta).
+- **Etiquetas de voz.** La voz `eleven_flash_v2_5` no entiende etiquetas como `[slow]` y las leería: con `TTS_ETIQUETAS=false` (por defecto) se quitan de las plantillas y de lo generado. Ponlo a `true` solo con una voz que las interprete (`eleven_v3`).
+
+### Latencia medida (22/10/2026)
+
+En local, con el modelo real por el router de Hugging Face (`openai/gpt-oss-120b`, que sirve Cerebras; la reformulación con `openai/gpt-oss-20b`, que sirve Groq) y el índice de 12 normas: 8 preguntas de los casos de Lucía, Sergio y Sara, 3 rondas (24 medidas por fila). Voz: `/v1/chat/completions` en streaming, con el secreto; texto: `/api/agent/ask`.
+
+| | Antes (sin `include_reasoning`) | Ahora | Ahora, reformulando con el 120b |
+|---|---|---|---|
+| Voz: primer texto | p50 1,32 s · máx 2,37 s | p50 0,001 s · máx 0,005 s (frase puente) | p50 0,002 s · máx 0,007 s |
+| Voz: primera frase de la respuesta | p50 1,32 s · máx 2,37 s | p50 1,03 s · máx 1,47 s | p50 0,73 s · máx 1,03 s |
+| Texto: respuesta completa | p50 1,43 s · máx 1,84 s | p50 1,16 s · máx 1,72 s | p50 0,94 s · máx 1,26 s |
+
+- Tal cual estaba, con el router no funcionaba: Cerebras rechaza `include_reasoning` con un 400, así que la voz decía siempre la respuesta segura y el modo texto devolvía 503. Ahora ese parámetro solo va a Groq.
+- Lo que más pesa son las dos llamadas al LLM (reformulación y respuesta). En el router, el 120b (Cerebras) contesta antes que el 20b (Groq): **recomendado `LLM_MODELO_REFORMULAR=openai/gpt-oss-120b`** (−0,3 s en voz y texto).
+- Con el principal colgado y el respaldo configurado, solo la primera pregunta tarda (4,5 s hasta la primera frase); las siguientes van directas al respaldo (p50 1,35 s). Sin respaldo, la respuesta segura llega a los 6 s.
+- 24 peticiones a la vez (12 de voz y 12 de texto): ningún fallo; la frase puente sale en 0,1 s como mucho, la primera frase de la respuesta en p50 2,05 s (máx. 2,35 s) y el texto en p50 2,06 s (máx. 2,54 s).
+- Ganancias en el código: conexión persistente con el proveedor (~0,1 s por llamada), reformulación en paralelo con la búsqueda de la pregunta, OpenBLAS con un hilo y torch con las CPU reales del contenedor (la búsqueda con las dos consultas bajó de 270 ms a 50 ms en una máquina de 32 núcleos) y más hilos para atender a la vez (`HILOS_MAX=100`).
 
 ## 8. Problemas frecuentes
 
@@ -110,6 +132,8 @@ curl -s https://aliassdev-tuturno-api.hf.space/api/session/token | python -c "im
 | La web recibe 403 | Su dominio no está en `ALLOWED_ORIGINS` |
 | `/api/session/token` devuelve 503 | Faltan `ELEVENLABS_API_KEY` o `ELEVENLABS_AGENT_ID` en los secretos del Space |
 | La primera respuesta tarda | El Space estaba dormido (sección 7) |
+| La voz contesta siempre «Ahora mismo no he podido responderte» | El LLM falla: en los logs, `LLM principal (...) ha fallado: LLM 401` (clave), `LLM 400` (modelo o parámetro) o `sin respuesta` (red). Configura el respaldo (sección 7) |
+| La voz lee «slow» o lo que va entre corchetes | `TTS_ETIQUETAS=true` con una voz que no entiende etiquetas |
 
 ## 9. Lo que nunca hay que hacer
 

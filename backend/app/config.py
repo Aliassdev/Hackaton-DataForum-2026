@@ -22,6 +22,10 @@ def _int(name: str, default: int) -> int:
     return int(os.getenv(name, str(default)).strip() or default)
 
 
+def _float(name: str, default: float) -> float:
+    return float(os.getenv(name, str(default)).strip() or default)
+
+
 @dataclass(frozen=True)
 class Settings:
     elevenlabs_api_key: str = os.getenv("ELEVENLABS_API_KEY", "")
@@ -48,6 +52,31 @@ class Settings:
     llm_modelo_reformular: str = os.getenv("LLM_MODELO_REFORMULAR", "openai/gpt-oss-20b")
     # Juez de «Dilo con tus palabras» (POST /api/learn/grade). Por defecto, el mismo que genera las respuestas.
     llm_modelo_evaluar: str = os.getenv("LLM_MODELO_EVALUAR") or os.getenv("LLM_MODELO", "openai/gpt-oss-120b")
+    # Respaldo opcional (app/llm/client.py): si el principal da 429, 5xx, timeout o fallo de conexión, se prueba este
+    # antes de rendirse. Por ejemplo, Groq (https://api.groq.com/openai/v1) o el mismo router de Hugging Face con
+    # otro proveedor (LLM_RESPALDO_MODELO=openai/gpt-oss-120b:groq). Sin LLM_RESPALDO_API_KEY se usa LLM_API_KEY,
+    # pero solo si la URL es la misma que la del principal (la clave nunca va a otro servidor).
+    llm_respaldo_base_url: str = os.getenv("LLM_RESPALDO_BASE_URL", "").strip().rstrip("/")
+    llm_respaldo_api_key: str = os.getenv("LLM_RESPALDO_API_KEY", "").strip()
+    llm_respaldo_modelo: str = os.getenv("LLM_RESPALDO_MODELO", "").strip()
+    # Plazos en segundos, contando el respaldo, para que un fallo del proveedor no deje al agente callado.
+    # Voz: hasta el primer texto de la respuesta (la frase puente sale antes, en milisegundos). Texto: la respuesta
+    # entera (la app corta a los 20 s). Reformulación: si tarda más, se busca solo con la pregunta original.
+    llm_plazo_voz_s: float = _float("LLM_PLAZO_VOZ_S", 7.0)
+    llm_plazo_texto_s: float = _float("LLM_PLAZO_TEXTO_S", 14.0)
+    reformular_plazo_s: float = _float("REFORMULAR_PLAZO_S", 2.0)
+
+    # Voz (Custom LLM de ElevenLabs).
+    # Etiquetas de tono entre corchetes ([slow]) de content/seguridad.json: la voz eleven_flash_v2_5 no las entiende y las
+    # leería en alto, así que con false (por defecto) se quitan de las plantillas y de lo generado. true solo con una
+    # voz que las interprete (eleven_v3).
+    tts_etiquetas: bool = _bool("TTS_ETIQUETAS")
+    # Frase puente: si el guardrail dice «normal», se manda enseguida un primer trozo corto y neutro («Vale, te lo
+    # explico.») mientras corren la reformulación, el RAG y el LLM. Nunca en crisis, hechos ni fuera de ámbito.
+    voz_frase_puente: bool = _bool("VOZ_FRASE_PUENTE", True)
+    # Hilos para los endpoints síncronos y el streaming (anyio usa 40 por defecto). Cada respuesta en curso ocupa uno
+    # mientras espera al LLM: con el público de la demo a la vez, 40 se pueden quedar cortos.
+    hilos_max: int = _int("HILOS_MAX", 100)
 
     # Límites de peticiones (app/api/limites.py) para /api/session/*, /api/agent/ask y /api/learn/grade.
     # Por IP: ventana deslizante en memoria (Hugging Face corre un solo contenedor). Generosos porque el jurado

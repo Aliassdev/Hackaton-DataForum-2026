@@ -33,7 +33,7 @@ class ClasificadorEmbeddingsLR:
         self.clases = list(self.lr.classes_)
 
     def probabilidades(self, textos: list[str]) -> list[dict[str, float]]:
-        emb = self.encoder.encode([f"query: {t}" for t in textos], normalize_embeddings=True)
+        emb = self.encoder.encode([f"query: {t}" for t in textos], normalize_embeddings=True, show_progress_bar=False)
         return [dict(zip(self.clases, map(float, fila))) for fila in self.lr.predict_proba(emb)]
 
 

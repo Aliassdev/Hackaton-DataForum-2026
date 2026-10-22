@@ -31,3 +31,9 @@ def test_sustituye_prediccion():
 def test_numeros_en_letras_y_sin_markdown():
     assert _verificar("**Tienes** que ir si tienes 14 años.") == "Tienes que ir si tienes catorce años."
     assert numero_a_letras(900) == "novecientos" and numero_a_letras(116) == "ciento dieciséis" and numero_a_letras(21) == "veintiuno"
+
+
+def test_no_parte_la_frase_detras_de_art():
+    """«art. 22» no es un final de frase: si se partiera, la cita entre corchetes se quedaría a medias y se leería."""
+    assert "".join(verificar_stream(["Puedes ir con alguien [LORPM ", "art. 22]. ", "Te lo explican antes."])) == "Puedes ir con alguien. Te lo explican antes. "
+    assert "".join(verificar_stream(["Lo dice el art. 3 de la ley. Fin."])) == "Lo dice el art. tres de la ley. Fin. "

@@ -5,10 +5,17 @@
 3. Fusión RRF (k=60): combina rankings sin tener que calibrar puntuaciones de escalas distintas.
 4. Refuerzo por perfil: multiplica según la ley (content/rag_perfiles.json).
 5. Agregación por artículo: se devuelven k artículos distintos con su mejor fragmento.
+
+Hilos: numpy y scipy (OpenBLAS) arrancan un hilo por núcleo que se queda girando un rato después de cada producto
+y le quita la CPU al codificador de torch. Con 32 núcleos, la parte densa de una consulta pasaba de unos 26 ms a
+130 ms. Nuestros productos son pequeños (3841 × 768), así que OpenBLAS va con un hilo, y torch con tantos como CPU
+tenga de verdad el contenedor (en un Space, la cuota del cgroup, no los núcleos de la máquina).
 """
 
 import json
 import logging
+import math
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -38,6 +45,44 @@ def texto_denso(t: dict) -> str:
 
 def texto_bm25(t: dict) -> str:
     return f"{t['cabecera']} {t['texto']}"
+
+
+def _cuota_cgroup(raiz: Path) -> float | None:
+    """CPU de la cuota del contenedor, o None si no la hay. cgroup v2: cpu.max («200000 100000» = 2 CPU; «max» = sin
+    cuota). cgroup v1: cpu/cpu.cfs_quota_us (-1 = sin cuota) y cpu/cpu.cfs_period_us."""
+    try:
+        cuota, periodo = (raiz / "cpu.max").read_text().split()[:2]
+    except (OSError, ValueError):
+        try:
+            cuota = (raiz / "cpu/cpu.cfs_quota_us").read_text().strip()
+            periodo = (raiz / "cpu/cpu.cfs_period_us").read_text().strip()
+        except OSError:
+            return None
+    try:
+        return int(cuota) / int(periodo) if cuota not in ("max", "-1") and int(periodo) > 0 else None
+    except ValueError:
+        return None
+
+
+def cpus_disponibles(raiz_cgroup: Path = Path("/sys/fs/cgroup")) -> int:
+    """CPU que puede usar el proceso: las de su afinidad, limitadas por la cuota del contenedor si la hay."""
+    try:
+        cpus = len(os.sched_getaffinity(0))
+    except AttributeError:  # Windows y macOS no tienen afinidad
+        cpus = os.cpu_count() or 1
+    cuota = _cuota_cgroup(raiz_cgroup)
+    return max(1, min(cpus, math.ceil(cuota))) if cuota else cpus
+
+
+def ajustar_hilos() -> int:
+    """OpenBLAS con un hilo y torch con las CPU reales (ver el docstring del módulo). Devuelve los hilos de torch."""
+    import torch
+    from threadpoolctl import threadpool_limits
+
+    threadpool_limits(limits=1, user_api="blas")
+    hilos = min(torch.get_num_threads(), cpus_disponibles())
+    torch.set_num_threads(hilos)
+    return hilos
 
 
 def tokenizar(textos: list[str]):
@@ -70,11 +115,13 @@ class Recuperador:
         self.encoder = SentenceTransformer(ENCODER)
         self.perfiles = json.loads(perfiles_path.read_text(encoding="utf-8"))
         self.habla_de_menores = [bool(RE_MENORES.search(t["texto"])) for t in self.trozos]
-        log.info("RAG cargado: %d trozos (%d hablan de menores)", len(self.trozos), sum(self.habla_de_menores))
+        hilos = ajustar_hilos()
+        self.rankings("calentamiento")  # la primera codificación es más lenta: que no le toque a nadie
+        log.info("RAG cargado: %d trozos (%d hablan de menores) · torch con %d hilos", len(self.trozos), sum(self.habla_de_menores), hilos)
 
     # --- rankings individuales (índices de trozo, de mejor a peor) ---
     def _denso(self, pregunta: str) -> list[int]:
-        q = self.encoder.encode([f"query: {pregunta}"], normalize_embeddings=True)[0]
+        q = self.encoder.encode([f"query: {pregunta}"], normalize_embeddings=True, show_progress_bar=False)[0]
         return list(np.argsort(-(self.emb @ q))[:CANDIDATOS])
 
     def _bm25(self, pregunta: str) -> list[int]:
@@ -89,19 +136,28 @@ class Recuperador:
             peso *= p["rol"].get(perfil.get("rol") or "", {}).get(ley, 1.0)
         return peso
 
+    def rankings(self, consulta: str, modo: str = "hibrido_perfil") -> list[list[int]]:
+        """Rankings de una consulta (BM25 y denso, o solo uno según el modo), en el orden en que se fusionan."""
+        funciones = {"bm25": [self._bm25], "denso": [self._denso]}.get(modo, [self._bm25, self._denso])
+        return [f(consulta) for f in funciones]
+
     def buscar(
         self, pregunta: str, perfil: dict | None = None, k: int = 5, modo: str = "hibrido_perfil",
         consulta_juridica: str | None = None, peso_consulta: float = PESO_CONSULTA,
+        rankings_pregunta: list[list[int]] | None = None,
     ) -> list[Fragmento]:
         """consulta_juridica: reformulación de la pregunta en lenguaje de la ley (la genera el LLM).
         Si llega, se busca con las dos consultas y se fusionan los cuatro rankings con RRF ponderado:
         la consulta jurídica pesa más (habla el idioma de la ley) y la pregunta original queda como
-        red de seguridad por si la reformulación sale mal."""
+        red de seguridad por si la reformulación sale mal.
+        rankings_pregunta: los de la pregunta original ya calculados con rankings(pregunta, modo), mientras el LLM
+        reformulaba (app/agent/orquestador.py). El resultado es el mismo que sin ellos."""
         inicio = time.perf_counter()
-        funciones = {"bm25": [self._bm25], "denso": [self._denso]}.get(modo, [self._bm25, self._denso])
-        consultas = [(pregunta, 1.0)] + ([(consulta_juridica, peso_consulta)] if consulta_juridica else [])
+        listas = [(r, 1.0) for r in (rankings_pregunta if rankings_pregunta is not None else self.rankings(pregunta, modo))]
+        if consulta_juridica:
+            listas += [(r, peso_consulta) for r in self.rankings(consulta_juridica, modo)]
         puntos: dict[int, float] = {}
-        for ranking, peso in ((f(c), w) for c, w in consultas for f in funciones):
+        for ranking, peso in listas:
             for pos, i in enumerate(ranking):
                 puntos[int(i)] = puntos.get(int(i), 0.0) + peso / (K_RRF + pos + 1)
         if modo in ("hibrido_perfil", "completo"):

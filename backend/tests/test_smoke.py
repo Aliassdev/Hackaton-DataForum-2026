@@ -49,3 +49,20 @@ def test_crisis_responde_plantilla_sin_llm():
         if l.startswith("data: {")
     )
     assert "ANAR" in texto
+
+
+def test_al_arrancar_se_suben_los_hilos_de_anyio(monkeypatch):
+    """Cada respuesta en streaming ocupa un hilo mientras espera al LLM: con los 40 de serie, la demo haría cola."""
+    import anyio
+    from anyio import to_thread
+
+    from app import main
+
+    for carga in ("get_guardrail", "get_recuperador", "conceptos"):
+        monkeypatch.setattr(main, carga, lambda: None)
+
+    async def arrancar() -> float:
+        async with main.lifespan(main.app):
+            return to_thread.current_default_thread_limiter().total_tokens
+
+    assert anyio.run(arrancar) == settings.hilos_max > 40

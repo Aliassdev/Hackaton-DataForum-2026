@@ -6,7 +6,7 @@ Uso, desde backend/ con el venv del backend:
     .venv/bin/python scripts/desplegar_hf.py <usuario>/<space> --subir-secretos --origenes https://<usuario>.github.io
 
 1. Monta artifacts/space/ con lo que espera el Dockerfile: Dockerfile, .dockerignore, README.md del Space
-   (cabecera YAML con sdk: docker y app_port: 7860), backend/ (app/ y requirements.txt), content/ y el
+   (cabecera YAML con sdk: docker y app_port: 7860), backend/ (app/, requirements.txt y constraints.txt), content/ y el
    índice del RAG (artifacts/index, más artifacts/models/guardrail si existe). Nunca copia .env.
 2. Crea el Space si no existe (SDK docker, visibilidad "protected" por defecto: código privado y API pública)
    y sube la carpeta en un commit. Cada subida reconstruye la imagen (unos 10 minutos).
@@ -37,12 +37,15 @@ GUARDRAIL = RAIZ / "artifacts/models/guardrail"
 FICHEROS_INDICE = ("trozos.jsonl", "emb.npy", "bm25")
 
 # Secretos: privados en el Space y nunca en la imagen. LLM_API_KEY solo si se usa en vez de GROQ_API_KEY.
-SECRETOS = ("ELEVENLABS_API_KEY", "ELEVENLABS_AGENT_ID", "GROQ_API_KEY", "LLM_API_KEY", "CUSTOM_LLM_SECRET")
+# LLM_RESPALDO_API_KEY solo si el LLM de respaldo está en otro proveedor (app/config.py).
+SECRETOS = ("ELEVENLABS_API_KEY", "ELEVENLABS_AGENT_ID", "GROQ_API_KEY", "LLM_API_KEY", "CUSTOM_LLM_SECRET", "LLM_RESPALDO_API_KEY")
 # Variables públicas con valor fijo en producción
 VARIABLES_FIJAS = {"DEBUG_LLM_REQUESTS": "false"}
 # Configuración que solo se sube si está en backend/.env (si no, vale el valor por defecto de config.py)
 VARIABLES_OPCIONALES = (
     "LLM_BASE_URL", "LLM_MODELO", "LLM_MODELO_REFORMULAR", "LLM_MODELO_EVALUAR",
+    "LLM_RESPALDO_BASE_URL", "LLM_RESPALDO_MODELO", "LLM_PLAZO_VOZ_S", "LLM_PLAZO_TEXTO_S", "REFORMULAR_PLAZO_S",
+    "VOZ_FRASE_PUENTE", "TTS_ETIQUETAS", "HILOS_MAX",
     "GUARDRAIL_UMBRAL_CRISIS", "GUARDRAIL_UMBRAL_OTROS", "ALLOWED_ORIGIN_REGEX",
 )
 # Límites de peticiones: se leen de app/config.py (nombre y valor por defecto) para seguir sus cambios
@@ -77,7 +80,7 @@ Las claves van en Settings → Variables and secrets, nunca en los ficheros.
 
 
 def comprobar_entrada() -> None:
-    faltan = [str(p.relative_to(RAIZ)) for p in (RAIZ / "Dockerfile", BACKEND / "requirements.txt", RAIZ / "content")
+    faltan = [str(p.relative_to(RAIZ)) for p in (RAIZ / "Dockerfile", BACKEND / "requirements.txt", BACKEND / "constraints.txt", RAIZ / "content")
               if not p.exists()]
     faltan += [f"artifacts/index/{f}" for f in FICHEROS_INDICE if not (INDICE / f).exists()]
     if faltan:
@@ -103,6 +106,7 @@ def montar_carpeta(carpeta: Path) -> None:
     (carpeta / "backend").mkdir()
     shutil.copytree(BACKEND / "app", carpeta / "backend/app", ignore=_sin_secretos)
     shutil.copy2(BACKEND / "requirements.txt", carpeta / "backend/requirements.txt")
+    shutil.copy2(BACKEND / "constraints.txt", carpeta / "backend/constraints.txt")
     shutil.copytree(RAIZ / "content", carpeta / "content", ignore=_sin_secretos)
 
     (carpeta / "artifacts/index").mkdir(parents=True)
@@ -158,7 +162,7 @@ def explicar_configuracion(env: dict[str, str | None], origenes: str | None) -> 
     print("  Secretos (privados; el valor se lee del .env y no se imprime):")
     for clave in SECRETOS:
         estado = "en .env" if env.get(clave) else "falta en .env"
-        nota = " (solo si no usas GROQ_API_KEY)" if clave == "LLM_API_KEY" else ""
+        nota = {"LLM_API_KEY": " (solo si no usas GROQ_API_KEY)", "LLM_RESPALDO_API_KEY": " (opcional: LLM de respaldo en otro proveedor)"}.get(clave, "")
         print(f"    - {clave}: {estado}{nota}")
     print("  Variables (públicas):")
     for clave, valor in variables(env, origenes).items():

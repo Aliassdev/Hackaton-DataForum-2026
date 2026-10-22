@@ -254,3 +254,8 @@ def test_normalizar_perfil_valores_de_la_app():
 def test_extraer_perfil_de_la_voz_acepta_los_valores_de_la_app():
     system = "Perfil: edad=no_lo_se; procedimiento=familia; rol=escuchado_familia; fase=no_lo_se."
     assert extraer_perfil(system) == {"procedimiento": "familia", "rol": "escuchado"}
+
+
+def test_separar_fuentes_no_deja_espacios_antes_del_punto():
+    assert prompts.separar_fuentes("Sin ver al acusado [LECrim art. 707] . Además, sí.")[0] == "Sin ver al acusado. Además, sí."
+    assert prompts.separar_fuentes("Llama al 900 20 20 10. ¿Vale?")[0] == "Llama al 900 20 20 10. ¿Vale?"

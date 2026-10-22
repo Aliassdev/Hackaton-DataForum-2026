@@ -16,6 +16,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from app.agent import clasificador
+from app.agent.verificacion import sin_etiquetas
 from app.config import settings
 
 log = logging.getLogger("tuturno.safety")
@@ -86,6 +87,13 @@ def _plantillas() -> dict[str, list[str]]:
 
 def plantilla(categoria: str) -> str:
     return random.choice(_plantillas()[categoria])
+
+
+def plantilla_voz(categoria: str) -> str:
+    """Para el Custom LLM. Sin las etiquetas de tono ([slow]) salvo con TTS_ETIQUETAS=true: la voz
+    eleven_flash_v2_5 no las entiende y las leería en alto."""
+    texto = plantilla(categoria)
+    return texto if settings.tts_etiquetas else sin_etiquetas(texto)
 
 
 # Las plantillas están escritas para la voz: teléfonos con letras y etiquetas de tono ([slow]) que no se leen.

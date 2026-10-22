@@ -10,6 +10,7 @@ from app.agent.safety import Decision, Guardrail
 from app.api import agent as agent_api
 from app.api import learn as learn_api
 from app.api import limites
+from app.api import llm as llm_api
 from app.config import settings
 from app.llm import client as cliente_llm
 from app.main import app
@@ -38,9 +39,17 @@ class RecuperadorFalso:
     def __init__(self, fragmentos: list[Fragmento]) -> None:
         self.fragmentos = fragmentos
         self.llamadas: list[dict] = []
+        self.rankings_pedidos: list[str] = []
 
-    def buscar(self, pregunta: str, perfil: dict | None = None, k: int = 5, consulta_juridica: str | None = None, **_: object) -> list[Fragmento]:
-        self.llamadas.append({"pregunta": pregunta, "perfil": perfil, "consulta": consulta_juridica})
+    def rankings(self, consulta: str, modo: str = "hibrido_perfil") -> list[list[int]]:
+        self.rankings_pedidos.append(consulta)
+        return [[0, 1, 2]]
+
+    def buscar(
+        self, pregunta: str, perfil: dict | None = None, k: int = 5, consulta_juridica: str | None = None,
+        rankings_pregunta: list[list[int]] | None = None, **_: object,
+    ) -> list[Fragmento]:
+        self.llamadas.append({"pregunta": pregunta, "perfil": perfil, "consulta": consulta_juridica, "rankings": rankings_pregunta})
         return self.fragmentos[:k]
 
 
@@ -52,7 +61,9 @@ class LLMFalso:
         self.respuestas: list[str | Exception] = []
         self.llamadas: list[dict] = []
 
-    def completar(self, mensajes: list[dict], modelo: str, max_tokens: int = 250, temperatura: float = 0.0, json_obj: bool = False) -> str:
+    def completar(
+        self, mensajes: list[dict], modelo: str, max_tokens: int = 250, temperatura: float = 0.0, json_obj: bool = False, **_: object,
+    ) -> str:
         if "Consulta jurídica:" in mensajes[-1]["content"]:
             return "consulta jurídica de prueba"
         self.llamadas.append({"mensajes": mensajes, "modelo": modelo, "json_obj": json_obj})
@@ -89,7 +100,7 @@ def reglas() -> Guardrail:
 @pytest.fixture
 def guardrail(monkeypatch: pytest.MonkeyPatch, reglas: Guardrail) -> Guardrail:
     """Solo reglas, sin el modelo BETO: el resultado no depende de lo que haya en artifacts/."""
-    for modulo in (agent_api, learn_api):
+    for modulo in (agent_api, learn_api, llm_api):
         monkeypatch.setattr(modulo, "get_guardrail", lambda: reglas)
     return reglas
 
@@ -97,7 +108,7 @@ def guardrail(monkeypatch: pytest.MonkeyPatch, reglas: Guardrail) -> Guardrail:
 @pytest.fixture
 def fijar_guardrail(monkeypatch: pytest.MonkeyPatch):
     def fijar(categoria: str) -> None:
-        for modulo in (agent_api, learn_api):
+        for modulo in (agent_api, learn_api, llm_api):
             monkeypatch.setattr(modulo, "get_guardrail", lambda: GuardrailFijo(categoria))
 
     return fijar

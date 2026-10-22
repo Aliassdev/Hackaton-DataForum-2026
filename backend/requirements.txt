@@ -1,3 +1,5 @@
+# Versiones exactas que funcionan (las usa el Dockerfile): constraints.txt.
+#   pip install -r requirements.txt -c constraints.txt
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pydantic>=2.7
@@ -14,6 +16,7 @@ sentence-transformers
 scikit-learn
 joblib
 numpy
+threadpoolctl
 
 # RAG (capa 2): BM25 con lematizador español e ingesta de PDFs
 bm25s

@@ -27,9 +27,10 @@ ARG TORCH_VERSION=2.14.1
 RUN python -m venv "$VIRTUAL_ENV" \
  && pip install "torch==${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/cpu
 
-# 2) El resto de dependencias. torch ya está instalado y cumple el requisito, así que pip no lo cambia.
-COPY --chown=user backend/requirements.txt backend/requirements.txt
-RUN pip install -r backend/requirements.txt
+# 2) El resto de dependencias, con las versiones exactas de backend/constraints.txt para que cada build instale lo
+#    mismo. torch ya está instalado y cumple el requisito, así que pip no lo cambia.
+COPY --chown=user backend/requirements.txt backend/constraints.txt backend/
+RUN pip install -r backend/requirements.txt -c backend/constraints.txt
 
 # 3) Modelo de embeddings del RAG descargado en la build, para que no se descargue en cada arranque.
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-base')"

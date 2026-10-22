@@ -60,12 +60,16 @@ CÓMO HABLAR
 - Tu respuesta se va a leer en voz alta: nada de listas, viñetas, asteriscos ni símbolos. Escribe los números con letras.
 - Como máximo 70 palabras. Ve al grano. Puedes terminar con una pregunta corta para seguir ayudando.
 - Tono cálido y tranquilo. Nunca juzgues.
-- No sabes si es chico o chica: no uses palabras con género sobre la persona (di "irás con alguien" y no "irás acompañada").
+- No sabes si es chico o chica: no uses palabras con género sobre la persona (di "irás con alguien" y no "irás acompañada").{puente}
 
 {normas}
 
 FRAGMENTOS DE LA LEY
 {fragmentos}"""
+
+# Voz con frase puente (app/agent/orquestador.py): el agente ya la ha dicho antes de que el LLM empiece. Sin citarla:
+# si el prompt la cita, el modelo la repite al empezar (10 de 12 respuestas en la prueba; 0 de 12 sin citarla).
+PUENTE = "\n- La voz ya ha dicho una frase corta para empezar a contestar. Empieza directamente con la información, sin saludar ni usar frases de entrada."
 
 SISTEMA_TEXTO = """Eres TuTurno, una inteligencia artificial que acompaña por escrito a chicos y chicas de 11 a 17 años que están en un procedimiento judicial en España.
 
@@ -124,6 +128,8 @@ RE_PARECE_CITA = re.compile(r"\[|\bningun|\bart(?:ículo|iculo)?s?\.?\s*\d", re.
 RE_SOLO_CITAS = re.compile(r"[\s*_]*(?:(?:\[[^\[\]]*\][\s*_.,;]*)+|ningun[oa]s?[\s*_.]*)", re.IGNORECASE)
 RE_ETIQUETA = re.compile(r"\[([^\[\]]+)\]")
 RE_CITA_EN_TEXTO = re.compile(r"[ \t]*\[[^\[\]\n]*\bart(?:ículo|iculo)?s?\.?\s*\d[^\[\]\n]*\]")
+# Si el LLM deja un espacio entre la cita y el punto («al acusado [LECrim art. 707] .»), al quitarla quedaría «acusado .»
+RE_ESPACIO_ANTES_DE_SIGNO = re.compile(r"[ \t]+([.,;:!?])")
 
 
 def describir_perfil(perfil: dict) -> str:
@@ -154,13 +160,15 @@ def formatear_fragmentos(fragmentos: list[Fragmento], max_palabras: int = 230) -
     return "\n\n".join(bloques)
 
 
-def sistema(perfil: dict, fragmentos: list[Fragmento], canal: str = "voz") -> str:
+def sistema(perfil: dict, fragmentos: list[Fragmento], canal: str = "voz", puente: bool = False) -> str:
+    """puente: la voz ya ha empezado a contestar con una frase puente (solo en el canal de voz)."""
     plantilla, normas = PLANTILLAS[canal]
     return plantilla.format(
         perfil=describir_perfil(perfil),
         estilo=ESTILO_FRANJA.get(perfil.get("franja") or "12-13"),
         normas=normas,
         fragmentos=formatear_fragmentos(fragmentos),
+        puente=PUENTE if puente else "",
     )
 
 
@@ -183,7 +191,7 @@ def separar_fuentes(texto: str) -> tuple[str, list[str] | None]:
     cuerpo = texto
     for m in reversed(lineas):
         cuerpo = cuerpo[: m.start()] + cuerpo[m.end() :]
-    cuerpo = RE_CITA_EN_TEXTO.sub("", cuerpo).strip()
+    cuerpo = RE_ESPACIO_ANTES_DE_SIGNO.sub(r"\1", RE_CITA_EN_TEXTO.sub("", cuerpo)).strip()
     if not lineas:
         return cuerpo, None
     lista = lineas[-1].group("lista")

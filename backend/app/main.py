@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
+from anyio import to_thread
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,8 +33,11 @@ logging.getLogger("uvicorn.access").addFilter(SinIpEnAccesos())
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # Los endpoints síncronos y el streaming corren en hilos de anyio (40 por defecto); cada respuesta ocupa uno
+    # mientras espera al LLM, así que con mucha gente a la vez las peticiones se quedarían en cola.
+    to_thread.current_default_thread_limiter().total_tokens = settings.hilos_max
     get_guardrail()  # los modelos se cargan una sola vez, al arrancar
-    get_recuperador()
+    get_recuperador()  # también ajusta los hilos de torch y OpenBLAS y hace una búsqueda de calentamiento
     conceptos()
     yield
 

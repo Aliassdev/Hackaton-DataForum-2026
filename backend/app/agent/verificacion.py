@@ -3,7 +3,8 @@
 El texto se acumula hasta completar una frase; cada frase se revisa:
 1. Patrones prohibidos (límites del agente): preguntar por los hechos, prometer secreto absoluto,
    predecir el resultado del caso. La frase se elimina y, si procede, se sustituye por una segura.
-2. Formato para voz: sin markdown y con los números escritos con letras.
+2. Formato para voz: sin markdown, con los números escritos con letras y, si la voz no las entiende
+   (TTS_ETIQUETAS=false), sin nada entre corchetes: ni etiquetas de tono ([slow]) ni citas ([LORPM art. 3]).
 3. Longitud máxima.
 El canal de texto (POST /api/agent/ask) usa verificar_texto: los mismos patrones prohibidos, pero con los
 números en cifras y conservando los párrafos, porque la respuesta se lee en pantalla.
@@ -13,11 +14,15 @@ import logging
 import re
 from collections.abc import Iterable, Iterator
 
+from app.config import settings
+
 log = logging.getLogger("tuturno.verificacion")
 
 MAX_PALABRAS = 110
 MAX_PALABRAS_TEXTO = 160  # el prompt de texto pide 110 como máximo
-FIN_FRASE = re.compile(r"(?<=[.!?…])\s+|\n+")
+# Fin de frase: un signo de cierre y espacio, o un salto de línea. Nunca detrás de «art.» o «arts.»: partiría en dos una
+# cita como «[LORPM art. 22]» y la mitad sin corchetes se leería en alto
+FIN_FRASE = re.compile(r"(?<=[.!?…])(?<![Aa]rt\.)(?<![Aa]rts\.)\s+|\n+")
 
 PROHIBIDOS = {
     "pregunta_hechos": (
@@ -73,7 +78,18 @@ def para_texto(frase: str) -> str:
     return re.sub(r"[*_#`>]+|^\s*[-•]\s*", "", frase)  # markdown y viñetas
 
 
+# Lo que va entre corchetes en una línea: etiquetas de tono ([slow]) o una cita que se haya colado ([LORPM art. 3])
+RE_CORCHETES = re.compile(r"\s*\[[^\[\]\n]{0,80}\]")
+
+
+def sin_etiquetas(texto: str) -> str:
+    """Quita lo que va entre corchetes. La voz eleven_flash_v2_5 no entiende las etiquetas y las leería en alto."""
+    return re.sub(r"[ \t]{2,}", " ", RE_CORCHETES.sub("", texto)).strip()
+
+
 def para_voz(frase: str) -> str:
+    if not settings.tts_etiquetas:
+        frase = sin_etiquetas(frase)
     return re.sub(r"\d+", lambda m: numero_a_letras(int(m.group())), para_texto(frase))
 
 
