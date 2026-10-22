@@ -101,12 +101,14 @@ Afectan a `/api/session/*`, `/api/agent/ask` y `/api/learn/grade`. Los valores e
 
 | Grupo | Por IP (cada `LIMITE_VENTANA_S`=60 s) | Diario, para todos |
 |---|---|---|
-| sesion (token y signed-url) | `LIMITE_SESION_IP`=10 | `LIMITE_SESION_DIA`=200 |
-| ask | `LIMITE_ASK_IP`=20 | `LIMITE_ASK_DIA`=1000 |
-| grade | `LIMITE_GRADE_IP`=20 | `LIMITE_GRADE_DIA`=1000 |
+| sesion (token y signed-url) | `LIMITE_SESION_IP`=60 | `LIMITE_SESION_DIA`=500 |
+| ask | `LIMITE_ASK_IP`=120 | `LIMITE_ASK_DIA`=3000 |
+| grade | `LIMITE_GRADE_IP`=120 | `LIMITE_GRADE_DIA`=3000 |
 
-- Por IP es una ventana deslizante en memoria (Hugging Face corre un solo contenedor). Los valores son generosos porque el jurado y el público pueden compartir la wifi del evento, que es una sola IP pública. Las IPv6 se agrupan por /64.
-- Los topes diarios protegen los créditos de ElevenLabs y el nivel gratuito de Groq (unas 1000 peticiones al día por modelo).
+- Por IP es una ventana deslizante en memoria (Hugging Face corre un solo contenedor). Las IPv6 se agrupan por /64.
+- En la demo toda la sala sale por la IP de la wifi del evento, así que el límite por IP es el de la sala entera. Un aula de 30 personas, en el peor momento unas 3 preguntas por minuto cada una, son unas 90 por minuto: 120 deja margen. En sesiones de voz, 60 por minuto cubre a las 30 entrando a la vez y los reintentos.
+- Los topes diarios protegen los créditos: cada pregunta son dos llamadas al LLM (unos 0,001 $ en el router de Hugging Face), así que 3000 preguntas son unos 3 $. El de sesiones es el mismo que el del agente de ElevenLabs (`call_limits.daily_limit`=500). Con 120 por minuto, una sola IP tardaría 25 minutos en agotar el tope diario de preguntas.
+- Los contadores viven en memoria: se reinician a las 00:00 UTC y cada vez que se reinicia el Space.
 - No se guardan IP: la clave es un resumen con una sal aleatoria por arranque, y en los logs solo salen 8 caracteres de ese resumen.
 
 ## IP real detrás de Hugging Face

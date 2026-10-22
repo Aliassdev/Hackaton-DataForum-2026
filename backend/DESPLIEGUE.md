@@ -82,7 +82,7 @@ La respuesta en streaming tiene que llegar en trozos `data: {...}` y acabar en `
    .venv/bin/python scripts/proteger_agente.py --custom-llm-url https://aliassdev-tuturno-api.hf.space --aplicar
    ```
    - `platform_settings.auth.enable_auth = true` hace privado el agente: solo se abre una conversación con un token del backend.
-   - `call_limits` pone 5 conversaciones a la vez y 200 al día, sin «bursting» (cambia con `--simultaneas` y `--diarias`). El backend tiene además su propio tope (`LIMITE_SESION_DIA=200`).
+   - `call_limits` pone 5 conversaciones a la vez y 200 al día, sin «bursting» (cambia con `--simultaneas` y `--diarias`). Para un día de demo con público, al menos `--simultaneas 10 --diarias 500` (lo que tiene ahora el agente): con 5, la sexta persona que abra la voz a la vez se queda fuera. El backend tiene además su propio tope (`LIMITE_SESION_DIA=500`).
    - `privacy` pone retención de 0 días, sin grabar voz y borrando audio y transcripción. ElevenLabs borra de forma programada, no al instante. `--aplicar-a-existentes` borra también lo ya guardado.
    - El script vuelve a leer el agente y comprueba campo a campo. Avisa si el agente deja que el cliente cambie el prompt o el LLM (overrides): eso se desactiva en el panel.
 3. **Coordinación con la app (A):** con el agente privado, una sesión abierta solo con el `agent_id` deja de funcionar. Aplica el paso 2 cuando la APK ya pida el token a `GET /api/session/token`. Mientras tanto, el modo texto sigue funcionando.
@@ -98,10 +98,12 @@ curl -s https://aliassdev-tuturno-api.hf.space/api/session/token | python -c "im
 
 ## 7. Que funcione siempre
 
-- **Sueño.** En CPU basic (gratis) el Space se duerme tras 48 horas sin visitas y se despierta con la primera petición, que tarda uno o dos minutos. Antes de la demo, abre `/api/health` unos minutos antes. Para los días del evento: `--hardware cpu-upgrade` (8 vCPU, 0,03 $/hora, no se duerme) y después vuelve a `cpu-basic` desde Settings.
+- **Sueño.** En CPU basic (gratis) el Space se duerme tras 48 horas sin visitas y se despierta con la primera petición, que tarda uno o dos minutos. Antes de la demo, abre `/api/health` unos minutos antes. Para los días del evento: `--hardware cpu-upgrade` (8 vCPU, 0,03 $/hora, no se duerme) y después vuelve a `cpu-basic` desde Settings. Con 8 vCPU la parte de CPU del RAG va unas 3 veces más rápida (ver «Concurrencia»).
 - **Reinicios.** Al cambiar secretos o variables en Settings, reinicia el Space (Settings → Restart) si no lo hace solo. El disco del contenedor no persiste, pero el backend no guarda nada.
-- **Límites.** Si aparecen respuestas 429, súbelos en Settings → Variables (`LIMITE_*`) sin reconstruir la imagen: solo hace falta reiniciar.
-- **LLM de respaldo.** Si el LLM principal da 429, 5xx, timeout o fallo de conexión, se prueba el respaldo, y durante 30 s va primero (así una caída no cuesta el timeout en cada llamada). Sin cambiar de clave, el mismo router con otro proveedor: variables `LLM_RESPALDO_BASE_URL=https://router.huggingface.co/v1` y `LLM_RESPALDO_MODELO=openai/gpt-oss-120b:groq` (sin `LLM_RESPALDO_API_KEY` se usa `LLM_API_KEY`, porque la URL es la misma). Para cubrir también una caída del router: Groq directo, con `LLM_RESPALDO_API_KEY` como **secreto**.
+- **Límites.** Por defecto están pensados para la demo, con toda la sala detrás de la IP de la wifi del evento: 120 preguntas y 120 correcciones por minuto y por IP, 60 sesiones de voz por minuto y por IP, y topes diarios de 3000, 3000 y 500 (el porqué, en `app/config.py` y `API.md`). Si aun así aparecen respuestas 429, súbelos en Settings → Variables (`LIMITE_*`) sin reconstruir la imagen: solo hace falta reiniciar. Ojo: reiniciar también pone a cero los contadores.
+- **LLM de respaldo.** Si el LLM principal da 429, 5xx, timeout o fallo de conexión, se prueba el respaldo, y durante 30 s va primero (así una caída no cuesta el timeout en cada llamada). Sin cambiar de clave, el mismo router con otro proveedor: variables `LLM_RESPALDO_BASE_URL=https://router.huggingface.co/v1` y `LLM_RESPALDO_MODELO=openai/gpt-oss-120b:groq` (sin `LLM_RESPALDO_API_KEY` se usa `LLM_API_KEY`, porque la URL es la misma). Para cubrir también una caída del router: Groq directo, con `LLM_RESPALDO_API_KEY` como **secreto**. En el Space `itsmedelatorre/tuturno-backend` está puesto el respaldo por el router (`:groq`), sin secreto nuevo.
+- **Modelo de la reformulación.** En el router, `LLM_MODELO_REFORMULAR=openai/gpt-oss-120b` (Cerebras, el mismo que genera; puesto en el Space). Frente al 20b (Groq): algo más rápido con una sola pregunta (texto p50 0,77 s frente a 0,86 s), mucho más con 30 a la vez (2,8 s frente a 4,1 s), determinista (la misma pregunta da siempre la misma consulta jurídica y aprovecha la caché del codificador) y en otro proveedor que el respaldo (`:groq`), así que una caída de Groq no le afecta. En calidad, empate con el conjunto de referencia (48 preguntas): Acierto@5 0,729 frente a 0,69-0,71, Recall@5 0,552 frente a 0,55-0,57 y MRR@10 0,524 frente a 0,56-0,58 (sin reformular: 0,438 / 0,316 / 0,362).
+- **Concurrencia.** Las consultas del modo denso se codifican por lotes desde un solo hilo (`Codificador` en `app/rag/retrieve.py`), con una caché de 512 vectores por resumen SHA-256 del texto (nunca el texto). En el Space (cpu-basic, 2 vCPU), 30 preguntas distintas a la vez: primera frase de la voz en p50 2,9 s (antes 6,2 s) y texto en p50 2,9 s; con las preguntas de ejemplo de la app repetidas, p50 1,7 s; 10 a la vez, p50 0,8 s, como una sola. Con 8 vCPU (emulado en local) la parte de CPU de 30 preguntas a la vez baja de 2,3 s a 0,76 s.
 - **Plazos.** Contando el respaldo: `LLM_PLAZO_VOZ_S=7` hasta el primer texto de la voz, `LLM_PLAZO_TEXTO_S=14` para la respuesta del modo texto (la app espera 20 s) y `REFORMULAR_PLAZO_S=2` para la reformulación (si tarda más, se busca solo con la pregunta). Pasado el plazo, la voz dice la respuesta segura y el modo texto devuelve 503; nunca se queda callado.
 - **Frase puente.** Con el guardrail en «normal», la voz empieza al instante con «Vale, te lo explico.» o «Vale, te cuento.» mientras se reformula, se busca y se genera (`VOZ_FRASE_PUENTE=false` la quita). No sale en crisis, hechos ni fuera de ámbito, ni con un saludo o un «gracias».
 - **ElevenLabs y su LLM de respaldo.** El agente TuTurno tiene `backup_llm_config: default` y `cascade_timeout_seconds: 4`: si el Custom LLM falla o no manda texto en 4 s, ElevenLabs puede contestar con su propio LLM, **sin guardrail, sin RAG y sin verificación**. La frase puente hace que el primer texto llegue en milisegundos, pero si el Space está caído o reiniciándose no hay frase que valga. Recomendado: `backup_llm_config: {"preference": "disabled"}` en el agente TuTurno (nunca en otro agente de la cuenta).
@@ -118,10 +120,27 @@ En local, con el modelo real por el router de Hugging Face (`openai/gpt-oss-120b
 | Texto: respuesta completa | p50 1,43 s · máx 1,84 s | p50 1,16 s · máx 1,72 s | p50 0,94 s · máx 1,26 s |
 
 - Tal cual estaba, con el router no funcionaba: Cerebras rechaza `include_reasoning` con un 400, así que la voz decía siempre la respuesta segura y el modo texto devolvía 503. Ahora ese parámetro solo va a Groq.
-- Lo que más pesa son las dos llamadas al LLM (reformulación y respuesta). En el router, el 120b (Cerebras) contesta antes que el 20b (Groq): **recomendado `LLM_MODELO_REFORMULAR=openai/gpt-oss-120b`** (−0,3 s en voz y texto).
+- Lo que más pesa son las dos llamadas al LLM (reformulación y respuesta). En el router, el 120b (Cerebras) contesta antes que el 20b (Groq): `LLM_MODELO_REFORMULAR=openai/gpt-oss-120b` (−0,3 s en voz y texto en local; en el Space, ver «Modelo de la reformulación»).
 - Con el principal colgado y el respaldo configurado, solo la primera pregunta tarda (4,5 s hasta la primera frase); las siguientes van directas al respaldo (p50 1,35 s). Sin respaldo, la respuesta segura llega a los 6 s.
 - 24 peticiones a la vez (12 de voz y 12 de texto): ningún fallo; la frase puente sale en 0,1 s como mucho, la primera frase de la respuesta en p50 2,05 s (máx. 2,35 s) y el texto en p50 2,06 s (máx. 2,54 s).
 - Ganancias en el código: conexión persistente con el proveedor (~0,1 s por llamada), reformulación en paralelo con la búsqueda de la pregunta, OpenBLAS con un hilo y torch con las CPU reales del contenedor (la búsqueda con las dos consultas bajó de 270 ms a 50 ms en una máquina de 32 núcleos) y más hilos para atender a la vez (`HILOS_MAX=100`).
+
+### En el Space, de punta a punta (22/10/2026)
+
+Space `itsmedelatorre/tuturno-backend` en cpu-basic (2 vCPU; en el log, «torch con 2 hilos»), con respaldo por el router y la reformulación con el 120b. Medido desde España.
+
+| | p50 | máx | n |
+|---|---|---|---|
+| Voz (`/v1/chat/completions`): primer trozo (frase puente) | 0,23 s | 0,43 s | 24 |
+| Voz: primera frase de la respuesta | 0,77 s | 2,29 s | 24 |
+| Texto (`/api/agent/ask`): respuesta completa | 0,77 s | 1,26 s | 24 |
+| Agente de ElevenLabs (WebSocket, solo texto): primer audio desde el envío | 0,44 s | 0,61 s | 18 |
+| Agente: audio de la respuesta, detrás de la frase puente | 1,13 s | 1,68 s | 18 |
+| Agente: `agent_response` (texto completo) | 1,91 s | 2,31 s | 18 |
+
+- Ningún fallo en más de 350 peticiones (sin contar las ráfagas para provocar el 429). En las conversaciones con el agente: ningún hueco de audio de 0,25 s o más (la frase puente suena mientras llega la respuesta), ninguna interrupción ni corrección, ninguna respuesta segura y ningún cierre inesperado.
+- En el servidor, la primera frase verificada sale en p50 0,5-0,65 s desde la pregunta. El resto es la red y ElevenLabs.
+- Comprobado también: 401 sin el secreto, 403 con un origen no permitido, 200 en `/api/session/token` y `/api/session/signed-url`, 429 con `Retry-After` al pasar de 120 preguntas por minuto desde una IP, plantilla de crisis sin LLM y ningún texto de usuario ni IP en los logs.
 
 ## 8. Problemas frecuentes
 

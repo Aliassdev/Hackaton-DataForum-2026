@@ -10,17 +10,25 @@ Hilos: numpy y scipy (OpenBLAS) arrancan un hilo por núcleo que se queda girand
 y le quita la CPU al codificador de torch. Con 32 núcleos, la parte densa de una consulta pasaba de unos 26 ms a
 130 ms. Nuestros productos son pequeños (3841 × 768), así que OpenBLAS va con un hilo, y torch con tantos como CPU
 tenga de verdad el contenedor (en un Space, la cuota del cgroup, no los núcleos de la máquina).
+
+Concurrencia: las consultas del modo denso se codifican por lotes desde un solo hilo (Codificador). Es lo que más CPU
+gasta (unos 60 ms por consulta con 2 hilos, y cada pregunta lleva dos: la original y la jurídica), y en las 2 vCPU del
+Space 30 preguntas a la vez tardaban casi 5 s solo en esta parte.
 """
 
+import hashlib
 import json
 import logging
 import math
 import os
 import re
+import threading
 import time
-from dataclasses import dataclass
+from collections import OrderedDict
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -29,6 +37,9 @@ log = logging.getLogger("tuturno.rag")
 ENCODER = "intfloat/multilingual-e5-base"
 K_RRF = 60
 CANDIDATOS = 100
+MAX_LOTE = 64  # consultas por lote del codificador
+CACHE_CONSULTAS = 512  # vectores de consulta recordados, por el resumen SHA-256 del texto (unos 1,5 MB)
+ESPERA_MAX_S = 20.0  # si el codificador no contesta en este tiempo, la petición falla (y la voz dice la respuesta segura)
 MODOS = ("bm25", "denso", "hibrido", "hibrido_perfil", "completo")
 # Prior de dominio (fijado a priori): en códigos generales como LECrim o LEC, los artículos que
 # mencionan a menores son mucho más probables como respuesta para nuestro público.
@@ -92,6 +103,105 @@ def tokenizar(textos: list[str]):
     return bm25s.tokenize(textos, stopwords="es", stemmer=Stemmer.Stemmer("spanish"), show_progress=False)
 
 
+class Encoder(Protocol):
+    """Lo que el Codificador usa de SentenceTransformer."""
+
+    def encode(self, textos: list[str], **opciones: Any) -> np.ndarray: ...
+
+
+@dataclass(eq=False)
+class _Encargo:
+    clave: bytes
+    texto: str
+    listo: threading.Event = field(default_factory=threading.Event)
+    vector: np.ndarray | None = None
+    error: BaseException | None = None
+
+
+class Codificador:
+    """Codifica consultas con el modelo denso por lotes dinámicos, desde un solo hilo.
+
+    Antes, cada hilo de petición llamaba a encode() por su cuenta. Con muchas preguntas a la vez, en las 2 vCPU del
+    Space los hilos de torch de todas las peticiones se pisaban, y cada consulta costaba lo de varias. Ahora cada
+    petición deja su consulta en una cola y espera; un único hilo coge todo lo pendiente, sin repetidos, y lo codifica
+    de una vez. Con una sola petición no cambia nada: es un lote de uno y no se espera a nadie. Con muchas a la vez,
+    una consulta en lote cuesta unos 25 ms en vez de 60 (medido con 2 hilos de CPU), y en la práctica 30 preguntas
+    simultáneas pasan de 3,9 s a 2,3 s en esta parte.
+
+    Además recuerda los últimos vectores por el resumen SHA-256 del texto (nunca guarda el texto): las preguntas de
+    ejemplo de la app llegan idénticas muchas veces, y su consulta jurídica suele repetirse también.
+    """
+
+    def __init__(self, encoder: Encoder, max_lote: int = MAX_LOTE, cache: int = CACHE_CONSULTAS, espera_max_s: float = ESPERA_MAX_S) -> None:
+        self.encoder = encoder
+        self.max_lote = max_lote
+        self.tam_cache = cache
+        self.espera_max_s = espera_max_s
+        self._cond = threading.Condition()
+        self._pendientes: list[_Encargo] = []
+        self._cache: OrderedDict[bytes, np.ndarray] = OrderedDict()
+        self.lotes = 0  # cuántas veces se ha llamado a encode() (para las pruebas)
+        threading.Thread(target=self._trabajar, name="codificador", daemon=True).start()
+
+    @staticmethod
+    def _clave(texto: str) -> bytes:
+        return hashlib.sha256(texto.encode("utf-8")).digest()
+
+    def codificar(self, texto: str) -> np.ndarray:
+        """Vector normalizado del texto, como encoder.encode([texto], normalize_embeddings=True)[0]."""
+        clave = self._clave(texto)
+        with self._cond:
+            if (vector := self._cache.get(clave)) is not None:
+                self._cache.move_to_end(clave)
+                return vector
+            encargo = _Encargo(clave, texto)
+            self._pendientes.append(encargo)
+            self._cond.notify()
+        if not encargo.listo.wait(self.espera_max_s):
+            with self._cond:
+                if encargo in self._pendientes:
+                    self._pendientes.remove(encargo)
+            raise TimeoutError(f"El codificador no ha respondido en {self.espera_max_s:.0f} s")
+        if encargo.error is not None:
+            raise encargo.error
+        if encargo.vector is None:  # el hilo ha terminado sin vector ni error: no debería pasar
+            raise RuntimeError("El codificador no ha devuelto ningún vector")
+        return encargo.vector
+
+    def _trabajar(self) -> None:
+        while True:
+            with self._cond:
+                while not self._pendientes:
+                    self._cond.wait()
+                lote = self._pendientes[: self.max_lote]
+                del self._pendientes[: self.max_lote]
+            try:
+                unicos = list(dict.fromkeys(e.texto for e in lote))
+                vectores = self.encoder.encode(unicos, normalize_embeddings=True, show_progress_bar=False, batch_size=len(unicos))
+                por_texto = {}
+                for texto, fila in zip(unicos, vectores, strict=True):
+                    vector = np.array(fila, copy=True)  # copia: una vista mantendría vivo el lote entero en la caché
+                    vector.flags.writeable = False  # compartido entre peticiones
+                    por_texto[texto] = vector
+                self.lotes += 1
+                with self._cond:
+                    for e in lote:
+                        e.vector = por_texto[e.texto]
+                        self._cache[e.clave] = e.vector
+                        self._cache.move_to_end(e.clave)
+                    while len(self._cache) > self.tam_cache:
+                        self._cache.popitem(last=False)
+                if len(unicos) > 1:
+                    log.debug("Codificador: lote de %d consultas", len(unicos))
+            except Exception as error:  # noqa: BLE001 - el fallo se entrega a cada petición del lote, y el hilo sigue
+                for e in lote:
+                    e.error = error
+            finally:
+                for e in lote:
+                    e.texto = ""  # el texto no se queda en memoria más de lo necesario
+                    e.listo.set()
+
+
 @dataclass
 class Fragmento:
     id: str
@@ -116,12 +226,13 @@ class Recuperador:
         self.perfiles = json.loads(perfiles_path.read_text(encoding="utf-8"))
         self.habla_de_menores = [bool(RE_MENORES.search(t["texto"])) for t in self.trozos]
         hilos = ajustar_hilos()
+        self.codificador = Codificador(self.encoder)  # con los hilos de torch ya ajustados
         self.rankings("calentamiento")  # la primera codificación es más lenta: que no le toque a nadie
         log.info("RAG cargado: %d trozos (%d hablan de menores) · torch con %d hilos", len(self.trozos), sum(self.habla_de_menores), hilos)
 
     # --- rankings individuales (índices de trozo, de mejor a peor) ---
     def _denso(self, pregunta: str) -> list[int]:
-        q = self.encoder.encode([f"query: {pregunta}"], normalize_embeddings=True, show_progress_bar=False)[0]
+        q = self.codificador.codificar(f"query: {pregunta}")
         return list(np.argsort(-(self.emb @ q))[:CANDIDATOS])
 
     def _bm25(self, pregunta: str) -> list[int]:
