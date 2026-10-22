@@ -1,0 +1,50 @@
+{
+  "id": "U5",
+  "titulo": "Tu imagen es tuya",
+  "conceptos": [
+    "C-propia-imagen",
+    "C-no-reenviar",
+    "C-retirar-contenido",
+    "C-denunciar",
+    "C-ayuda-internet"
+  ],
+  "lecciones": [
+    {
+      "id": "U5-L1",
+      "titulo": "Tu imagen y tu intimidad",
+      "ejercicios": [
+        "E-501",
+        "E-502",
+        "E-503",
+        "E-504",
+        "E-505",
+        "E-506"
+      ]
+    },
+    {
+      "id": "U5-L2",
+      "titulo": "Pedir que lo quiten",
+      "ejercicios": [
+        "E-507",
+        "E-508",
+        "E-509",
+        "E-510",
+        "E-511",
+        "E-512"
+      ]
+    },
+    {
+      "id": "U5-L3",
+      "titulo": "Denunciar y pedir ayuda",
+      "ejercicios": [
+        "E-513",
+        "E-514",
+        "E-515",
+        "E-516",
+        "E-517",
+        "E-518"
+      ]
+    }
+  ],
+  "validado": true
+}

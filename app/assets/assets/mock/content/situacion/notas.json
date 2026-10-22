@@ -1,0 +1,97 @@
+{
+  "nota": "Notas «Para ti» de la cabecera de «Mi situación»: lo que cambia por tu edad o por tu tipo de proceso. {edad} se cambia por la edad de tu ticket (las notas con edad solo salen si la sabemos). Cada afirmación sale de docs/MARCO_LEGAL.md con su artículo; las que llevan \"consejo\": true no son afirmaciones jurídicas.",
+  "validado": true,
+  "notas": [
+    {
+      "id": "N-menor14",
+      "papeles": ["victima", "testigo"],
+      "edad_max": 13,
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años, en un caso de violencia tu entrevista se graba para que valga en el juicio: es la prueba preconstituida. Así, normalmente no tienes que ir al juicio. Y se evita que veas cara a cara a la persona investigada.",
+      "fuentes": ["LECrim, art. 449 ter", "LECrim, art. 703 bis"],
+      "validado": true
+    },
+    {
+      "id": "N-v-14mas",
+      "papeles": ["victima"],
+      "edad_min": 14,
+      "preocupaciones": ["redes"],
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años puedes pedir tú a la Agencia Española de Protección de Datos que quite fotos, vídeos o audios sexuales o violentos tuyos publicados en internet sin permiso.",
+      "fuentes": ["AEPD, Canal prioritario"],
+      "validado": true
+    },
+    {
+      "id": "N-t-14mas",
+      "papeles": ["testigo"],
+      "edad_min": 14,
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años, cuentas lo que sabes con tus palabras. Tienes derecho a que te lo expliquen todo con palabras que entiendas.",
+      "fuentes": ["LO 1/1996, art. 9.1"],
+      "validado": true
+    },
+    {
+      "id": "N-i-menor14",
+      "papeles": ["investigado"],
+      "edad_max": 13,
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años, la ley penal de menores no se te aplica: actúan los servicios de protección de menores, que cuidan de que estés bien. Los pasos de abajo son para chicos y chicas de 14 a 17 años.",
+      "fuentes": ["LO 5/2000, art. 1.1", "LO 5/2000, art. 3"],
+      "validado": true
+    },
+    {
+      "id": "N-i-14mas",
+      "papeles": ["investigado"],
+      "edad_min": 14,
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años se aplica la ley penal de menores. La Fiscalía de Menores dirige la investigación y, a la vez, defiende tus derechos.",
+      "fuentes": ["LO 5/2000, art. 1.1", "LO 5/2000, art. 6"],
+      "validado": true
+    },
+    {
+      "id": "N-f-12mas",
+      "papeles": ["escuchado_familia"],
+      "edad_min": 12,
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años, si tus padres no se ponen de acuerdo, el juez tiene que escucharte siempre.",
+      "fuentes": ["LEC, art. 770"],
+      "validado": true
+    },
+    {
+      "id": "N-f-menos12",
+      "papeles": ["escuchado_familia"],
+      "edad_max": 11,
+      "titulo": "Por tu edad",
+      "texto": "Con {edad} años, el juez puede escucharte si lo ve necesario, y lo puedes pedir tú. Tienes derecho a que te escuchen sin que importe tu edad.",
+      "fuentes": ["LEC, art. 770", "LO 1/1996, art. 9.1"],
+      "validado": true
+    },
+    {
+      "id": "N-proteccion",
+      "procedimientos": ["proteccion"],
+      "titulo": "Por tu tipo de proceso",
+      "texto": "En un proceso de protección, la regla es ayudar a tu familia para que sigas con ella. Solo si no es seguro se busca otra forma de protegerte.",
+      "fuentes": ["LO 1/1996, art. 17.1", "LO 1/1996, art. 18.2"],
+      "validado": true
+    },
+    {
+      "id": "N-ninguno-victima",
+      "procedimientos": ["ninguno"],
+      "papeles": ["victima"],
+      "titulo": "Todavía no hay proceso",
+      "texto": "Esta guía te sirve para saber qué pasaría. Desde el primer momento, incluso antes de denunciar, te tienen que explicar tus derechos.",
+      "fuentes": ["Ley 4/2015, art. 5.1"],
+      "validado": true
+    },
+    {
+      "id": "N-familia-camino",
+      "procedimientos": ["familia"],
+      "papeles": ["victima", "testigo", "investigado"],
+      "titulo": "Por tu tipo de proceso",
+      "texto": "En tu ticket pone que es un proceso de familia. Si allí te van a escuchar, mira también el camino «Me van a escuchar».",
+      "enlace": "escuchado_familia",
+      "consejo": true,
+      "validado": true
+    }
+  ]
+}

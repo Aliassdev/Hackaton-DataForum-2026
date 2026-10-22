@@ -1,0 +1,142 @@
+{
+  "id": "caso-acoso-escolar",
+  "titulo": "Sergio y el protocolo contra el acoso",
+  "rol": "victima",
+  "basado_en": [],
+  "escenas": [
+    {
+      "id": "S1",
+      "lugar": "casa",
+      "personajes": ["Sergio", "Sus padres"],
+      "narracion": "Sergio tiene 13 años. Desde hace meses, unos chicos de su instituto se meten con él en clase y por el móvil. Sus padres han decidido denunciarlo, y a Sergio le surgen muchas dudas: ¿qué va a pasar ahora? ¿Quién le va a ayudar?",
+      "siguiente": "S2"
+    },
+    {
+      "id": "S2",
+      "lugar": "instituto",
+      "personajes": ["Sergio", "Laura, coordinadora de bienestar"],
+      "narracion": "En el instituto, Sergio habla con Laura, la coordinadora de bienestar y protección. Es la persona a la que se puede acudir si hay acoso. Laura le explica que el centro tiene un protocolo contra el acoso y que ya lo ha puesto en marcha.",
+      "decision": {
+        "pregunta": "¿Qué tiene que hacer el instituto ahora?",
+        "opciones": [
+          {"texto": "Tomar medidas para protegerle, para que contarlo no empeore las cosas", "correcta": true,
+           "siguiente": "S3",
+           "feedback": "Si cuentas que sufres acoso, tu centro tiene que tomar las medidas necesarias para protegerte. Y el protocolo contra el acoso se pone en marcha con solo que lo cuentes.",
+           "fuente": "LOPIVI, arts. 20.2 y 34.1", "carta": "R-centro-protege"},
+          {"texto": "Nada, porque es un problema entre alumnos", "correcta": false,
+           "siguiente": "S3",
+           "feedback": "Para la ley, el acoso escolar y el ciberacoso son formas de violencia. Los centros tienen que seguir un protocolo contra ellos.",
+           "fuente": "LOPIVI, arts. 1.2 y 34.1"},
+          {"texto": "Esperar a que Sergio lo solucione solo", "correcta": false,
+           "siguiente": "S3",
+           "feedback": "Nadie tiene que solucionarlo solo. En cada centro hay un coordinador o coordinadora de bienestar y protección: es la persona a la que puedes acudir.",
+           "fuente": "LOPIVI, art. 35"}
+        ]
+      }
+    },
+    {
+      "id": "S3",
+      "lugar": "fiscalia",
+      "personajes": ["Sergio", "Su madre", "El fiscal"],
+      "narracion": "Los chicos tienen 14 y 15 años, así que la denuncia llega a la Fiscalía de Menores. El fiscal estudia la denuncia, decide si el caso sigue adelante y dirige la investigación. Además, tiene que proteger los derechos de Sergio en todo momento.",
+      "siguiente": "S4"
+    },
+    {
+      "id": "S4",
+      "lugar": "fiscalia",
+      "personajes": ["Sergio", "El fiscal"],
+      "narracion": "Sergio tendrá que contar lo que sabe. Como tiene menos de 14 años, la Fiscalía pedirá que su declaración se grabe con garantías, para que no tenga que repetirla. Aun así, le da miedo encontrarse con esos chicos.",
+      "decision": {
+        "pregunta": "¿Cómo puede declarar Sergio?",
+        "opciones": [
+          {"texto": "A distancia, por videoconferencia, sin estar en la misma sala que ellos", "correcta": true,
+           "siguiente": "S5",
+           "feedback": "Como eres menor de edad, lo normal es que declares a distancia, por videoconferencia. Solo irías en persona si el juez o el fiscal explican por qué hace falta.",
+           "fuente": "LO 5/2000, art. 4", "carta": "R-a-distancia"},
+          {"texto": "Sentado frente a ellos, en la misma mesa", "correcta": false,
+           "siguiente": "S5",
+           "feedback": "Los sitios donde se declara se organizan para que no te cruces con las personas denunciadas. Y al ser menor, lo normal es declarar a distancia.",
+           "fuente": "Ley 4/2015, art. 20"},
+          {"texto": "Delante de toda su clase", "correcta": false,
+           "siguiente": "S5",
+           "feedback": "No. Tu intimidad está protegida: quienes llevan el caso tienen que evitar que se difunda cualquier dato que permita saber quién eres.",
+           "fuente": "Ley 4/2015, art. 22"}
+        ]
+      }
+    },
+    {
+      "id": "S5",
+      "lugar": "casa",
+      "personajes": ["Sergio", "Su padre"],
+      "narracion": "Hay algo que le preocupa todavía más: los chicos siguen escribiéndole mensajes. Su padre le dice que no tiene por qué aguantarlo.",
+      "decision": {
+        "pregunta": "¿Qué se puede pedir para protegerle?",
+        "opciones": [
+          {"texto": "Que el juez les prohíba acercarse a él o escribirle", "correcta": true,
+           "siguiente": "S6",
+           "feedback": "En cualquier momento, el fiscal puede pedir al juez de menores medidas para protegerte, como prohibir que se te acerquen o que se comuniquen contigo.",
+           "fuente": "LO 5/2000, art. 28.1", "carta": "R-proteccion"},
+          {"texto": "Nada: hay que esperar al juicio", "correcta": false,
+           "siguiente": "S6",
+           "feedback": "No hace falta esperar. El fiscal puede pedir esas medidas en cualquier momento del proceso.",
+           "fuente": "LO 5/2000, art. 28.1"},
+          {"texto": "Que Sergio cambie de número y no se lo cuente a nadie", "correcta": false,
+           "siguiente": "S6",
+           "feedback": "Cambiar de número no está mal, pero no tienes que cargar con esto sin ayuda. Lo importante es contarlo: a tu familia, al instituto o a la Fiscalía. Así se pueden pedir medidas para que no te escriban.",
+           "fuente": "LO 5/2000, art. 28.1"}
+        ]
+      }
+    },
+    {
+      "id": "S6",
+      "lugar": "fiscalia",
+      "personajes": ["Sergio", "Sus padres", "El fiscal"],
+      "narracion": "Unas semanas después, el fiscal les cuenta que uno de los chicos reconoce el daño que hizo y quiere pedirle perdón a Sergio. Les explica qué es una conciliación.",
+      "decision": {
+        "pregunta": "¿Tiene Sergio que aceptar las disculpas?",
+        "opciones": [
+          {"texto": "No: solo hay conciliación si se aceptan las disculpas", "correcta": true,
+           "siguiente": "S7",
+           "feedback": "Solo hay conciliación si quien hizo daño lo reconoce, pide perdón y se aceptan sus disculpas. Como Sergio es menor, el compromiso lo asumen sus padres y lo tiene que aprobar el juez.",
+           "fuente": "LO 5/2000, art. 19", "carta": "R-conciliacion"},
+          {"texto": "Sí, está obligado a perdonar", "correcta": false,
+           "siguiente": "S7",
+           "feedback": "Nadie te puede obligar a aceptar unas disculpas. La conciliación solo existe si se aceptan.",
+           "fuente": "LO 5/2000, art. 19"},
+          {"texto": "Sí, y además tiene que reunirse a solas con él", "correcta": false,
+           "siguiente": "S7",
+           "feedback": "Una mediación solo se hace si das tu permiso después de que te la expliquen bien, y si no es peligrosa para ti. Puedes echarte atrás cuando quieras.",
+           "fuente": "Ley 4/2015, art. 15"}
+        ]
+      }
+    },
+    {
+      "id": "S7",
+      "lugar": "instituto",
+      "personajes": ["Sergio", "Laura, coordinadora de bienestar"],
+      "narracion": "Mientras tanto, el instituto sigue su protocolo y Laura está pendiente de Sergio. Si al final el juez de menores decide que esos chicos cometieron un delito, les pondrá medidas, no penas como a los adultos. Por ejemplo, prohibirles que se acerquen a él o que le escriban.",
+      "siguiente": "S8"
+    },
+    {
+      "id": "S8",
+      "lugar": "despues",
+      "personajes": ["Sergio"],
+      "narracion": "Sergio vuelve a clase más tranquilo. Sabe que no tenía que aguantarlo solo y que contarlo fue un paso valiente. Y sabe a quién acudir si lo necesita: a su familia, a Laura o al teléfono de ANAR, el 900 20 20 10."
+    }
+  ],
+  "cartas": [
+    {"id": "R-centro-protege", "titulo": "Tu centro tiene que protegerte",
+     "texto": "Si cuentas que sufres acoso, tu colegio o instituto tiene que activar su protocolo y tomar medidas para protegerte.",
+     "fuente": "LOPIVI, arts. 20.2 y 34.1"},
+    {"id": "R-a-distancia", "titulo": "Puedes declarar a distancia",
+     "texto": "Al ser menor, lo normal es declarar por videoconferencia, sin estar en la misma sala que los acusados.",
+     "fuente": "LO 5/2000, art. 4"},
+    {"id": "R-proteccion", "titulo": "Pueden prohibir que se te acerquen",
+     "texto": "El fiscal puede pedir al juez, en cualquier momento, que no se te acerquen ni te escriban.",
+     "fuente": "LO 5/2000, art. 28.1"},
+    {"id": "R-conciliacion", "titulo": "Las disculpas, solo si se aceptan",
+     "texto": "Solo hay conciliación si quien te hizo daño lo reconoce, se disculpa y se aceptan sus disculpas.",
+     "fuente": "LO 5/2000, art. 19"}
+  ],
+  "validado": true
+}

@@ -1,0 +1,186 @@
+{
+  "rol": "victima",
+  "pasos": [
+    {
+      "id": "P1",
+      "nombre": "Se pide ayuda",
+      "que_pasa": "Se cuenta a la policía, a la Fiscalía o a un juzgado algo que puede ser un delito: es la denuncia. Puede hacerla tu familia, tu colegio u otra persona, y también puedes hacerla tú. Desde el primer momento, incluso antes de denunciar, te tienen que explicar tus derechos con palabras claras.",
+      "quien_esta": [
+        "Tu familia o un adulto de confianza, que puede acompañarte",
+        "Policías o personas del juzgado, que recogen la denuncia y te explican tus derechos",
+        "En tu colegio o instituto, el coordinador o la coordinadora de bienestar y protección: la persona a la que puedes acudir si sufres violencia"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen tus derechos con palabras que entiendas, también cómo pedir protección",
+        "Que esté contigo una persona de confianza que elijas tú",
+        "Denunciar tú en la policía, aunque no vaya contigo un adulto",
+        "No cruzarte en la comisaría con la persona investigada",
+        "Que quiten de una red social o una web fotos o vídeos tuyos sexuales o violentos publicados sin permiso. Se pide en el Canal prioritario de la Agencia Española de Protección de Datos (AEPD). Desde los 14 años puedes pedirlo tú sin un adulto; con menos, que lo pida un adulto de confianza. El Canal prioritario no sirve para WhatsApp, Telegram ni el correo: para eso, puedes ir a la policía o a la Fiscalía"
+      ],
+      "fuentes": [
+        "Ley 4/2015, art. 5.1",
+        "LOPIVI, art. 17.1",
+        "LOPIVI, art. 35",
+        "LOPIVI, art. 50.2",
+        "LOPIVI, art. 52",
+        "AEPD, Canal prioritario y FAQ 15.03"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P2",
+      "nombre": "Quién lleva tu caso",
+      "que_pasa": "Si la persona investigada tiene de 14 a 17 años, la Fiscalía de Menores decide si el caso sigue y dirige la investigación. Si es adulta, lo investiga un juzgado. Si tiene menos de 14 años, no hay juicio: actúan los servicios de protección de menores.",
+      "quien_esta": [
+        "El fiscal o la fiscal, que cuida de que se respeten tus derechos",
+        "Tu abogado o abogada, si lo tienes. Si eres víctima de violencia, el Colegio de Abogados tiene que asignártelo con urgencia",
+        "A veces, un defensor judicial: alguien que nombra el juzgado para representarte si lo que les conviene a tus padres choca con lo que te conviene a ti"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen quién es cada persona y qué hace",
+        "Un abogado o abogada. Es gratis en los casos que marca la ley, como los delitos sexuales; en otros, depende de los ingresos de tu familia",
+        "Que os digan si la denuncia sigue adelante o no"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 1.1",
+        "LO 5/2000, art. 6",
+        "LO 5/2000, art. 16.2",
+        "LECrim, art. 449 ter",
+        "LO 5/2000, art. 3",
+        "LOPIVI, art. 14",
+        "Ley 1/1996 de asistencia jurídica gratuita, art. 2.h)",
+        "Ley 4/2015, art. 26.2 a)"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P3",
+      "nombre": "Te citan para escucharte",
+      "que_pasa": "Llega una citación: un aviso con el día, la hora y el sitio donde te van a escuchar. Como eres menor, el aviso llega a tus padres o a quien te represente. Quieren escucharte porque tu opinión cuenta, tengas la edad que tengas.",
+      "quien_esta": [
+        "Tus padres o quien te represente, que reciben el aviso",
+        "Una persona de confianza, que te puede ayudar a apuntar tus dudas"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen con palabras claras qué va a pasar y quién estará",
+        "Que te expliquen palabras difíciles, como «prueba preconstituida» o «Sala Gesell»",
+        "Ir con quien te represente y con una persona de confianza que elijas tú"
+      ],
+      "fuentes": [
+        "Ley 4/2015, art. 4",
+        "LOPIVI, art. 10.3",
+        "LOPIVI, art. 11.1",
+        "LECrim, art. 433"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P4",
+      "nombre": "Tu declaración",
+      "que_pasa": "Te pueden escuchar en una sala preparada, como la Sala Gesell, con profesionales formados. Con menos de 14 años, en casos de violencia, tu entrevista se graba para el juicio (es la prueba preconstituida) y se evita que veas a la persona investigada. En los casos de la Fiscalía de Menores, lo normal es declarar a distancia, por videoconferencia.",
+      "quien_esta": [
+        "La persona que te hace las preguntas. Puede ser un psicólogo o una psicóloga del equipo psicosocial, que ayuda al juez",
+        "El juez o la jueza, que cuida de que todo sea justo y decide qué preguntas de los abogados se te pueden hacer",
+        "El abogado o la abogada de la persona investigada. Si tu entrevista se graba para el juicio, tiene que estar, para que sea justa para todos",
+        "Quien te represente y una persona de confianza que elijas tú, salvo que haya un motivo para que no esté y te lo expliquen"
+      ],
+      "que_puedes_pedir": [
+        "Un descanso si lo necesitas",
+        "Que te repitan una pregunta o te la expliquen de otra forma",
+        "Tiempo para pensar, y decir «no lo sé» o «no me acuerdo» si es así",
+        "Que te expliquen qué se puede hacer si te preocupa ver a la persona investigada",
+        "Declarar a distancia, por videoconferencia, si tu caso lo lleva la Fiscalía de Menores"
+      ],
+      "fuentes": [
+        "Ley 4/2015, art. 25.1",
+        "LOPIVI, art. 11.2",
+        "LECrim, art. 449 ter",
+        "LECrim, art. 449 bis",
+        "LO 5/2000, art. 23.4 b)",
+        "LO 5/2000, art. 4",
+        "LECrim, art. 433"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P5",
+      "nombre": "Te protegen mientras dura el caso",
+      "que_pasa": "Los juzgados y las fiscalías tienen que organizarse para que no te cruces con la persona investigada. Si hace falta, se pueden pedir medidas para protegerte. Nadie puede publicar tu nombre, tu imagen ni datos que permitan reconocerte.",
+      "quien_esta": [
+        "El fiscal o la fiscal, que vigila de forma especial que el proceso no te haga más daño",
+        "El juez o la jueza, que puede poner medidas para protegerte",
+        "Tu colegio o instituto, que tiene que protegerte si allí has contado que sufres violencia"
+      ],
+      "que_puedes_pedir": [
+        "Una orden de alejamiento, para que no se te acerquen ni te escriban. Si la persona investigada tiene de 14 a 17 años, el fiscal puede pedirla al juez de menores en cualquier momento",
+        "Esperar en un sitio donde no te cruces con la persona investigada",
+        "Que tu colegio o instituto ponga en marcha su protocolo contra el acoso y la violencia",
+        "Que te expliquen qué medidas de protección se pueden pedir y cómo"
+      ],
+      "fuentes": [
+        "Ley 4/2015, art. 20",
+        "Ley 4/2015, art. 5.1",
+        "LECrim, art. 681.3",
+        "Ley 4/2015, art. 19",
+        "LO 5/2000, art. 28.1",
+        "LOPIVI, art. 20.2",
+        "LOPIVI, art. 34.1"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P6",
+      "nombre": "Un posible acuerdo y el juicio",
+      "que_pasa": "Si la persona investigada tiene de 14 a 17 años, a veces se propone que te pida perdón con ayuda de una persona mediadora. Solo se hace si tú quieres, y solo hay conciliación si aceptas sus disculpas. Si hay juicio y tu entrevista se grabó, normalmente ponen la grabación y no tienes que ir.",
+      "quien_esta": [
+        "El juez o la jueza, que escucha a todos y decide. Si la persona investigada tiene de 14 a 17 años, es el juez de menores, que puede poner medidas, no penas como a un adulto",
+        "El fiscal o la fiscal y los abogados, también el tuyo si lo tienes",
+        "Tus padres o quien te represente, que asumen el acuerdo si lo hay. Después lo tiene que aprobar el juzgado de menores"
+      ],
+      "que_puedes_pedir": [
+        "Que nadie te obligue a aceptar unas disculpas",
+        "Que solo haya mediación si das tu permiso, y echarte atrás cuando quieras. La mediación es intentar llegar a un acuerdo con ayuda de una persona neutral",
+        "Que os avisen de la fecha, la hora y el lugar del juicio",
+        "Si tienes que declarar, no cruzarte con la persona acusada"
+      ],
+      "fuentes": [
+        "LO 5/2000, art. 19",
+        "Ley 4/2015, art. 15",
+        "LECrim, art. 703 bis",
+        "Ley 4/2015, art. 7.1",
+        "Ley 4/2015, art. 20",
+        "LO 5/2000, art. 7.1 i)"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P7",
+      "nombre": "La decisión y lo que viene después",
+      "que_pasa": "A ti o a tus padres os tienen que avisar de las decisiones importantes, como la sentencia, que es la decisión final. Si se decide algo sobre tu familia, la regla es ayudarla para que sigas con ella; si no es seguro, se busca otra forma de protegerte. Nadie puede prometerte cómo acabará, pero quien decida tiene que escucharte y pensar en lo mejor para ti.",
+      "quien_esta": [
+        "Tus padres o quien te represente, que reciben los avisos",
+        "Servicios sociales, que pueden ayudar a tu familia",
+        "Un adulto de confianza con quien hablar de cómo te sientes"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen la decisión con palabras que entiendas",
+        "Que te expliquen qué medidas se han puesto. Por ejemplo, que no se acerquen a ti, a tu casa ni a tu colegio, ni te escriban",
+        "Si quien te cuida es víctima de violencia en casa, que os ayuden para que puedas seguir viviendo con esa persona",
+        "Ayuda si la necesitas: a un adulto de confianza, a alguien de tu colegio o a ANAR (900 20 20 10, gratis y a cualquier hora)",
+        "Avisar a la Fiscalía o quejarte al Defensor del Pueblo si crees que no se han respetado tus derechos"
+      ],
+      "fuentes": [
+        "Ley 4/2015, art. 7.1",
+        "LO 1/1996, art. 17.1",
+        "LO 1/1996, art. 18.2",
+        "LO 1/1996, art. 9.1",
+        "LECrim, art. 544 quinquies",
+        "LO 5/2000, art. 7.1 i)",
+        "LO 1/1996, art. 12.3",
+        "LO 1/1996, art. 10.2"
+      ],
+      "fase": "despues"
+    }
+  ],
+  "validado": true
+}

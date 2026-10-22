@@ -1,0 +1,50 @@
+{
+  "id": "U2",
+  "titulo": "Si te toca declarar",
+  "conceptos": [
+    "C-citacion",
+    "C-que-pedir",
+    "C-sala-gesell",
+    "C-sin-contacto",
+    "C-despues"
+  ],
+  "lecciones": [
+    {
+      "id": "U2-L1",
+      "titulo": "La citación y qué puedes pedir",
+      "ejercicios": [
+        "E-201",
+        "E-202",
+        "E-203",
+        "E-204",
+        "E-205",
+        "E-206"
+      ]
+    },
+    {
+      "id": "U2-L2",
+      "titulo": "La Sala Gesell",
+      "ejercicios": [
+        "E-207",
+        "E-208",
+        "E-209",
+        "E-210",
+        "E-211",
+        "E-212"
+      ]
+    },
+    {
+      "id": "U2-L3",
+      "titulo": "Protección y después",
+      "ejercicios": [
+        "E-213",
+        "E-214",
+        "E-215",
+        "E-216",
+        "E-217",
+        "E-218"
+      ]
+    }
+  ],
+  "validado": true
+}

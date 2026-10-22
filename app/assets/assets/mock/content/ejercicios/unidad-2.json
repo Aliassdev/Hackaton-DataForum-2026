@@ -1,0 +1,259 @@
+[
+  {
+    "id": "E-201",
+    "tipo": "eleccion",
+    "concepto": "C-citacion",
+    "dificultad": 1,
+    "pregunta": "¿Qué es una citación?",
+    "opciones": [
+      "Un aviso del juzgado que dice cuándo y dónde tienes que ir",
+      "Una multa por haber hecho algo mal",
+      "Un permiso para faltar a clase"
+    ],
+    "correcta": 0,
+    "explicacion": "La citación te dice el día, la hora y el lugar. Si eres víctima, también te tienen que informar de la fecha, la hora y el lugar del juicio.",
+    "fuente": "Ley 4/2015, art. 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-202",
+    "tipo": "vf",
+    "concepto": "C-que-pedir",
+    "dificultad": 1,
+    "afirmacion": "Si eres víctima y vas a declarar, puedes ir con una persona de confianza que tú elijas.",
+    "correcta": true,
+    "explicacion": "Puedes ir con la persona adulta que te representa legalmente y con otra persona de confianza que tú elijas, salvo que el juez explique por qué no.",
+    "fuente": "LECrim, art. 433",
+    "validado": true
+  },
+  {
+    "id": "E-203",
+    "tipo": "vf",
+    "concepto": "C-citacion",
+    "dificultad": 1,
+    "afirmacion": "Si eres víctima y menor de edad, los avisos oficiales se envían a tus padres o a quien te represente.",
+    "correcta": true,
+    "explicacion": "Las comunicaciones se hacen a tu representante o a la persona que te asista. Aun así, tienes derecho a entender lo que pasa: lo que te expliquen tiene que ser claro y sencillo.",
+    "fuente": "Ley 4/2015, art. 4",
+    "validado": true
+  },
+  {
+    "id": "E-204",
+    "tipo": "eleccion",
+    "concepto": "C-que-pedir",
+    "dificultad": 2,
+    "pregunta": "Sara tiene casi 16 años y quiere denunciar en la policía. ¿Tiene que ir con un adulto?",
+    "opciones": [
+      "No: puede denunciar ella misma",
+      "Sí: siempre tiene que ir con sus padres",
+      "Sí: y además con un abogado"
+    ],
+    "correcta": 0,
+    "explicacion": "Las personas menores de edad pueden denunciar por sí mismas, sin que las acompañe un adulto. Si quiere, puede estar con una persona de su confianza.",
+    "fuente": "LOPIVI, art. 50.2",
+    "validado": true
+  },
+  {
+    "id": "E-205",
+    "tipo": "eleccion",
+    "concepto": "C-citacion",
+    "dificultad": 2,
+    "pregunta": "Los padres de Sergio han presentado una denuncia. ¿Qué hace después la Fiscalía de Menores?",
+    "opciones": [
+      "Decide si sigue adelante y les comunica lo que ha decidido",
+      "Abre siempre un juicio, sin estudiar nada",
+      "Nada: los padres tienen que investigarlo"
+    ],
+    "correcta": 0,
+    "explicacion": "La Fiscalía decide si admite la denuncia y tiene que comunicar su decisión a quienes la presentaron.",
+    "fuente": "LO 5/2000, art. 16.2",
+    "validado": true
+  },
+  {
+    "id": "E-206",
+    "tipo": "dilo",
+    "concepto": "C-que-pedir",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué puede pedir una víctima menor de edad cuando va a declarar.",
+    "proposiciones": [
+      "Que se lo expliquen todo con palabras claras",
+      "Ir acompañada de una persona de confianza",
+      "Pedir medidas para que la protejan"
+    ],
+    "fuente": "Ley 4/2015, arts. 4 y 5; LECrim, art. 433",
+    "validado": true
+  },
+  {
+    "id": "E-207",
+    "tipo": "eleccion",
+    "concepto": "C-sala-gesell",
+    "dificultad": 1,
+    "pregunta": "Lucía tiene 11 años y va a hablar en una sala preparada para niños y niñas. ¿Quién puede hacerle la entrevista?",
+    "opciones": [
+      "Un equipo psicosocial: psicólogos y trabajadores sociales",
+      "Un periodista",
+      "Cualquier persona que esté en el juzgado"
+    ],
+    "correcta": 0,
+    "explicacion": "El juez puede pedir que la entrevista la haga un equipo psicosocial. Por eso habla con ella gente que no conoce: están preparados para tratarla mejor.",
+    "fuente": "LECrim, art. 449 ter",
+    "validado": true
+  },
+  {
+    "id": "E-208",
+    "tipo": "vf",
+    "concepto": "C-sala-gesell",
+    "dificultad": 1,
+    "afirmacion": "La entrevista de Lucía en la Sala Gesell se graba en vídeo.",
+    "correcta": true,
+    "explicacion": "La declaración se graba con imagen y sonido. Así puede servir en el juicio.",
+    "fuente": "LECrim, art. 449 bis",
+    "validado": true
+  },
+  {
+    "id": "E-209",
+    "tipo": "eleccion",
+    "concepto": "C-sala-gesell",
+    "dificultad": 2,
+    "pregunta": "¿Qué es la prueba preconstituida?",
+    "opciones": [
+      "Grabar tu declaración antes del juicio para que valga en el juicio",
+      "Un examen que haces en el colegio",
+      "Una prueba que tienes que llevar tú al juzgado"
+    ],
+    "correcta": 0,
+    "explicacion": "Tu entrevista se graba y vale como si hablaras en el juicio. Si tienes menos de 14 años y eres testigo en un caso como el de Lucía, el juez tiene que hacerlo así.",
+    "fuente": "LECrim, art. 449 ter",
+    "validado": true
+  },
+  {
+    "id": "E-210",
+    "tipo": "vf",
+    "concepto": "C-sala-gesell",
+    "dificultad": 2,
+    "afirmacion": "Después de la entrevista, Lucía tendrá que contarlo todo otra vez en el juicio.",
+    "correcta": false,
+    "explicacion": "En el juicio se pone la grabación y no hace falta que vaya. Solo de forma excepcional el juez podría pedir que declare.",
+    "fuente": "LECrim, art. 703 bis",
+    "validado": true
+  },
+  {
+    "id": "E-211",
+    "tipo": "emparejar",
+    "concepto": "C-sala-gesell",
+    "dificultad": 2,
+    "pares": [
+      [
+        "Sala Gesell",
+        "Una sala preparada para declarar"
+      ],
+      [
+        "Equipo psicosocial",
+        "Puede hacer la entrevista"
+      ],
+      [
+        "Grabación",
+        "Se pone en el juicio"
+      ]
+    ],
+    "fuente": "LECrim, arts. 449 ter y 703 bis; Ley 4/2015, art. 25",
+    "validado": true
+  },
+  {
+    "id": "E-212",
+    "tipo": "dilo",
+    "concepto": "C-sala-gesell",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué es la prueba preconstituida.",
+    "proposiciones": [
+      "Tu entrevista se graba en vídeo",
+      "La grabación vale para el juicio",
+      "Normalmente no tienes que ir al juicio"
+    ],
+    "fuente": "LECrim, arts. 449 ter y 703 bis",
+    "validado": true
+  },
+  {
+    "id": "E-213",
+    "tipo": "vf",
+    "concepto": "C-sin-contacto",
+    "dificultad": 1,
+    "afirmacion": "En la entrevista, Lucía no tendrá que ver cara a cara a la persona investigada.",
+    "correcta": true,
+    "explicacion": "Si la persona investigada está presente, se evita que Lucía la vea cara a cara. Para eso se puede usar cualquier medio técnico, como un cristal o una pantalla.",
+    "fuente": "LECrim, art. 449 ter",
+    "validado": true
+  },
+  {
+    "id": "E-214",
+    "tipo": "vf",
+    "concepto": "C-despues",
+    "dificultad": 1,
+    "afirmacion": "Si eres víctima y menor de edad, se pueden publicar tu nombre y tus fotos en las noticias.",
+    "correcta": false,
+    "explicacion": "Está prohibido publicar la identidad de las víctimas menores de edad, cualquier dato que permita reconocerlas y sus imágenes o las de su familia.",
+    "fuente": "LECrim, art. 681.3",
+    "validado": true
+  },
+  {
+    "id": "E-215",
+    "tipo": "eleccion",
+    "concepto": "C-sin-contacto",
+    "dificultad": 2,
+    "pregunta": "Los chicos que se meten con Sergio tienen 14 y 15 años. ¿Qué medida puede pedir la Fiscalía de Menores para que no se le acerquen ni le escriban?",
+    "opciones": [
+      "Que no puedan acercarse a él ni comunicarse con él",
+      "Que Sergio cambie de instituto",
+      "Que Sergio borre sus redes sociales"
+    ],
+    "correcta": 0,
+    "explicacion": "La Fiscalía puede pedir al juez de menores, en cualquier momento, que les prohíba acercarse a Sergio o comunicarse con él. La medida es para quien hace daño, no para Sergio. Si tuvieran menos de 14 años, no se aplicaría la ley de menores: actuarían los servicios de protección de menores.",
+    "fuente": "LO 5/2000, arts. 1.1, 3 y 28.1",
+    "validado": true
+  },
+  {
+    "id": "E-216",
+    "tipo": "ordenar",
+    "concepto": "C-despues",
+    "dificultad": 2,
+    "enunciado": "Ordena lo que pasa con la declaración de Lucía.",
+    "pasos": [
+      "El juez decide que declare como prueba preconstituida",
+      "Un equipo psicosocial le hace la entrevista y se graba",
+      "En el juicio se pone la grabación",
+      "Comunican la sentencia a quien representa a Lucía"
+    ],
+    "fuente": "LECrim, arts. 449 ter y 703 bis; Ley 4/2015, art. 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-217",
+    "tipo": "eleccion",
+    "concepto": "C-despues",
+    "dificultad": 3,
+    "pregunta": "Lucía se pregunta si tendrá que dejar de vivir con su madre. ¿Qué dice la ley?",
+    "opciones": [
+      "Que lo normal es seguir con la familia, con apoyo si hace falta",
+      "Que siempre se separa a los niños de su familia",
+      "Que lo decide Lucía ella sola"
+    ],
+    "correcta": 0,
+    "explicacion": "La regla es ayudar a la familia para que Lucía pueda seguir en casa. Separarla solo es posible si su familia no puede protegerla: a eso se le llama desamparo. Si su madre fuera víctima, la ley busca que Lucía siga con ella. Nadie puede prometer qué pasará, pero a Lucía la escucharán.",
+    "fuente": "LO 1/1996, arts. 9, 12.3, 17.1 y 18.2",
+    "validado": true
+  },
+  {
+    "id": "E-218",
+    "tipo": "dilo",
+    "concepto": "C-sin-contacto",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras cómo se protege a una víctima menor de edad para que no se encuentre con la persona investigada.",
+    "proposiciones": [
+      "Los juzgados se organizan para evitar que se crucen",
+      "En la entrevista no tiene que verla cara a cara",
+      "Se puede prohibir que se acerque o que se comunique con ella"
+    ],
+    "fuente": "Ley 4/2015, art. 20; LECrim, art. 449 ter; LO 5/2000, art. 28.1",
+    "validado": true
+  }
+]

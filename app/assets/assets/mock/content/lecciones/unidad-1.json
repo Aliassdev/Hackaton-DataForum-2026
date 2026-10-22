@@ -1,0 +1,50 @@
+{
+  "id": "U1",
+  "titulo": "Tus derechos",
+  "conceptos": [
+    "C-ser-oido",
+    "C-fiscalia",
+    "C-defensor",
+    "C-abogado-gratis",
+    "C-comunicar-violencia"
+  ],
+  "lecciones": [
+    {
+      "id": "U1-L1",
+      "titulo": "Que te escuchen",
+      "ejercicios": [
+        "E-101",
+        "E-102",
+        "E-103",
+        "E-104",
+        "E-105",
+        "E-106"
+      ]
+    },
+    {
+      "id": "U1-L2",
+      "titulo": "Fiscalía y Defensor del Pueblo",
+      "ejercicios": [
+        "E-107",
+        "E-108",
+        "E-109",
+        "E-110",
+        "E-111",
+        "E-112"
+      ]
+    },
+    {
+      "id": "U1-L3",
+      "titulo": "Abogado y canales seguros",
+      "ejercicios": [
+        "E-113",
+        "E-114",
+        "E-115",
+        "E-116",
+        "E-117",
+        "E-118"
+      ]
+    }
+  ],
+  "validado": true
+}

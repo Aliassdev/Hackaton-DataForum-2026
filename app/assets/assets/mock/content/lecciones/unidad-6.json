@@ -1,0 +1,37 @@
+{
+  "id": "U6",
+  "titulo": "Si te investigan (14 a 17 años)",
+  "conceptos": [
+    "C-edad-penal",
+    "C-medidas",
+    "C-derechos-detenido",
+    "C-conciliacion"
+  ],
+  "lecciones": [
+    {
+      "id": "U6-L1",
+      "titulo": "La ley de menores",
+      "ejercicios": [
+        "E-601",
+        "E-602",
+        "E-603",
+        "E-604",
+        "E-605",
+        "E-606"
+      ]
+    },
+    {
+      "id": "U6-L2",
+      "titulo": "Tus derechos si te investigan",
+      "ejercicios": [
+        "E-607",
+        "E-608",
+        "E-609",
+        "E-610",
+        "E-611",
+        "E-612"
+      ]
+    }
+  ],
+  "validado": true
+}

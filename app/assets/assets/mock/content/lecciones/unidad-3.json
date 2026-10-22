@@ -1,0 +1,36 @@
+{
+  "id": "U3",
+  "titulo": "Quién es quién en el juzgado",
+  "conceptos": [
+    "C-personas",
+    "C-abogados",
+    "C-proceso"
+  ],
+  "lecciones": [
+    {
+      "id": "U3-L1",
+      "titulo": "Las personas que te ayudan",
+      "ejercicios": [
+        "E-301",
+        "E-302",
+        "E-303",
+        "E-304",
+        "E-305",
+        "E-306"
+      ]
+    },
+    {
+      "id": "U3-L2",
+      "titulo": "Los pasos del proceso",
+      "ejercicios": [
+        "E-307",
+        "E-308",
+        "E-309",
+        "E-310",
+        "E-311",
+        "E-312"
+      ]
+    }
+  ],
+  "validado": true
+}

@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "origen": "marco_legal",
+  "nota": "Conversaciones de ejemplo de Pregunta, para cuando no hay conexión con el asistente (ni con la voz ni con el modo texto) o cuando se fuerza desde el modo demo. En la app siempre van marcadas como ejemplo. Los textos y las fuentes salen solo de docs/MARCO_LEGAL.md; la respuesta de «hechos» es la plantilla literal de content/seguridad.json (hechos[1]), con el teléfono en cifras, como la dice el agente en directo. Después del ensayo se pueden cambiar por respuestas reales del agente, revisadas contra MARCO_LEGAL.md y con su campo origen cambiado. Las claves son trozos de la pregunta en minúsculas y sin tildes: una conversación se reconoce si la pregunta contiene todas las claves de alguno de sus grupos. Van en orden: gana la primera que se reconoce.",
+  "conversaciones": [
+    {
+      "id": "sergio-hechos",
+      "caso": "Sergio",
+      "origen": "marco_legal",
+      "nota": "Momento «hechos» del guion: la plantilla literal, sin hablar de lo que pasó. La fuente explica por qué: el testimonio lo recogen profesionales preparados.",
+      "pregunta": "El que me insultaba era mi compañero de mesa.",
+      "claves": [
+        [
+          "me insultaba"
+        ],
+        [
+          "me insultaban"
+        ],
+        [
+          "companero de mesa"
+        ]
+      ],
+      "respuesta": {
+        "tipo": "hechos",
+        "respuesta": "Te agradezco que me lo cuentes. De lo que pasó es mejor que hables con los profesionales de tu caso; yo no te voy a preguntar por ello. Lo que sí puedo hacer es explicarte qué va a pasar en el proceso. Y si te sientes mal, en ANAR te escuchan: 900 20 20 10. ¿Qué quieres saber del proceso?",
+        "fuentes": [
+          {
+            "id": "ML-LOPIVI-11",
+            "titulo": "Te escuchan personas preparadas, con cuidado y respeto",
+            "norma": "LO 8/2021",
+            "articulo": "11.1 y 11.2",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2021-9347"
+          }
+        ],
+        "sugerencias": [
+          "¿Qué pasa si se denuncia?",
+          "¿A quién puedo pedir ayuda?"
+        ],
+        "terminos": [],
+        "latencia_ms": 0
+      }
+    },
+    {
+      "id": "sergio-proceso",
+      "caso": "Sergio",
+      "origen": "marco_legal",
+      "pregunta": "Mis padres han ido a la Fiscalía porque me acosan en el instituto. ¿Qué va a pasar ahora?",
+      "claves": [
+        [
+          "fiscal",
+          "acos"
+        ],
+        [
+          "fiscal",
+          "instituto"
+        ],
+        [
+          "fiscal",
+          "colegio"
+        ],
+        [
+          "fiscal",
+          "insult"
+        ]
+      ],
+      "respuesta": {
+        "tipo": "normal",
+        "respuesta": "Cuando tus padres denuncian, la Fiscalía de Menores decide si lo que pasó puede ser delito y si sigue adelante, y tiene que comunicarles lo que decida [ML-LO5-16.2].\n\nLa Fiscalía defiende los derechos de los menores, vigila que el proceso sea justo y dirige la investigación [ML-LO5-6]. En cualquier momento, el fiscal puede pedir al juez medidas para protegerte, como prohibir a la persona denunciada que se te acerque o que se comunique contigo [ML-LO5-28.1].\n\nEn tu instituto, el protocolo contra el acoso se pone en marcha con solo que lo cuentes [ML-LOPIVI-34.1]. Y si te sientes mal, en ANAR te escuchan: 900 20 20 10.",
+        "fuentes": [
+          {
+            "id": "ML-LO5-16.2",
+            "titulo": "La Fiscalía decide si sigue adelante",
+            "norma": "LO 5/2000",
+            "articulo": "16.2",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2000-641"
+          },
+          {
+            "id": "ML-LO5-6",
+            "titulo": "Qué hace la Fiscalía de Menores",
+            "norma": "LO 5/2000",
+            "articulo": "6",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2000-641"
+          },
+          {
+            "id": "ML-LO5-28.1",
+            "titulo": "Medidas para protegerte durante el proceso",
+            "norma": "LO 5/2000",
+            "articulo": "28.1",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2000-641"
+          },
+          {
+            "id": "ML-LOPIVI-34.1",
+            "titulo": "El protocolo contra el acoso",
+            "norma": "LO 8/2021",
+            "articulo": "34.1",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2021-9347"
+          }
+        ],
+        "sugerencias": [
+          "¿Tendré que verlos cuando declare?",
+          "¿Quién puede acompañarme?",
+          "¿A quién puedo pedir ayuda?"
+        ],
+        "terminos": [
+          "Fiscalía de Menores",
+          "protocolo contra el acoso"
+        ],
+        "latencia_ms": 0
+      }
+    },
+    {
+      "id": "sara-fotos",
+      "caso": "Sara",
+      "origen": "marco_legal",
+      "nota": "Contesta como a una víctima (Sara): si la pregunta llega desde «Pregunta como investigado», no se usa y contesta MockTuTurnoApi.",
+      "pregunta": "¿Qué puedo hacer si difunden fotos mías sin permiso?",
+      "claves": [
+        [
+          "difund"
+        ],
+        [
+          "difusion"
+        ],
+        [
+          "pasan",
+          " foto"
+        ],
+        [
+          "comparten",
+          " foto"
+        ],
+        [
+          "publica",
+          " foto"
+        ],
+        [
+          "sin permiso",
+          " foto"
+        ],
+        [
+          "sin permiso",
+          " video"
+        ],
+        [
+          "sin permiso",
+          " imagen"
+        ]
+      ],
+      "respuesta": {
+        "tipo": "normal",
+        "respuesta": "Aunque tú hubieras aceptado que te hicieran una foto o un vídeo íntimo, o lo hubieras enviado tú, nadie puede pasarlo a otros sin tu permiso. Si eso daña gravemente tu intimidad, es un delito [ML-CP-197.7]. Y si eres menor de edad y las imágenes son sexuales, pasarlas a otros, por cualquier medio (también el móvil), es un delito grave [ML-CP-189.1].\n\nSi son fotos o vídeos sexuales o violentos y están publicados en internet sin permiso, puedes pedir a la Agencia Española de Protección de Datos que los quite enseguida, en su Canal prioritario. Si tienes entre 14 y 17 años, puedes pedirlo tú directamente [ML-AEPD-CP]. Este canal no sirve si se están pasando por WhatsApp, Telegram o el correo [ML-AEPD-FAQ15.03].\n\nTambién puedes ir a la policía y denunciar tú, sin un adulto, y puede estar contigo una persona de tu confianza que tú elijas [ML-LOPIVI-50.2]. El 017 te ayuda gratis con problemas en internet, todos los días de 8:00 a 23:00 [ML-INCIBE-017].",
+        "fuentes": [
+          {
+            "id": "ML-CP-197.7",
+            "titulo": "Pasar a otros imágenes íntimas sin permiso",
+            "norma": "Código Penal",
+            "articulo": "197.7",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1995-25444"
+          },
+          {
+            "id": "ML-CP-189.1",
+            "titulo": "Pasar imágenes sexuales de menores es un delito grave",
+            "norma": "Código Penal",
+            "articulo": "189.1.b)",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1995-25444"
+          },
+          {
+            "id": "ML-AEPD-CP",
+            "titulo": "Canal prioritario de la Agencia Española de Protección de Datos",
+            "norma": "AEPD · Canal prioritario",
+            "articulo": "",
+            "url": "https://www.aepd.es/canalprioritario"
+          },
+          {
+            "id": "ML-AEPD-FAQ15.03",
+            "titulo": "Cuándo no sirve el Canal prioritario",
+            "norma": "AEPD · FAQ 15.03",
+            "articulo": "",
+            "url": "https://www.aepd.es/preguntas-frecuentes/15-canal-prioritario-para-contenidos-sensibles-en-internet/FAQ-1503-en-que-casos-no-puedo-acudir-a-este-canal"
+          },
+          {
+            "id": "ML-LOPIVI-50.2",
+            "titulo": "Denunciar sin un adulto y con alguien de confianza",
+            "norma": "LO 8/2021",
+            "articulo": "50.2.e) y 50.2.h)",
+            "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2021-9347"
+          },
+          {
+            "id": "ML-INCIBE-017",
+            "titulo": "El 017, ayuda con problemas en internet",
+            "norma": "INCIBE · 017",
+            "articulo": "",
+            "url": "https://www.incibe.es/linea-de-ayuda-en-ciberseguridad"
+          }
+        ],
+        "sugerencias": [
+          "¿Puedo pedir que borren mis fotos?",
+          "¿Qué es el 017?",
+          "¿A quién puedo pedir ayuda?"
+        ],
+        "terminos": [
+          "intimidad",
+          "Agencia Española de Protección de Datos",
+          "Canal prioritario"
+        ],
+        "latencia_ms": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+MaryKate (Medium), de Sakura Hatsuki (fluffybanana101).
+Original: https://www.fontspace.com/marykate-font-f18298 (licencia: Freeware).
+
+Texto de la autora (misc/Read Me!.txt del paquete original):
+"You may use this font on anything. Personal and commercial.
+If you wish to post or upload this font in other sites, please put my name
+(Sakura Hatsuki or fluffybanana101) as the author of the font."
+
+MaryKate-Medium-ES.ttf es una versión modificada para el español: la original solo dibuja ASCII
+(las letras acentuadas estaban vacías). Se han añadido á é í ó ú Á É Í Ó Ú ñ Ñ ü Ü ¿ ¡ " y ·
+a partir de los propios trazos de la fuente (su ~, su punto, su ? y su !) y un acento dibujado
+en su estilo. Script: se generó con fontTools para TuTurno (DATAthon DATAfórum Justicia 2026).
+
+Peso declarado: MaryKate tiene un solo peso, y Flutter le simula la negrita (la engorda y la emborrona) cuando
+un estilo pide un peso de 600 o más y el fichero declara 200 o más por debajo. Para que eso no pase nunca, el
+fichero declara 900 en OS/2.usWeightClass (antes, 500); los trazos son los mismos. Lo comprueba
+test/marca/tema_test.dart.

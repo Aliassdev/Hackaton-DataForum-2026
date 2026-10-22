@@ -1,0 +1,37 @@
+{
+  "id": "U7",
+  "titulo": "Cuando el juez te escucha en familia",
+  "conceptos": [
+    "C-escuchado-familia",
+    "C-tu-opinion",
+    "C-seguir-familia",
+    "C-defender-derechos"
+  ],
+  "lecciones": [
+    {
+      "id": "U7-L1",
+      "titulo": "Cuando hablas con el juez",
+      "ejercicios": [
+        "E-701",
+        "E-702",
+        "E-703",
+        "E-704",
+        "E-705",
+        "E-706"
+      ]
+    },
+    {
+      "id": "U7-L2",
+      "titulo": "Tu familia y tus derechos",
+      "ejercicios": [
+        "E-707",
+        "E-708",
+        "E-709",
+        "E-710",
+        "E-711",
+        "E-712"
+      ]
+    }
+  ],
+  "validado": true
+}

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Todo sale de esta misma web: ni rastreadores, ni cookies, ni letras o scripts de otros sitios. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>TuTurno · Pruébala gratis</title>
+  <meta name="description" content="TuTurno explica la justicia con palabras claras a chicos y chicas de 11 a 17 años. Pruébala en el navegador, sin instalar nada, o instala la app para Android.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFDE59">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0E1A4F">
+  <link rel="canonical" href="https://aliassdev.github.io/Hackaton-DataForum-2026/">
+
+  <!-- Vista previa al compartir el enlace (WhatsApp, Telegram…) -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="TuTurno">
+  <meta property="og:title" content="TuTurno · La justicia, con palabras claras">
+  <meta property="og:description" content="Una app para chicos y chicas de 11 a 17 años que pasan por un proceso judicial. Pruébala en el navegador o instálala en Android.">
+  <meta property="og:url" content="https://aliassdev.github.io/Hackaton-DataForum-2026/">
+  <meta property="og:image" content="https://aliassdev.github.io/Hackaton-DataForum-2026/recursos/compartir.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Logotipo de TuTurno y la frase «El derecho a ser oído empieza por entender»">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="recursos/marca/icono.svg" type="image/svg+xml">
+  <link rel="icon" href="recursos/marca/icono-48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="recursos/marca/icono-180.png">
+  <link rel="preload" href="recursos/fuentes/nunito-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="recursos/fuentes/marykate.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="recursos/estilo.css">
+  <script src="recursos/plataforma.js" defer></script>
+</head>
+<body>
+  <a class="saltar" href="#descarga">Ir a probar la app</a>
+
+  <header class="cabecera">
+    <div class="cabecera__dentro">
+      <h1 class="logotipo">
+        <svg viewBox="0 0 575.2 160.62" role="img" aria-label="TuTurno" focusable="false" fill="currentColor"><path d="M68.48 1.38L68.02 23.44C64.04 23.28 60.05 23.17 56.06 23.09C52.08 23.02 48.1 22.91 44.12 22.75L42.52 160.62L20.45 160.39L22.06 22.28C18.38 22.28 14.71 22.25 11.03 22.17C7.35 22.1 3.68 22.06 0 22.06L0 0C11.49 0 22.94 0.16 34.34 0.47C45.76 0.77 57.14 1.07 68.48 1.38ZM68.48 1.38"/><path d="M152.13 79.73C152.28 83.11 152.23 86.6 152.01 90.2C151.78 93.8 151.43 97.36 150.98 100.88C150.67 102.72 150.33 104.56 149.95 106.41C149.56 108.24 149.06 110.15 148.45 112.14C147.83 114.29 147.06 116.36 146.15 118.34C145.69 119.26 145.15 120.26 144.54 121.33C143.92 122.4 143.23 123.4 142.48 124.31C140.95 126.3 139.18 128.11 137.18 129.72C135.19 131.32 133.2 132.66 131.21 133.73C130.59 134.05 130.02 134.32 129.49 134.55C128.96 134.78 128.46 134.97 127.99 135.12L126.16 135.81C126.01 135.81 125.77 135.85 125.46 135.92C125.16 136 124.86 136.11 124.55 136.27C122.41 136.88 119.95 137.27 117.2 137.42C111.98 137.57 107.01 136.5 102.26 134.2C97.96 131.9 94.29 128.84 91.23 125C88.16 121.18 86.02 116.97 84.79 112.38L84.34 110.53L84.1 109.61C83.95 109.31 83.88 109.08 83.88 108.92L83.41 106.16C83.41 105.24 83.34 104.36 83.18 103.52C83.03 102.67 82.88 101.79 82.73 100.88C81.96 93.84 81.66 86.91 81.8 80.09C81.96 73.27 82.19 66.56 82.49 59.97L104.55 61.12C104.25 67.56 104.06 73.92 103.98 80.2C103.9 86.48 104.17 92.61 104.79 98.58C104.79 99.35 104.86 100.08 105.01 100.77C105.16 101.45 105.24 102.18 105.24 102.95L105.71 105.02C105.71 105.17 105.71 105.32 105.71 105.47L105.95 105.7C105.95 106.01 105.95 106.23 105.95 106.39C106.4 108.08 107.24 109.69 108.46 111.22C109.53 112.59 110.84 113.67 112.37 114.44C113.59 115.05 114.98 115.36 116.51 115.36C116.81 115.36 117.15 115.32 117.54 115.25C117.92 115.17 118.34 115.05 118.8 114.89C118.8 114.89 118.88 114.89 119.04 114.89C119.2 114.89 119.27 114.82 119.27 114.67L119.96 114.44C120.26 114.44 120.48 114.4 120.63 114.33C120.79 114.25 121.02 114.12 121.34 113.97C122.87 113.21 124.09 112.21 125.01 110.98C125.32 110.68 125.78 109.92 126.38 108.69C126.7 107.77 127 106.78 127.3 105.7C127.76 104.63 128.11 103.41 128.34 102.03C128.57 100.65 128.84 99.19 129.15 97.66C129.91 91.99 130.21 86.09 130.05 79.97C129.91 73.84 129.61 67.48 129.15 60.89L151.21 59.52C151.51 62.73 151.74 66.03 151.9 69.41C152.05 72.77 152.13 76.21 152.13 79.73ZM152.13 79.73"/><path d="M230.03 1.38L229.57 23.44C225.59 23.28 221.6 23.17 217.61 23.09C213.63 23.02 209.65 22.91 205.68 22.75L204.07 160.62L182 160.39L183.61 22.28C179.93 22.28 176.26 22.25 172.58 22.17C168.9 22.1 165.23 22.06 161.55 22.06L161.55 0C173.04 0 184.49 0.16 195.89 0.47C207.31 0.77 218.69 1.07 230.03 1.38ZM230.03 1.38"/><path d="M313.68 79.73C313.83 83.11 313.78 86.6 313.56 90.2C313.33 93.8 312.98 97.36 312.53 100.88C312.22 102.72 311.88 104.56 311.5 106.41C311.11 108.24 310.61 110.15 310 112.14C309.38 114.29 308.61 116.36 307.7 118.34C307.24 119.26 306.7 120.26 306.09 121.33C305.47 122.4 304.78 123.4 304.03 124.31C302.5 126.3 300.73 128.11 298.73 129.72C296.74 131.32 294.75 132.66 292.76 133.73C292.14 134.05 291.57 134.32 291.04 134.55C290.51 134.78 290.01 134.97 289.54 135.12L287.71 135.81C287.56 135.81 287.32 135.85 287.01 135.92C286.71 136 286.41 136.11 286.1 136.27C283.96 136.88 281.5 137.27 278.75 137.42C273.53 137.57 268.56 136.5 263.81 134.2C259.52 131.9 255.84 128.84 252.78 125C249.71 121.18 247.57 116.97 246.34 112.38L245.89 110.53L245.65 109.61C245.5 109.31 245.43 109.08 245.43 108.92L244.96 106.16C244.96 105.24 244.89 104.36 244.73 103.52C244.58 102.67 244.43 101.79 244.28 100.88C243.52 93.84 243.21 86.91 243.35 80.09C243.51 73.27 243.74 66.56 244.04 59.97L266.1 61.12C265.8 67.56 265.61 73.92 265.53 80.2C265.45 86.48 265.72 92.61 266.34 98.58C266.34 99.35 266.41 100.08 266.56 100.77C266.71 101.45 266.79 102.18 266.79 102.95L267.26 105.02C267.26 105.17 267.26 105.32 267.26 105.47L267.5 105.7C267.5 106.01 267.5 106.23 267.5 106.39C267.95 108.08 268.79 109.69 270.01 111.22C271.08 112.59 272.39 113.67 273.92 114.44C275.14 115.05 276.53 115.36 278.06 115.36C278.36 115.36 278.7 115.32 279.09 115.25C279.47 115.17 279.89 115.05 280.35 114.89C280.35 114.89 280.43 114.89 280.59 114.89C280.75 114.89 280.82 114.82 280.82 114.67L281.51 114.44C281.81 114.44 282.03 114.4 282.18 114.33C282.34 114.25 282.57 114.12 282.89 113.97C284.42 113.21 285.64 112.21 286.56 110.98C286.87 110.68 287.33 109.92 287.93 108.69C288.25 107.77 288.55 106.78 288.85 105.7C289.31 104.63 289.66 103.41 289.89 102.03C290.12 100.65 290.39 99.19 290.7 97.66C291.46 91.99 291.76 86.09 291.6 79.97C291.46 73.84 291.16 67.48 290.7 60.89L312.76 59.52C313.06 62.73 313.29 66.03 313.45 69.41C313.6 72.77 313.68 76.21 313.68 79.73ZM313.68 79.73"/><path d="M386.29 49.41L387.44 71.47C383.15 71.77 379.09 72.61 375.26 73.98C373.42 74.76 371.66 75.68 369.98 76.75C369.21 77.21 368.37 77.75 367.44 78.36L366.54 79.28L365.38 80.2C362.32 82.95 360.02 86.02 358.49 89.39C356.96 92.76 356.19 96.36 356.19 100.19L355.96 100.19C356.12 106.17 356.34 112.11 356.65 118C356.96 123.9 357.26 129.84 357.57 135.81L335.51 136.95C333.98 108.31 332.9 79.59 332.29 50.78L354.35 50.33C354.35 52.01 354.39 53.69 354.46 55.38C354.54 57.06 354.58 58.75 354.58 60.44C355.96 59.37 357.18 58.52 358.26 57.91C361.17 56.22 364.16 54.77 367.23 53.55C373.19 51.25 379.55 49.87 386.29 49.41ZM386.29 49.41"/><path d="M475.47 95.59C475.92 102.95 476.19 110.27 476.26 117.55C476.33 124.82 476.45 132.05 476.61 139.25L454.54 139.72C454.39 132.37 454.27 125.17 454.2 118.12C454.13 111.07 453.86 104.02 453.4 96.97C453.25 95.28 453.09 93.56 452.93 91.8C452.79 90.04 452.64 88.31 452.48 86.62C452.48 85.71 452.44 84.83 452.36 83.98C452.28 83.14 452.17 82.26 452.01 81.34L451.79 78.81L451.56 77.67L451.32 76.52C450.86 73.45 450.25 70.85 449.5 68.7C448.57 66.87 447.57 65.57 446.5 64.8C446.35 64.64 446.16 64.49 445.93 64.34C445.7 64.19 445.66 64.11 445.81 64.11C445.66 64.11 445.36 64.11 444.89 64.11C444.43 64.27 443.89 64.5 443.29 64.8C442.98 64.95 442.67 65.11 442.37 65.27C442.22 65.41 441.98 65.64 441.68 65.95C440.45 67.33 439.38 69.17 438.47 71.47C438 72.69 437.54 74.06 437.07 75.59L435.7 80.66C433.86 87.4 432.25 94.1 430.87 100.77C429.5 107.43 428.66 114.14 428.36 120.88L428.12 120.88C428.12 122.87 428.08 124.86 428 126.84C427.92 128.84 427.89 130.82 427.89 132.81L405.82 132.12C406.28 116.96 406.51 101.76 406.51 86.52C406.51 71.28 406.51 55.92 406.51 40.44L428.57 40.44C428.57 43.04 428.57 45.65 428.57 48.25C428.89 47.95 429.04 47.8 429.04 47.8C430.11 46.88 431.34 46.04 432.72 45.27C435.47 43.89 438.31 42.98 441.22 42.52C442.75 42.2 444.36 42.05 446.04 42.05C447.73 42.05 449.42 42.28 451.11 42.73C452.78 43.2 454.39 43.81 455.92 44.58C456.69 44.88 457.38 45.27 458 45.73C458.61 46.2 459.22 46.65 459.82 47.11C461.05 48.03 462.16 49.02 463.15 50.09C464.15 51.17 465.11 52.24 466.04 53.31C467.42 55.46 468.64 57.76 469.72 60.2C470.63 62.51 471.36 64.73 471.89 66.88C472.43 69.01 472.85 71.15 473.15 73.3L473.39 74.69L473.62 76.3L473.86 79.05C474 79.96 474.11 80.89 474.18 81.81C474.27 82.73 474.39 83.65 474.54 84.56C474.69 86.4 474.84 88.23 475 90.08C475.15 91.91 475.31 93.75 475.47 95.59ZM475.47 95.59"/><path d="M574.73 80.66C575.49 85.87 575.33 91.15 574.26 96.52C573.2 101.57 571.29 106.32 568.53 110.77C565.61 115.51 562.01 119.41 557.73 122.48C553.28 125.85 548.3 128.07 542.8 129.14C540.03 129.76 537.31 130.03 534.62 129.95C531.94 129.87 529.3 129.6 526.7 129.14C524.1 128.68 521.56 127.96 519.11 126.97C516.66 125.97 514.29 124.7 512 123.17C507.25 119.95 503.42 115.89 500.51 110.98C497.75 106.39 496.06 101.26 495.45 95.59C495.15 92.99 495.11 90.43 495.34 87.91C495.57 85.38 495.91 82.88 496.37 80.42C496.83 78.13 497.48 75.76 498.33 73.31C499.17 70.86 500.2 68.48 501.42 66.17C504.18 61.43 507.63 57.45 511.76 54.23C513.3 53.01 514.75 52.05 516.12 51.36C517.51 50.67 518.89 50.1 520.26 49.64C522.72 48.87 525.33 48.26 528.08 47.8C532.83 47.18 537.73 47.18 542.8 47.8C544.17 47.95 545.47 48.18 546.7 48.48C548.23 48.79 549.61 49.17 550.83 49.64C553.58 50.7 556.12 52.08 558.42 53.77C560.71 55.3 562.86 57.14 564.86 59.28C565.77 60.36 566.61 61.51 567.37 62.73C567.83 63.35 568.22 63.89 568.53 64.34L569.45 66.17C572.05 70.62 573.81 75.45 574.73 80.66ZM552.67 91.92C553.28 89.32 553.36 86.79 552.9 84.33C552.44 81.58 551.6 79.13 550.37 76.98C549.46 75.6 548.77 74.6 548.31 73.98C547.54 73.07 546.77 72.3 546.01 71.69C545.08 71.23 544.16 70.77 543.25 70.31C542.79 70.16 542.25 70.01 541.64 69.86C541.64 69.86 541.41 69.86 540.95 69.86C540.8 69.7 540.49 69.62 540.03 69.62C536.97 69.32 533.98 69.32 531.08 69.62C529.69 69.93 528.46 70.23 527.39 70.55C526.63 70.85 526.02 71.16 525.56 71.47C521.72 74.53 519.19 79.05 517.97 85.02C517.35 87.93 517.2 90.62 517.51 93.06C517.81 95.67 518.5 97.96 519.58 99.95C522.03 103.95 525.87 106.48 531.08 107.55C536.13 108.62 540.64 107.7 544.62 104.78C546.61 103.25 548.3 101.41 549.69 99.27C551.22 96.82 552.21 94.37 552.67 91.92ZM552.67 91.92"/></svg>
+      </h1>
+      <a class="boton-ayuda" href="#ayuda">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M6 6l3.5 3.5M14.5 14.5 18 18M18 6l-3.5 3.5M9.5 14.5 6 18"/></svg>
+        Ayuda
+      </a>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <div class="portada">
+      <div class="portada__dentro">
+        <div class="portada__texto">
+          <p class="lema">El derecho a ser oído empieza por entender.</p>
+          <p class="frase">TuTurno es una app para chicos y chicas de 11 a 17 años que pasan por un proceso judicial: te explica con palabras claras qué va a pasar y cuáles son tus derechos.</p>
+          <p class="prototipo">Prototipo del DATAthon DATAfórum Justicia&nbsp;2026 · Reto&nbsp;2: Infancia y juventud</p>
+        </div>
+        <!-- Solo en el ordenador (estilo.css): para abrir la página en el móvil. -->
+        <div class="qr-escritorio">
+          <img src="recursos/qr-tuturno.svg" width="192" height="192" alt="Código QR que abre esta página">
+          <p>¿Estás en un ordenador? Escanea el código con la cámara del móvil.</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="seccion descarga" id="descarga" aria-labelledby="titulo-descarga">
+      <h2 id="titulo-descarga">Pruébala gratis</h2>
+      <!-- plataforma.js destaca la opción de tu móvil y estilo.css esconde la otra: en Android la versión web ya está
+           en su tarjeta, y en iPhone o iPad no se puede instalar la APK. En el ordenador, o sin JavaScript, se ven las dos. -->
+      <div class="opciones">
+        <article class="opcion" id="opcion-android" aria-labelledby="titulo-android">
+          <div class="opcion__cabeza">
+            <div class="opcion__titulo">
+              <h3 id="titulo-android">Android</h3>
+              <p class="recomendada" hidden>Para tu móvil</p>
+            </div>
+            <p>Pruébala ya en el navegador, o instala la app y habla con TuTurno con tu voz.</p>
+          </div>
+          <div class="opcion__talon">
+            <a class="boton" href="./app/">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.2v13.6L18.6 12z"/></svg>
+              Probar ya, sin instalar
+            </a>
+            <a class="boton boton--secundario" href="https://github.com/Aliassdev/Hackaton-DataForum-2026/releases/latest/download/tuturno.apk" type="application/vnd.android.package-archive">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>
+              Instalar la app (con voz)
+            </a>
+            <!-- Versión y tamaño de la APK (marcadores con dobles llaves): los rellena publicar_pages.sh con los de la última release. -->
+            <p class="datos">La app pesa 69 MB (versión 1.0.0, para Android 7 o superior): mejor con wifi.</p>
+            <a class="enlace-flecha" href="#instalar">
+              Cómo instalarla, paso a paso
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13m0 0-5-5m5 5-5 5"/></svg>
+            </a>
+          </div>
+        </article>
+
+        <article class="opcion" id="opcion-web" aria-labelledby="titulo-web">
+          <div class="opcion__cabeza">
+            <div class="opcion__titulo">
+              <h3 id="titulo-web">iPhone, iPad u ordenador</h3>
+              <p class="recomendada" hidden>Para tu móvil</p>
+            </div>
+            <p>Úsala en el navegador, sin instalar nada: escribe o dicta tus preguntas y TuTurno te lee las respuestas.</p>
+          </div>
+          <div class="opcion__talon">
+            <a class="boton" href="./app/">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.2v13.6L18.6 12z"/></svg>
+              Probar ya, sin instalar
+            </a>
+            <p class="datos">En iPhone, ábrela con Safari. Para tenerla a mano, elige «Añadir a pantalla de inicio» en el menú de compartir.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="seccion" id="instalar" aria-labelledby="titulo-instalar">
+      <h2 id="titulo-instalar">Cómo instalarla en Android</h2>
+      <p>Para probarla no hace falta: toca «Probar ya, sin instalar». Instálala si quieres hablar con TuTurno con tu voz.</p>
+      <ol class="pasos" role="list">
+        <li>
+          <h3>Descarga el archivo</h3>
+          <p>Toca «Instalar la app (con voz)». Si el navegador te avisa de que este tipo de archivo puede dañar tu dispositivo, elige descargarlo de todas formas.</p>
+        </li>
+        <li>
+          <h3>Ábrelo</h3>
+          <p>Cuando acabe, toca «Abrir». Si no lo ves, búscalo en la app Archivos, en Descargas: se llama tuturno.apk.</p>
+        </li>
+        <li>
+          <h3>Permite instalar apps de este navegador</h3>
+          <p>La primera vez, Android te dirá que, por seguridad, no puede instalar apps de esta fuente. Toca «Ajustes», activa «Permitir desde esta fuente» y vuelve atrás.</p>
+        </li>
+        <li>
+          <h3>Instala</h3>
+          <p>Toca «Instalar» y, cuando termine, «Abrir». ¡Ya está!</p>
+        </li>
+      </ol>
+
+      <div class="aviso" role="note" aria-labelledby="titulo-aviso">
+        <h3 id="titulo-aviso">¿Te avisa de que es una app desconocida o sale Play Protect?</h3>
+        <p>Es normal. Android avisa siempre que una app no viene de Google Play, y TuTurno no está en la tienda porque es un prototipo. Si el aviso es de Play Protect, toca «Más detalles» y después «Instalar de todas formas». Si te pregunta si quieres enviar la app para que la analicen, elige lo que prefieras.</p>
+        <p>Descárgala solo desde esta página. Y, en general, ten cuidado con las apps que no vienen de Google Play: si tienes dudas, pregunta a un adulto de confianza o toca «Probar ya, sin instalar», que funciona en el navegador.</p>
+      </div>
+
+      <ul class="consejos">
+        <li><strong>¿No empieza la descarga?</strong> Abre esta página en Chrome y vuelve a probar.</li>
+        <li><strong>Cuando ya la tengas,</strong> puedes quitar el permiso que diste: en Ajustes, busca «desconocidas», entra en tu navegador y desactívalo.</li>
+      </ul>
+    </section>
+
+    <section class="seccion" id="permisos" aria-labelledby="titulo-permisos">
+      <h2 id="titulo-permisos">Qué permisos pide la app</h2>
+      <dl class="permisos">
+        <div>
+          <dt>
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+            Micrófono
+          </dt>
+          <dd>Para que puedas hablar con TuTurno en vez de escribir. Te lo pide la primera vez que vas a usar la voz. Si dices que no, puedes escribir igual.</dd>
+        </div>
+        <div>
+          <dt>
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5a13.5 13.5 0 0 1 19 0M5.6 12.8a9 9 0 0 1 12.8 0M8.8 16a4.6 4.6 0 0 1 6.4 0"/><path d="M12 19.5h.01" stroke-width="3"/></svg>
+            Internet
+          </dt>
+          <dd>Para responder a tus preguntas. Este no te lo pregunta: lo tienen todas las apps que se conectan.</dd>
+        </div>
+      </dl>
+      <p class="despues-lista">Nada más: no pide tu ubicación, tus contactos, tus fotos ni la cámara. En la versión web, es el navegador el que te pide el micrófono cuando vas a dictar.</p>
+    </section>
+
+    <section class="seccion" id="privacidad" aria-labelledby="titulo-privacidad">
+      <h2 id="titulo-privacidad">Tu privacidad</h2>
+      <ul class="lista">
+        <li><strong>Sin cuentas.</strong> No te pide tu nombre, tu correo ni tu teléfono, y tu progreso se guarda solo en tu móvil.</li>
+        <li><strong>Tu voz, en la app de Android.</strong> El reconocimiento de voz de tu móvil pasa lo que dices a texto. A TuTurno solo le llega ese texto, que ves y puedes corregir antes de enviarlo, y TuTurno no guarda tu voz. Eso sí: en muchos móviles ese reconocimiento es el de Google, que puede usar sus servidores.</li>
+        <li><strong>Tu voz, en la versión web.</strong> El navegador usa su propio servicio de reconocimiento de voz (en iPhone, el de Apple; en Chrome, el de Google), que puede enviar tu voz a sus servidores para pasarla a texto. Si prefieres que no, escribe.</li>
+        <li><strong>Tus preguntas.</strong> Llegan en texto a nuestro servidor, que quita teléfonos, correos, DNI y direcciones antes de preparar la respuesta con una inteligencia artificial de otra empresa, y no guarda lo que escribes. En la app de Android también pasan por ElevenLabs, el servicio que pone la voz a TuTurno.</li>
+        <li><strong>Cuenta solo lo necesario.</strong> No escribas tu nombre ni datos que te identifiquen. TuTurno te explica cómo funciona el proceso y no te va a preguntar qué ha pasado.</li>
+      </ul>
+    </section>
+
+    <section class="seccion" id="importante" aria-labelledby="titulo-importante">
+      <div class="destacado">
+        <h2 id="titulo-importante">No sustituye a un abogado</h2>
+        <p>TuTurno da información general para que entiendas el proceso, pero no conoce tu caso y no es asesoramiento legal. Sus respuestas las prepara una inteligencia artificial y pueden tener errores. Para lo que te pasa a ti, habla con tu abogado o abogada, con los profesionales que te acompañan o con un adulto de confianza.</p>
+      </div>
+    </section>
+
+    <section class="seccion ayuda" id="ayuda" aria-labelledby="titulo-ayuda">
+      <h2 id="titulo-ayuda">¿Necesitas ayuda ahora?</h2>
+      <p>Son teléfonos gratuitos. Al tocar uno, se abre el teclado del teléfono con el número: tú decides si llamas.</p>
+      <ul class="telefonos" role="list">
+        <li>
+          <a class="telefono" href="tel:900202010">
+            <span class="telefono__numero">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+              900&nbsp;20&nbsp;20&nbsp;10
+            </span>
+            <span class="telefono__quien">Fundación ANAR</span>
+            <span class="telefono__para">Para chicos, chicas y adolescentes. Confidencial y a cualquier hora.</span>
+          </a>
+        </li>
+        <li>
+          <a class="telefono" href="tel:116111">
+            <span class="telefono__numero">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+              116&nbsp;111
+            </span>
+            <span class="telefono__quien">Línea de ayuda a la infancia</span>
+            <span class="telefono__para">Teléfono europeo. En muchas comunidades lo atiende ANAR.</span>
+          </a>
+        </li>
+        <li>
+          <a class="telefono telefono--urgente" href="tel:112">
+            <span class="telefono__numero">
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+              112
+            </span>
+            <span class="telefono__quien">Emergencias</span>
+            <span class="telefono__para">Si estás en peligro ahora mismo.</span>
+          </a>
+        </li>
+      </ul>
+      <p class="despues-lista">ANAR también atiende por chat en su web, <a href="https://www.anar.org">anar.org</a>.</p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>TuTurno es un prototipo hecho para el DATAthon DATAfórum Justicia 2026. No es un servicio oficial.</p>
+    <p>Esta página no usa cookies ni rastreadores, y no carga nada de otras webs.</p>
+    <p>Títulos con la letra MaryKate, de Sakura Hatsuki (fluffybanana101). Texto con Nunito, de The Nunito Project Authors, con <a href="recursos/fuentes/Nunito-OFL.txt">licencia SIL Open Font</a>.</p>
+    <p><a class="enlace-suelto" href="https://github.com/Aliassdev/Hackaton-DataForum-2026">El código de TuTurno, en GitHub</a></p>
+  </footer>
+</body>
+</html>

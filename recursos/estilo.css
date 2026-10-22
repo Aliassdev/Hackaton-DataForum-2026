@@ -1,0 +1,808 @@
+/* TuTurno · página de descarga. Pensada primero para el móvil.
+   Colores de la marca (app/lib/tema.dart): amarillo #FFDE59, azul #2643E0, azul noche #0E1A4F y papel #FFFBEF.
+   El amarillo nunca va sobre blanco ni lleva texto blanco: va sobre azul noche, y encima de él el texto es azul noche.
+   El rojo es solo para Ayuda y el 112. Todas las parejas de texto y fondo cumplen el contraste AA. */
+
+/* MaryKate (títulos), de Sakura Hatsuki (fluffybanana101); versión con letras del español de TuTurno.
+   Tiene un solo peso: el intervalo 100–900 evita que el navegador le simule la negrita. */
+@font-face {
+  font-family: "MaryKate";
+  src: url("fuentes/marykate.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Nunito (texto), SIL Open Font License 1.1 (fuentes/Nunito-OFL.txt). Recortada al latín y la puntuación del
+   español. */
+@font-face {
+  font-family: "Nunito";
+  src: url("fuentes/nunito-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Nunito";
+  src: url("fuentes/nunito-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Nunito";
+  src: url("fuentes/nunito-800.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+
+  --amarillo: #FFDE59;
+  --azul: #2643E0;
+  --noche: #0E1A4F;
+  --papel: #FFFBEF;
+
+  /* Tema claro: papel cálido con tinta azul noche y azul eléctrico como color principal. */
+  --fondo: var(--papel);
+  --tinta: var(--noche);
+  --tinta-suave: #454E7E;
+  --tarjeta: #FFFFFF;
+  --contorno: rgba(14, 26, 79, 0.28);
+  --sombra: rgba(14, 26, 79, 0.16);
+  --perforado: rgba(14, 26, 79, 0.32);
+  --cabecera: var(--amarillo);
+  --sobre-cabecera: var(--noche);
+  --portada: var(--amarillo);
+  --sobre-portada: var(--noche);
+  --logotipo: var(--noche);
+  --principal: var(--azul);
+  --sobre-principal: #FFFFFF;
+  --secundario: var(--azul);
+  --enlace: var(--azul);
+  --marcador: var(--azul);
+  --etiqueta: var(--noche);
+  --sobre-etiqueta: var(--amarillo);
+  --numero: var(--noche);
+  --sobre-numero: var(--amarillo);
+  --aviso: #FFEEAD;
+  --sobre-aviso: #3B2900;
+  --destacado: #DDE4FF;
+  --sobre-destacado: var(--noche);
+  --ayuda: #C21F2B;
+  --sobre-ayuda: #FFFFFF;
+  --ayuda-suave: #FFDAD7;
+  --sobre-ayuda-suave: #7D0F18;
+  --foco: var(--noche);
+
+  --letra-titulos: "MaryKate", "Nunito", ui-rounded, system-ui, sans-serif;
+  --letra-texto: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ancho-texto: 44rem;
+  --ancho-ancho: 64rem;
+  --radio: 20px;
+}
+
+/* Tema oscuro: superficies azul noche con acentos amarillos, como la app. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #0B1543;
+    --tinta: var(--papel);
+    --tinta-suave: #C5CBEB;
+    --tarjeta: #1B2865;
+    --contorno: rgba(197, 203, 235, 0.35);
+    --sombra: rgba(0, 0, 0, 0.45);
+    --perforado: rgba(255, 251, 239, 0.4);
+    --cabecera: var(--noche);
+    --sobre-cabecera: var(--amarillo);
+    --portada: #152159;
+    --sobre-portada: var(--papel);
+    --logotipo: var(--amarillo);
+    --principal: var(--amarillo);
+    --sobre-principal: var(--noche);
+    --secundario: var(--amarillo);
+    --enlace: #AEBCFF;
+    --marcador: var(--amarillo);
+    --etiqueta: var(--amarillo);
+    --sobre-etiqueta: var(--noche);
+    --numero: var(--amarillo);
+    --sobre-numero: var(--noche);
+    --aviso: #4A3C00;
+    --sobre-aviso: #FFEEAD;
+    --destacado: #2A3A94;
+    --sobre-destacado: var(--papel);
+    --ayuda: #D3313B;
+    --sobre-ayuda: #FFFFFF;
+    --ayuda-suave: #8C1620;
+    --sobre-ayuda-suave: #FFDAD7;
+    --foco: var(--amarillo);
+  }
+}
+
+/* --- Base ------------------------------------------------------------------------------------------------ */
+
+/* Los márgenes laterales van en px y los verticales en rem: con el texto del sistema muy grande (200 %), el texto
+   crece pero los márgenes no se comen el ancho del móvil y la página no se desplaza en horizontal. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Para que la cabecera fija no tape el título al saltar a una sección. */
+  scroll-padding-top: 5.5rem;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: var(--letra-texto);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  overflow-wrap: break-word;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-family: var(--letra-titulos);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: clamp(2rem, 1.7rem + 1.5vw, 2.75rem);
+  line-height: 1.1;
+  /* El espacio de MaryKate mide 0,42 em, más que sus letras: se acerca al de Nunito. */
+  word-spacing: -0.16em;
+  text-wrap: balance;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+a {
+  color: var(--enlace);
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-thickness: 0.16em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+}
+
+.icono {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+}
+
+.saltar {
+  position: absolute;
+  top: -10rem;
+  left: 1rem;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  background: var(--noche);
+  color: var(--papel);
+  font-weight: 800;
+}
+
+.saltar:focus {
+  top: 0.5rem;
+}
+
+/* --- Cabecera: siempre visible, con Ayuda arriba a la derecha como en la app ------------------------------ */
+
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--cabecera);
+  color: var(--sobre-cabecera);
+  box-shadow: 0 1px 0 var(--sombra);
+}
+
+.cabecera__dentro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 16px;
+  max-width: var(--ancho-ancho);
+  margin: 0 auto;
+  padding: 0.375rem 16px;
+}
+
+.logotipo {
+  width: 140px;
+  color: var(--logotipo);
+  line-height: 0;
+}
+
+.logotipo svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.boton-ayuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.5rem 18px 0.5rem 14px;
+  border-radius: 999px;
+  background: var(--ayuda);
+  color: var(--sobre-ayuda);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.boton-ayuda:focus-visible {
+  outline-color: var(--sobre-cabecera);
+}
+
+/* --- Portada --------------------------------------------------------------------------------------------- */
+
+.portada {
+  position: relative;
+  padding: 0.5rem 0 2.25rem;
+  background: var(--portada);
+  color: var(--sobre-portada);
+}
+
+/* Borde de abajo festoneado, como el de un rollo de tickets de turno. */
+.portada::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: calc(-1rem + 1px);
+  left: 0;
+  height: 1rem;
+  background: var(--portada);
+  -webkit-mask: radial-gradient(circle at 50% 0, #000 0.75rem, transparent calc(0.75rem + 1px)) 0 0 / 1.5rem 1rem repeat-x;
+  mask: radial-gradient(circle at 50% 0, #000 0.75rem, transparent calc(0.75rem + 1px)) 0 0 / 1.5rem 1rem repeat-x;
+}
+
+.portada__dentro {
+  display: grid;
+  gap: 2rem;
+  max-width: var(--ancho-ancho);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.lema {
+  max-width: 12em;
+  font-family: var(--letra-titulos);
+  font-size: clamp(2.125rem, 1.75rem + 1.9vw, 3.25rem);
+  line-height: 1.08;
+  word-spacing: -0.16em;
+  text-wrap: balance;
+}
+
+.frase {
+  max-width: 34rem;
+  margin-top: 1rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.prototipo {
+  max-width: 34rem;
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+}
+
+/* El QR solo tiene sentido si no estás ya en el móvil. */
+.qr-escritorio {
+  display: none;
+  max-width: 15rem;
+  padding: 1rem 1rem 1.25rem;
+  border-radius: var(--radio);
+  background: #FFFFFF;
+  color: var(--noche);
+  text-align: center;
+  box-shadow: 0 4px 0 var(--sombra);
+}
+
+.qr-escritorio img {
+  width: 12rem;
+  height: 12rem;
+  margin: 0 auto 0.75rem;
+}
+
+.qr-escritorio p {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+/* Las letras del logotipo se pegan una a una, como pegatinas (como en la pantalla de carga de la app). */
+@media (prefers-reduced-motion: no-preference) {
+  .logotipo path {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pegar 520ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+
+  .logotipo path:nth-of-type(1) { --giro: -18deg; animation-delay: 0ms; }
+  .logotipo path:nth-of-type(2) { --giro: 14deg; animation-delay: 75ms; }
+  .logotipo path:nth-of-type(3) { --giro: -11deg; animation-delay: 150ms; }
+  .logotipo path:nth-of-type(4) { --giro: 17deg; animation-delay: 225ms; }
+  .logotipo path:nth-of-type(5) { --giro: -15deg; animation-delay: 300ms; }
+  .logotipo path:nth-of-type(6) { --giro: 11deg; animation-delay: 375ms; }
+  .logotipo path:nth-of-type(7) { --giro: -17deg; animation-delay: 450ms; }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@keyframes pegar {
+  from {
+    opacity: 0;
+    transform: translateY(-45%) rotate(var(--giro, 0deg)) scale(1.8);
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Secciones ------------------------------------------------------------------------------------------- */
+
+.seccion {
+  max-width: var(--ancho-texto);
+  margin: 0 auto;
+  padding: 3rem 16px 0;
+}
+
+.seccion > h2 + *,
+.destacado > h2 + * {
+  margin-top: 1rem;
+}
+
+.despues-lista {
+  margin-top: 1rem;
+}
+
+/* --- Descarga: las dos opciones, con forma de ticket de turno ---------------------------------------------- */
+
+.descarga {
+  max-width: var(--ancho-ancho);
+  padding-top: 2.5rem;
+}
+
+.opciones {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.opcion {
+  display: flex;
+  flex-direction: column;
+  /* Un contorno fino y una sombra de papel que siguen la forma recortada del ticket. */
+  filter: drop-shadow(0 0 0.6px var(--contorno)) drop-shadow(0 3px 0 var(--sombra));
+}
+
+.opcion__cabeza,
+.opcion__talon {
+  background: var(--tarjeta);
+  padding: 1.25rem 20px;
+}
+
+.opcion__cabeza {
+  flex: 1;
+  border-radius: var(--radio) var(--radio) 0 0;
+  -webkit-mask:
+    radial-gradient(circle at 0 100%, transparent 12px, #000 12.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, transparent 12px, #000 12.5px) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at 0 100%, transparent 12px, #000 12.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, transparent 12px, #000 12.5px) right / 51% 100% no-repeat;
+}
+
+.opcion__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.75rem;
+}
+
+.opcion__titulo + p {
+  margin-top: 0.5rem;
+}
+
+.opcion__talon {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+  border-radius: 0 0 var(--radio) var(--radio);
+  -webkit-mask:
+    radial-gradient(circle at 0 0, transparent 12px, #000 12.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 0, transparent 12px, #000 12.5px) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at 0 0, transparent 12px, #000 12.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 0, transparent 12px, #000 12.5px) right / 51% 100% no-repeat;
+}
+
+/* La línea de puntos por donde se arranca el ticket. */
+.opcion__talon::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 20px;
+  left: 20px;
+  border-top: 2px dashed var(--perforado);
+}
+
+.recomendada {
+  display: inline-block;
+  padding: 0.125rem 0.75rem;
+  border-radius: 999px;
+  background: var(--etiqueta);
+  color: var(--sobre-etiqueta);
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.recomendada[hidden] {
+  display: none;
+}
+
+.boton {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.625rem;
+  min-height: 3.5rem;
+  padding: 0.75rem 16px;
+  border: 3px solid var(--principal);
+  border-radius: 999px;
+  background: var(--principal);
+  color: var(--sobre-principal);
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+}
+
+.boton:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+}
+
+.boton:active {
+  transform: translateY(1px);
+}
+
+/* El segundo botón de una opción («Instalar la app»), con borde: el principal es «Probar ya». */
+.boton--secundario {
+  border-color: var(--secundario);
+  background: transparent;
+  color: var(--secundario);
+}
+
+/* En un Android o un iPhone/iPad solo se ve su opción (plataforma.js pone data-plataforma): en Android, «Probar ya»
+   ya está en su tarjeta, y en iPhone o iPad no se puede instalar la APK. En el ordenador, o sin JavaScript, las dos. */
+html[data-plataforma="android"] #opcion-web,
+html[data-plataforma="ios"] #opcion-android,
+html[data-plataforma="ios"] #instalar {
+  display: none;
+}
+
+.datos {
+  color: var(--tinta-suave);
+  font-size: 0.9375rem;
+}
+
+.enlace-flecha,
+.enlace-suelto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 48px;
+  font-weight: 800;
+}
+
+.enlace-flecha {
+  justify-self: start;
+}
+
+/* --- Instalar en Android ---------------------------------------------------------------------------------- */
+
+.pasos {
+  display: grid;
+  gap: 1.25rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: paso;
+}
+
+.pasos li {
+  position: relative;
+  min-height: 44px;
+  padding-left: 60px;
+  counter-increment: paso;
+}
+
+.pasos li::before {
+  content: counter(paso);
+  position: absolute;
+  top: -0.125rem;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--numero);
+  color: var(--sobre-numero);
+  font-family: var(--letra-titulos);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.pasos h3 + p {
+  margin-top: 0.25rem;
+}
+
+.aviso {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding: 1.25rem 20px;
+  border-radius: var(--radio);
+  background: var(--aviso);
+  color: var(--sobre-aviso);
+}
+
+.consejos {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.consejos li::marker,
+.lista li::marker {
+  color: var(--marcador);
+}
+
+/* --- Permisos y privacidad -------------------------------------------------------------------------------- */
+
+.permisos {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+}
+
+.permisos > div {
+  padding: 1rem 20px;
+  border-radius: var(--radio);
+  background: var(--tarjeta);
+  box-shadow: 0 0 0 1px var(--contorno), 0 3px 0 var(--sombra);
+}
+
+.permisos dt {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.permisos dd {
+  margin: 0.375rem 0 0;
+}
+
+.lista {
+  display: grid;
+  gap: 0.875rem;
+  margin: 1.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.destacado {
+  padding: 1.5rem 20px;
+  border-radius: var(--radio);
+  background: var(--destacado);
+  color: var(--sobre-destacado);
+}
+
+/* --- Ayuda ------------------------------------------------------------------------------------------------- */
+
+.telefonos {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.telefono {
+  display: grid;
+  gap: 0.125rem;
+  min-height: 48px;
+  padding: 1rem 20px;
+  border: 2px solid var(--ayuda);
+  border-radius: var(--radio);
+  background: var(--ayuda-suave);
+  color: var(--sobre-ayuda-suave);
+  text-decoration: none;
+}
+
+.telefono:hover .telefono__numero {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+}
+
+.telefono--urgente {
+  background: var(--ayuda);
+  color: var(--sobre-ayuda);
+}
+
+.telefono__numero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  /* El número no se parte en dos líneas: con el texto muy grande, se queda en un tamaño que cabe. */
+  font-size: clamp(1rem, 7vw, 1.625rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.telefono__quien {
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
+/* --- Pie --------------------------------------------------------------------------------------------------- */
+
+.pie {
+  display: grid;
+  gap: 0.5rem;
+  max-width: var(--ancho-texto);
+  margin: 3.5rem auto 0;
+  padding: 1.5rem 16px 2.5rem;
+  border-top: 2px dashed var(--perforado);
+  color: var(--tinta-suave);
+  font-size: 0.9375rem;
+}
+
+/* --- Pantallas más grandes --------------------------------------------------------------------------------- */
+
+@media (min-width: 40rem) {
+  body {
+    font-size: 1.125rem;
+  }
+
+  .cabecera__dentro,
+  .portada__dentro,
+  .seccion,
+  .pie {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .logotipo {
+    width: 168px;
+  }
+}
+
+@media (min-width: 48rem) {
+  .opciones {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Con una sola opción (en una tableta Android o un iPad), el ticket no se estira a todo el ancho. */
+  html[data-plataforma="android"] .opciones,
+  html[data-plataforma="ios"] .opciones {
+    grid-template-columns: minmax(0, 32rem);
+  }
+
+  /* Las dos opciones lado a lado: la línea de puntos y los botones, a la misma altura. */
+  @supports (grid-template-rows: subgrid) {
+    .opciones {
+      grid-template-rows: auto auto;
+    }
+
+    .opcion {
+      display: grid;
+      grid-row: span 2;
+      grid-template-rows: subgrid;
+      row-gap: 0;
+    }
+  }
+}
+
+@media (min-width: 56rem) {
+  .portada {
+    padding-top: 2rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .portada__dentro {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 3rem;
+  }
+
+  html:not([data-plataforma="android"]):not([data-plataforma="ios"]) .qr-escritorio {
+    display: block;
+  }
+}
+
+/* En un ordenador (con ratón), el QR también sale con la ventana estrecha. */
+@media (hover: hover) and (pointer: fine) {
+  html[data-plataforma="otro"] .qr-escritorio {
+    display: block;
+  }
+}
+
+/* Móvil en horizontal: la cabecera deja de ser fija para no quitar media pantalla. */
+@media (max-height: 480px) {
+  .cabecera {
+    position: static;
+  }
+
+  html {
+    scroll-padding-top: 0;
+  }
+}
+
+/* Modo de alto contraste de Windows: los fondos desaparecen, así que los botones llevan borde. */
+@media (forced-colors: active) {
+  .boton,
+  .boton-ayuda,
+  .telefono,
+  .recomendada {
+    border: 2px solid ButtonText;
+  }
+
+  .opcion__talon::before,
+  .pie {
+    border-color: CanvasText;
+  }
+}

@@ -1,0 +1,246 @@
+[
+  {
+    "id": "E-501",
+    "tipo": "vf",
+    "concepto": "C-propia-imagen",
+    "dificultad": 1,
+    "afirmacion": "Para hacer o publicar fotos tuyas, normalmente necesitan tu permiso.",
+    "correcta": true,
+    "explicacion": "Hacer, copiar o publicar fotos o vídeos de alguien sin su permiso va contra su derecho a la propia imagen. Solo hay pocas excepciones.",
+    "fuente": "LO 1/1982, art. 7.5; LO 1/1996, art. 4.1",
+    "validado": true
+  },
+  {
+    "id": "E-502",
+    "tipo": "eleccion",
+    "concepto": "C-propia-imagen",
+    "dificultad": 1,
+    "pregunta": "Un día diste permiso para que usaran una foto tuya, pero ya no quieres. ¿Qué puedes hacer?",
+    "opciones": [
+      "Retirar tu permiso: lo puedes hacer cuando quieras",
+      "Nada: el permiso es para siempre",
+      "Esperar a cumplir 18 años"
+    ],
+    "correcta": 0,
+    "explicacion": "El permiso para usar tu imagen se puede retirar en cualquier momento. Y si tienes madurez suficiente, eres tú quien lo da.",
+    "fuente": "LO 1/1982, arts. 2.3 y 3.1",
+    "validado": true
+  },
+  {
+    "id": "E-503",
+    "tipo": "vf",
+    "concepto": "C-no-reenviar",
+    "dificultad": 1,
+    "afirmacion": "Si te llegan imágenes íntimas de otra persona, reenviarlas no tiene importancia si no las has hecho tú.",
+    "correcta": false,
+    "explicacion": "Sí la tiene. Cada vez que se reenvían, el daño crece. Y pasar a otros imágenes sexuales de una persona menor de edad es un delito muy serio.",
+    "fuente": "Código Penal, art. 189.1.b)",
+    "validado": true
+  },
+  {
+    "id": "E-504",
+    "tipo": "eleccion",
+    "concepto": "C-no-reenviar",
+    "dificultad": 2,
+    "pregunta": "A Nadia le llegan por un grupo imágenes íntimas de una compañera. ¿Qué es lo correcto?",
+    "opciones": [
+      "No pasarlas a nadie y avisar a un adulto de confianza o a la policía",
+      "Guardarlas en el móvil por si acaso",
+      "Reenviárselas a la compañera para que sepa lo que circula"
+    ],
+    "correcta": 0,
+    "explicacion": "Guardar imágenes sexuales de otra persona menor de edad también es delito. Si están en internet, cualquiera que las vea tiene que avisar a las autoridades. A la compañera se la puede avisar sin enviarle nada.",
+    "fuente": "Código Penal, art. 189.5; LOPIVI, art. 19.1",
+    "validado": true
+  },
+  {
+    "id": "E-505",
+    "tipo": "emparejar",
+    "concepto": "C-propia-imagen",
+    "dificultad": 2,
+    "pares": [
+      ["Derecho a la propia imagen", "Que no publiquen fotos tuyas sin permiso"],
+      ["Derecho a la intimidad", "Que respeten tu vida privada"],
+      ["Derecho al honor", "Que no dañen tu buen nombre"]
+    ],
+    "fuente": "LO 1/1996, art. 4.1; LO 1/1982, arts. 7.5 y 7.7",
+    "validado": true
+  },
+  {
+    "id": "E-506",
+    "tipo": "dilo",
+    "concepto": "C-no-reenviar",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras por qué no hay que reenviar imágenes íntimas de otra persona.",
+    "proposiciones": [
+      "Reenviarlas hace más daño a la persona que sale en ellas",
+      "Pasar imágenes sexuales de un menor es un delito muy serio",
+      "La culpa es de quien las difunde, no de quien sale en ellas"
+    ],
+    "fuente": "Código Penal, arts. 189.1 y 197.7",
+    "validado": true
+  },
+  {
+    "id": "E-507",
+    "tipo": "eleccion",
+    "concepto": "C-retirar-contenido",
+    "dificultad": 1,
+    "pregunta": "Han publicado en una red social imágenes íntimas de Sara sin su permiso. ¿Dónde puede pedir que las quiten enseguida?",
+    "opciones": [
+      "En el Canal prioritario de la AEPD, por internet",
+      "En la tienda donde compró el móvil",
+      "En ningún sitio: lo que se sube a internet se queda para siempre"
+    ],
+    "correcta": 0,
+    "explicacion": "Es un canal de la Agencia Española de Protección de Datos. Allí se puede pedir que retiren enseguida fotos, vídeos o audios sexuales o violentos publicados sin permiso.",
+    "fuente": "AEPD, Canal prioritario",
+    "validado": true
+  },
+  {
+    "id": "E-508",
+    "tipo": "vf",
+    "concepto": "C-retirar-contenido",
+    "dificultad": 1,
+    "afirmacion": "El Canal prioritario de la AEPD también sirve para lo que se pasa por WhatsApp o Telegram.",
+    "correcta": false,
+    "explicacion": "No sirve para WhatsApp, Telegram ni el correo. En esos casos, puedes ir a la policía o a la Fiscalía. Aun así, la AEPD puede sancionar a quien lo difunde.",
+    "fuente": "AEPD, FAQ 15.03; LOPIVI, art. 17.1",
+    "validado": true
+  },
+  {
+    "id": "E-509",
+    "tipo": "vf",
+    "concepto": "C-retirar-contenido",
+    "dificultad": 2,
+    "afirmacion": "Con 15 años puedes usar el Canal prioritario sin un adulto.",
+    "correcta": true,
+    "explicacion": "Si tienes entre 14 y 17 años, puedes contactar tú con la AEPD, tanto si las imágenes son tuyas como si son de otra persona. Con menos de 14, que te ayude un adulto de confianza.",
+    "fuente": "AEPD, Canal prioritario; LOPIVI, art. 52.3",
+    "validado": true
+  },
+  {
+    "id": "E-510",
+    "tipo": "eleccion",
+    "concepto": "C-retirar-contenido",
+    "dificultad": 2,
+    "pregunta": "Una red social tiene fotos y datos de Sara, que tiene 15 años. Si Sara pide que los borren, ¿qué pasa?",
+    "opciones": [
+      "La red social tiene que borrarlos sin retrasos",
+      "Solo los borran si los subió ella",
+      "Solo los borran si lo manda un juez"
+    ],
+    "correcta": 0,
+    "explicacion": "Si eres menor de edad, basta con que lo pidas, aunque los haya subido otra persona. La red social tiene que borrarlos sin retrasos. Y sigue valiendo después de los 18 para lo que se subió antes.",
+    "fuente": "LOPDGDD, art. 94.3; RGPD, art. 17.1",
+    "validado": true
+  },
+  {
+    "id": "E-511",
+    "tipo": "ordenar",
+    "concepto": "C-retirar-contenido",
+    "dificultad": 2,
+    "enunciado": "Sara pide en el Canal prioritario que quiten unas imágenes suyas. Ordena lo que pasa.",
+    "pasos": [
+      "Sara envía su solicitud por internet",
+      "La AEPD estudia su caso con prioridad",
+      "La AEPD puede ordenar a la red social que lo retire"
+    ],
+    "fuente": "AEPD, Canal prioritario y FAQ 15.06",
+    "validado": true
+  },
+  {
+    "id": "E-512",
+    "tipo": "dilo",
+    "concepto": "C-retirar-contenido",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué puede hacer Sara para que quiten imágenes suyas de una red social.",
+    "proposiciones": [
+      "Puede pedirlo en el Canal prioritario de la AEPD",
+      "Desde los 14 años puede hacerlo ella sola",
+      "Como es menor, puede pedir a la red social que borre sus fotos y datos"
+    ],
+    "fuente": "AEPD, Canal prioritario; LOPDGDD, art. 94.3",
+    "validado": true
+  },
+  {
+    "id": "E-513",
+    "tipo": "vf",
+    "concepto": "C-denunciar",
+    "dificultad": 1,
+    "afirmacion": "Sara puede contárselo ella misma a la policía o a la Fiscalía.",
+    "correcta": true,
+    "explicacion": "Puede comunicarlo ella misma a la policía, a la Fiscalía, a un juzgado o a servicios sociales. Y en la policía puede denunciar sin un adulto.",
+    "fuente": "LOPIVI, arts. 17.1 y 50.2",
+    "validado": true
+  },
+  {
+    "id": "E-514",
+    "tipo": "eleccion",
+    "concepto": "C-denunciar",
+    "dificultad": 2,
+    "pregunta": "Unos compañeros difunden imágenes íntimas de Sara por el móvil. ¿Qué tiene que incluir el protocolo de su instituto?",
+    "opciones": [
+      "Pasos concretos para cuando se daña la intimidad de alguien con el móvil o internet",
+      "Nada: lo que pasa en el móvil no es cosa del instituto",
+      "Solo pasos para las peleas en el patio"
+    ],
+    "correcta": 0,
+    "explicacion": "El protocolo contra el acoso tiene que tener pasos concretos para un caso así: cuando el acoso por el móvil o internet daña la intimidad de un alumno o una alumna.",
+    "fuente": "LOPIVI, art. 34.2",
+    "validado": true
+  },
+  {
+    "id": "E-515",
+    "tipo": "vf",
+    "concepto": "C-denunciar",
+    "dificultad": 2,
+    "afirmacion": "Si lo que le han hecho a Sara es un delito sexual, tiene abogado gratis aunque su familia tenga dinero.",
+    "correcta": true,
+    "explicacion": "En los delitos contra la libertad sexual, las víctimas menores de edad tienen abogado gratis sin mirar los ingresos. En muchos otros delitos, depende del dinero de la familia.",
+    "fuente": "Ley 1/1996, art. 2.h; LOPIVI, art. 14.1",
+    "validado": true
+  },
+  {
+    "id": "E-516",
+    "tipo": "eleccion",
+    "concepto": "C-denunciar",
+    "dificultad": 2,
+    "pregunta": "Las personas denunciadas por difundir las imágenes de Sara tienen 15 y 16 años. ¿Qué ley se les aplica?",
+    "opciones": [
+      "La ley de menores, que pone medidas, no penas como a los adultos",
+      "Ninguna, porque son menores",
+      "La misma que a las personas adultas"
+    ],
+    "correcta": 0,
+    "explicacion": "De 14 a 17 años se aplica la ley penal de menores. Si el juez de menores decide que cometieron un delito, les pone medidas. Además, desde los 14 años la AEPD puede sancionar.",
+    "fuente": "LO 5/2000, arts. 1.1 y 7.1; LOPIVI, art. 52.4",
+    "validado": true
+  },
+  {
+    "id": "E-517",
+    "tipo": "emparejar",
+    "concepto": "C-ayuda-internet",
+    "dificultad": 1,
+    "pares": [
+      ["017", "Ayuda con problemas en internet, de 8:00 a 23:00"],
+      ["Canal Joven de la AEPD", "Dudas sobre tu privacidad: 900 293 183"],
+      ["Canal prioritario", "Pedir que retiren imágenes sexuales o violentas publicadas sin permiso"]
+    ],
+    "fuente": "INCIBE, 017; AEPD, Canal Joven y Canal prioritario",
+    "validado": true
+  },
+  {
+    "id": "E-518",
+    "tipo": "dilo",
+    "concepto": "C-denunciar",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué puede hacer una chica de 15 años si difunden imágenes íntimas suyas.",
+    "proposiciones": [
+      "Puede denunciarlo ella misma, sin un adulto",
+      "Si lo cuenta en su instituto, se pone en marcha el protocolo",
+      "La culpa es de quien difunde las imágenes, no suya"
+    ],
+    "fuente": "LOPIVI, arts. 34.2 y 50.2; Código Penal, art. 197.7",
+    "validado": true
+  }
+]

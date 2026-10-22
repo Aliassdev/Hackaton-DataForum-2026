@@ -1,0 +1,107 @@
+{
+  "rol": "testigo",
+  "pasos": [
+    {
+      "id": "P1",
+      "nombre": "Te llega una citación",
+      "que_pasa": "Un juzgado o la Fiscalía quiere escuchar lo que viste u oíste. Te llega una citación: un aviso con el día, la hora y el sitio. Ser testigo no quiere decir que estés en un lío.",
+      "quien_esta": [
+        "Tu familia o un adulto de confianza, que te ayuda a entender el aviso"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen qué es una citación y para qué te llaman",
+        "Que te expliquen las palabras que no entiendas",
+        "Ir con tu familia o con un adulto de confianza",
+        "Que te expliquen tus derechos como víctima si lo que viste u oíste fue violencia en tu casa: para la ley, eso también es violencia contra ti"
+      ],
+      "fuentes": [
+        "LO 1/1996, art. 9.1",
+        "LO 5/2000, art. 6",
+        "LOPIVI, art. 1.2"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P2",
+      "nombre": "Te explican cómo será",
+      "que_pasa": "Tienes derecho a que te lo expliquen todo con palabras que entiendas, tengas la edad que tengas. Con menos de 14 años, en un caso de violencia, tu declaración se graba para el juicio y normalmente no tienes que repetirla: es la prueba preconstituida.",
+      "quien_esta": [
+        "Tu familia o un adulto de confianza",
+        "Personas del juzgado, a las que puedes preguntar cómo será"
+      ],
+      "que_puedes_pedir": [
+        "Que te cuenten dónde será, quién estará y cuánto puede durar",
+        "Que te expliquen qué es la prueba preconstituida, si te toca",
+        "Que respondan a tus dudas antes de empezar"
+      ],
+      "fuentes": [
+        "LO 1/1996, art. 9.1",
+        "LECrim, art. 449 ter",
+        "LECrim, art. 449 bis",
+        "LO 5/2000, art. 23.4 b)",
+        "LECrim, art. 703 bis"
+      ],
+      "fase": "antes"
+    },
+    {
+      "id": "P3",
+      "nombre": "Cuentas lo que sabes",
+      "que_pasa": "Cuentas lo que viste u oíste, con tus palabras. Si tu declaración es prueba preconstituida, te puede preguntar una persona del equipo psicosocial, y las preguntas de los abogados pasan antes por el juez. En ese caso, además, se evita que veas cara a cara a la persona investigada.",
+      "quien_esta": [
+        "El juez o la jueza, que dirige la declaración y cuida de que sea justa",
+        "El fiscal o la fiscal y los abogados, también el de la persona investigada",
+        "Si tu declaración es prueba preconstituida, un psicólogo o una psicóloga del equipo psicosocial, que puede hacerte las preguntas"
+      ],
+      "que_puedes_pedir": [
+        "Que te repitan una pregunta o te la digan de otra forma",
+        "Tiempo para pensar, y decir «no lo sé» o «no me acuerdo» si es así",
+        "Un descanso si lo necesitas",
+        "Que te expliquen qué se puede hacer si te preocupa ver a la persona investigada"
+      ],
+      "fuentes": [
+        "LECrim, art. 449 ter",
+        "LECrim, art. 449 bis"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P4",
+      "nombre": "El juicio",
+      "que_pasa": "Si tu declaración se grabó como prueba preconstituida, normalmente ponen la grabación y no tienes que ir al juicio. Solo de forma excepcional el juez podría llamarte. Si no se grabó, puede que te citen al juicio para contar lo que sabes.",
+      "quien_esta": [
+        "El juez o la jueza, que escucha a todos y decide",
+        "El fiscal o la fiscal y los abogados, que pueden hacerte preguntas",
+        "La persona acusada, que puede estar en la sala"
+      ],
+      "que_puedes_pedir": [
+        "Que te expliquen antes cómo es la sala y dónde te sentarás",
+        "Que te expliquen qué se puede hacer si te preocupa ver a la persona acusada",
+        "Que te repitan las preguntas que no entiendas"
+      ],
+      "fuentes": [
+        "LECrim, art. 703 bis",
+        "LO 1/1996, art. 9.1"
+      ],
+      "fase": "durante"
+    },
+    {
+      "id": "P5",
+      "nombre": "Después de declarar",
+      "que_pasa": "Normalmente, cuando terminas de declarar, tu parte ha acabado. No tienes que decidir nada: decide el juez o la jueza. Es normal tener dudas o nervios después.",
+      "quien_esta": [
+        "Tu familia o un adulto de confianza, con quien puedes hablar de cómo te sientes"
+      ],
+      "que_puedes_pedir": [
+        "Que te digan si tienes que hacer algo más",
+        "Ayuda si la necesitas: a tu familia, a alguien de tu colegio o a ANAR (900 20 20 10, gratis y a cualquier hora)",
+        "Avisar a la Fiscalía o quejarte al Defensor del Pueblo si crees que no se han respetado tus derechos"
+      ],
+      "fuentes": [
+        "LO 1/1996, art. 10.2",
+        "LO 3/1981, art. 10.1"
+      ],
+      "fase": "despues"
+    }
+  ],
+  "validado": true
+}

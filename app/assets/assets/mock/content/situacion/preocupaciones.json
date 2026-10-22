@@ -1,0 +1,408 @@
+{
+  "nota": "Lo que te preocupa, respondido punto a punto. Cada punto con fuentes sale de docs/MARCO_LEGAL.md; los que llevan \"consejo\": true no son afirmaciones jurídicas, sino consejos prácticos (no llevan fuente y la app los marca como «Consejo»). Nunca se pregunta qué pasó y no se promete nada.",
+  "validado": true,
+  "preocupaciones": [
+    {
+      "id": "ver_persona",
+      "titulo": "Ver a la persona",
+      "ideas_pregunta": ["¿Quién va a estar cuando me escuchen?", "¿Puedo esperar en un sitio aparte?"],
+      "puntos": [
+        {
+          "papeles": ["victima", "testigo"],
+          "edad_max": 13,
+          "texto": "Si la persona investigada está en tu entrevista, se evita que la veas cara a cara: se puede usar un cristal, una pantalla u otro medio.",
+          "fuentes": ["LECrim, art. 449 ter, párr. 3"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima", "testigo"],
+          "edad_max": 13,
+          "texto": "En el juicio, normalmente ponen la grabación de tu entrevista y no hace falta que vayas.",
+          "fuentes": ["LECrim, art. 703 bis"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Los juzgados y las fiscalías tienen que organizarse para que ni tú ni tu familia os crucéis con la persona investigada.",
+          "fuentes": ["Ley 4/2015, art. 20"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "En la comisaría, la policía tiene que evitar cualquier contacto entre tú y la persona investigada.",
+          "fuentes": ["LOPIVI, art. 50.2.d)"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Si a quien investigan tiene de 14 a 17 años, lo normal es que declares por videoconferencia, sin ir a la sala donde están los acusados.",
+          "fuentes": ["LO 5/2000, art. 4"],
+          "validado": true
+        },
+        {
+          "papeles": ["testigo"],
+          "edad_min": 14,
+          "texto": "Si te preocupa verla, dilo antes: puedes pedir que te expliquen qué se puede hacer.",
+          "consejo": true,
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "texto": "En el juzgado y en la Fiscalía se organiza todo para que la víctima y tú no os crucéis.",
+          "fuentes": ["Ley 4/2015, art. 20"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Mientras dura el caso, el juez de menores puede poner una medida para proteger a la víctima, como no acercarte a ella ni comunicarte con ella.",
+          "fuentes": ["LO 5/2000, art. 28.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["escuchado_familia"],
+          "texto": "Tienes derecho a que te lo expliquen todo con palabras que entiendas: puedes preguntar antes quién estará delante cuando hables con el juez o la jueza.",
+          "fuentes": ["LO 1/1996, art. 9.1"],
+          "validado": true
+        },
+        {
+          "texto": "Si te agobias, dilo: puedes pedir parar un momento.",
+          "consejo": true,
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "no_entender",
+      "titulo": "No entender lo que dicen",
+      "ideas_pregunta": ["¿Me lo puedes explicar con otras palabras?", "¿Qué significa esta palabra?"],
+      "puntos": [
+        {
+          "texto": "Tienes derecho a que te lo expliquen todo con palabras que entiendas, tengas la edad que tengas.",
+          "fuentes": ["LO 1/1996, art. 9.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Si eres víctima, todo lo que te digan tiene que ser claro, sencillo y adaptado a tu edad.",
+          "fuentes": ["Ley 4/2015, art. 4"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Si sufres violencia, te tienen que informar con palabras claras, en un idioma que entiendas y de una forma adaptada a ti.",
+          "fuentes": ["LOPIVI, art. 10.3"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Si te detienen, te tienen que explicar tus derechos con palabras claras y según tu edad y tu madurez.",
+          "fuentes": ["LO 5/2000, art. 17.1", "LECrim, art. 520.2 bis"],
+          "validado": true
+        },
+        {
+          "texto": "Si no entiendes una pregunta, di: «¿Me lo puedes decir de otra forma?». Las palabras difíciles las tienes en el Glosario.",
+          "consejo": true,
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "preguntas",
+      "titulo": "Qué me van a preguntar",
+      "ideas_pregunta": ["¿Quién me va a hacer las preguntas?", "¿Cuánto tiempo puede durar?"],
+      "puntos": [
+        {
+          "texto": "No podemos saber qué te preguntarán: depende de cada caso. Aquí nunca te preguntamos qué pasó.",
+          "consejo": true,
+          "validado": true
+        },
+        {
+          "texto": "Puedes tomarte tu tiempo, pedir que te repitan una pregunta y decir «no lo sé» o «no me acuerdo» si es así.",
+          "consejo": true,
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Las personas que te escuchen están preparadas para hacerlo con cuidado y respeto, en un sitio pensado para ti.",
+          "fuentes": ["LOPIVI, art. 11.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima", "testigo"],
+          "edad_max": 13,
+          "texto": "Te puede hacer las preguntas una persona del equipo psicosocial, que conoce tu situación.",
+          "fuentes": ["LECrim, art. 449 ter, párr. 2"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Tienes derecho a no declarar contra ti y a hablar a solas con tu abogado o abogada antes de declarar.",
+          "fuentes": ["CE, art. 24.2", "LO 5/2000, art. 22.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["escuchado_familia"],
+          "texto": "Quieren conocer lo que piensas y lo que sientes, porque tu opinión cuenta.",
+          "fuentes": ["CDN, art. 12.2", "LO 1/1996, art. 9.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["escuchado_familia"],
+          "texto": "No es un examen: no hay respuestas buenas ni malas.",
+          "consejo": true,
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "familia",
+      "titulo": "Mi familia",
+      "ideas_pregunta": ["¿Quién de mi familia puede estar conmigo?", "¿Quién va a saber lo que yo cuente?"],
+      "puntos": [
+        {
+          "papeles": ["victima"],
+          "texto": "Los avisos oficiales se envían a tus padres o a quien te represente.",
+          "fuentes": ["Ley 4/2015, art. 4"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Si lo que les conviene a tus padres choca con lo que te conviene a ti, el fiscal pedirá que te represente un defensor judicial.",
+          "fuentes": ["Ley 4/2015, art. 26.2 a)"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima", "testigo", "escuchado_familia"],
+          "texto": "Si hay problemas en casa, la regla es ayudar a tu familia para que sigas con ella. Solo si no es seguro se busca otra forma de protegerte.",
+          "fuentes": ["LO 1/1996, art. 17.1", "LO 1/1996, art. 18.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["testigo"],
+          "texto": "Si lo que viste u oíste fue violencia en tu casa, para la ley eso también es violencia contra ti.",
+          "fuentes": ["LOPIVI, art. 1.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Si te detienen, tienen que avisar enseguida a tus padres o tutores. Cuando declares, también pueden estar ellos, salvo que haya motivos para que no.",
+          "fuentes": ["LO 5/2000, arts. 17.1 y 17.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["escuchado_familia"],
+          "texto": "Que te escuchen no quiere decir que tengas que elegir tú: decide el juez o la jueza, después de escuchar a todos.",
+          "fuentes": ["LEC, art. 770", "CDN, art. 12.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima", "testigo", "escuchado_familia"],
+          "texto": "Si quien te cuida es víctima de violencia en casa, las autoridades tienen que ayudaros para que puedas seguir viviendo con esa persona.",
+          "fuentes": ["LO 1/1996, art. 12.3"],
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "colegio",
+      "titulo": "El colegio o el instituto",
+      "ideas_pregunta": ["¿Se va a enterar alguien de mi colegio o instituto?", "¿Con quién puedo hablar en mi centro?"],
+      "puntos": [
+        {
+          "papeles": ["victima", "testigo"],
+          "texto": "En tu centro tiene que haber un coordinador o coordinadora de bienestar y protección: la persona a la que puedes contárselo.",
+          "fuentes": ["LOPIVI, arts. 35.1 y 35.2.c)"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Si cuentas que sufres violencia, tu centro tiene que tomar medidas para protegerte, para que contarlo no empeore las cosas.",
+          "fuentes": ["LOPIVI, art. 20.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "El protocolo contra el acoso se pone en marcha con solo que lo cuentes.",
+          "fuentes": ["LOPIVI, art. 34.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "Si eres víctima, jueces, fiscales y policías tienen que evitar que se difunda cualquier dato que permita saber quién eres.",
+          "fuentes": ["Ley 4/2015, art. 22"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "texto": "Que te investiguen no quiere decir que ya se haya decidido nada.",
+          "fuentes": ["CE, art. 24.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Si es un delito menos grave y sin violencia ni amenazas, la Fiscalía puede no abrir el caso y pasárselo a los servicios de protección de menores.",
+          "fuentes": ["LO 5/2000, art. 18"],
+          "validado": true
+        },
+        {
+          "papeles": ["escuchado_familia"],
+          "texto": "Si la decisión cambia cosas de tu día a día, puedes pedir que te expliquen qué cambia para ti.",
+          "fuentes": ["LO 1/1996, art. 9.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado", "escuchado_familia"],
+          "texto": "Si te preocupa algo de tu centro, apúntalo en Mis preguntas para preguntárselo a quien lleve tu caso.",
+          "consejo": true,
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "redes",
+      "titulo": "Las redes",
+      "ideas_pregunta": ["¿Qué puedo hacer si hay fotos o vídeos míos en internet?", "¿Alguien puede publicar quién soy?"],
+      "puntos": [
+        {
+          "papeles": ["victima"],
+          "texto": "Si eres víctima y menor de edad, está prohibido publicar tu nombre, datos que permitan reconocerte o fotos tuyas o de tu familia.",
+          "fuentes": ["LECrim, art. 681.3"],
+          "validado": true
+        },
+        {
+          "texto": "Si se han publicado fotos, vídeos o audios sexuales o violentos tuyos sin permiso, puedes pedir que los quiten en el Canal prioritario de la Agencia Española de Protección de Datos. No sirve para WhatsApp, Telegram ni el correo.",
+          "fuentes": ["AEPD, Canal prioritario", "AEPD, FAQ 15.03"],
+          "validado": true
+        },
+        {
+          "edad_min": 14,
+          "texto": "Con 14 a 17 años, puedes contactar tú directamente con la Agencia, tanto si las imágenes son tuyas como si son de otra persona.",
+          "fuentes": ["AEPD, Canal prioritario"],
+          "validado": true
+        },
+        {
+          "texto": "Si una red social tiene fotos o datos tuyos subidos antes de que cumplas 18 años, los subieras tú u otra persona, basta con que pidas que los borren.",
+          "fuentes": ["LOPDGDD, art. 94.3"],
+          "validado": true
+        },
+        {
+          "texto": "El 017 es un teléfono gratuito que ayuda con problemas en internet, también a menores y a sus familias, todos los días de 8:00 a 23:00.",
+          "fuentes": ["INCIBE, 017"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Mientras dura el caso, puede haber una medida para que no te comuniques con la víctima, tampoco por el móvil o las redes.",
+          "fuentes": ["LO 5/2000, art. 28.1", "LO 5/2000, art. 7.1 i)"],
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "solo",
+      "titulo": "Estar solo o sola",
+      "ideas_pregunta": ["¿Puede estar conmigo una persona de confianza?", "¿Puedo hablar antes con mi abogado o abogada?"],
+      "puntos": [
+        {
+          "papeles": ["victima"],
+          "texto": "Cuando declares, puedes ir con quien te represente y con una persona de confianza que elijas tú, salvo que el juez explique por qué no.",
+          "fuentes": ["LECrim, art. 433"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima"],
+          "texto": "En la policía, se procura que esté contigo en todo momento una persona de tu confianza elegida por ti.",
+          "fuentes": ["LOPIVI, art. 50.2.h)"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Puedes hablar a solas con tu abogado o abogada antes de declarar y, si te detienen, también después.",
+          "fuentes": ["LO 5/2000, art. 22.1", "LO 5/2000, art. 17.2"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Pueden acompañarte tus padres u otra persona que elijas, si el juez lo permite.",
+          "fuentes": ["LO 5/2000, art. 22.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["testigo", "escuchado_familia"],
+          "texto": "Pregunta antes quién puede acompañarte y lleva apuntado el teléfono de tu persona de confianza.",
+          "consejo": true,
+          "validado": true
+        },
+        {
+          "texto": "Si en algún momento lo pasas mal, puedes llamar a ANAR: 900 20 20 10, gratis y a cualquier hora.",
+          "consejo": true,
+          "validado": true
+        }
+      ]
+    },
+    {
+      "id": "despues",
+      "titulo": "Qué pasará después",
+      "ideas_pregunta": ["¿Qué pasa después de hoy?", "¿Cuándo me contaréis lo que se decida?"],
+      "puntos": [
+        {
+          "papeles": ["victima"],
+          "texto": "A ti o a tus padres os tienen que avisar de la fecha del juicio y de las decisiones importantes, como la sentencia.",
+          "fuentes": ["Ley 4/2015, art. 7.1"],
+          "validado": true
+        },
+        {
+          "texto": "Nadie puede prometerte cómo acabará, pero sí puedes pedir que te expliquen cada decisión con palabras que entiendas.",
+          "fuentes": ["LO 1/1996, art. 9.1"],
+          "validado": true
+        },
+        {
+          "papeles": ["victima", "testigo"],
+          "edad_max": 13,
+          "texto": "Si tu entrevista se grabó, normalmente en el juicio ponen la grabación y no tienes que ir. Solo de forma excepcional el juez podría llamarte.",
+          "fuentes": ["LECrim, art. 703 bis"],
+          "validado": true
+        },
+        {
+          "papeles": ["testigo"],
+          "texto": "Cuando terminas de declarar, no tienes que decidir nada: decide el juez o la jueza. Pregunta si tendrás que ir también al juicio.",
+          "consejo": true,
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_min": 14,
+          "texto": "Al final, el juez de menores decide si pone una medida o no, y tiene que explicar por qué la elige y cuánto dura.",
+          "fuentes": ["LO 5/2000, art. 7.3"],
+          "validado": true
+        },
+        {
+          "papeles": ["investigado"],
+          "edad_max": 13,
+          "texto": "Con menos de 14 años, actúan los servicios de protección de menores, que cuidan de que estés bien.",
+          "fuentes": ["LO 5/2000, art. 3"],
+          "validado": true
+        },
+        {
+          "papeles": ["escuchado_familia"],
+          "texto": "Si más adelante se vuelve a decidir algo sobre ti, también tienen que darte la oportunidad de que te escuchen.",
+          "fuentes": ["CDN, art. 12.2"],
+          "validado": true
+        },
+        {
+          "texto": "Si crees que no se han respetado tus derechos, puedes avisar a la Fiscalía o quejarte al Defensor del Pueblo.",
+          "fuentes": ["LO 1/1996, art. 10.2.b)", "LO 1/1996, art. 10.2.c)"],
+          "validado": true
+        }
+      ]
+    }
+  ]
+}
