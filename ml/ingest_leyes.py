@@ -10,6 +10,10 @@ Decisiones:
 - La unidad es el ARTÍCULO: es la unidad natural del texto legal y permite citar con precisión.
 - Artículos largos se parten por apartados en trozos de <= MAX_PALABRAS; cada trozo lleva
   delante la cabecera (ley, artículo, título del artículo, capítulo) para no perder contexto.
+- Los títulos de artículo que el PDF parte en varias líneas se unen (en el BOE terminan siempre en
+  punto); si no, el título quedaba cortado y su final abría el texto del artículo.
+- El nombre de un título o capítulo que va en la línea siguiente ('TÍTULO I' / 'Derechos básicos')
+  se une a su encabezado; si no, acababa pegado al final del artículo anterior.
 - Se ignoran preámbulo, índice, disposiciones (en la LOPIVI son en su mayoría modificaciones de
   otras leyes, que ya están consolidadas en sus textos) y las notas de modificación del BOE.
 """
@@ -47,9 +51,11 @@ RE_RUIDO = re.compile(
 RE_NOTA = re.compile(
     r"(Ref\. BOE-|^(Se (modifica|añade|suprime|deroga|da nueva redacción|declara)|Redactad[oa]|Téngase en cuenta|Véase|"
     r"Esta (modificación|redacción)|Texto (añadido|suprimido)|Declarado|Anulado|Este artículo|Afectado)\b)",
-    re.I,
+    re.IGNORECASE,
 )
 RE_INDICE = re.compile(r"(\. ){4,}|\.{6,}")
+RE_APARTADO = re.compile(r"^(\d+\.(ª)? |[a-zñ]\) |\d+\) |\d+\.ª )")
+MAX_PALABRAS_TITULO = 25  # continuación máxima del título de un artículo partido en varias líneas
 
 
 def lineas_limpias(pdf: Path) -> list[str]:
@@ -63,11 +69,78 @@ def lineas_limpias(pdf: Path) -> list[str]:
     return salida
 
 
+def es_encabezado(linea: str) -> bool:
+    return bool(RE_ARTICULO.match(linea) or RE_FIN.match(linea) or RE_ESTRUCTURA.match(linea))
+
+
+def unir_titulos_partidos(lineas: list[str]) -> list[str]:
+    """Une el título de un artículo que el PDF parte en dos o tres líneas.
+
+    En los textos consolidados del BOE el título termina siempre en punto. Si el PDF lo corta
+    ("Artículo 26.  Medidas de protección para menores, personas con discapacidad necesitadas" /
+    "de especial protección y víctimas de violencias sexuales."), el título quedaba a medias y el
+    resto abría el texto del artículo. Solo se une una continuación corta, que no es un apartado
+    ni otro encabezado y que termina en punto. RGPD y CDN no llevan título en esa línea: no les afecta.
+    """
+    salida, i = [], 0
+    while i < len(lineas):
+        linea = lineas[i]
+        m = RE_ARTICULO.match(linea)
+        if m and m.group(2).strip() and not linea.endswith("."):
+            for n in (1, 2):
+                resto = lineas[i + 1 : i + 1 + n]
+                if len(resto) < n or any(es_encabezado(r) or RE_APARTADO.match(r) for r in resto):
+                    break
+                if (
+                    resto[-1].endswith(".")
+                    and not any(r.endswith(".") for r in resto[:-1])
+                    and len(" ".join(resto).split()) <= MAX_PALABRAS_TITULO
+                ):
+                    linea = " ".join([linea, *resto])
+                    i += n
+                    break
+        salida.append(linea)
+        i += 1
+    return salida
+
+
+def unir_nombres_estructura(lineas: list[str]) -> list[str]:
+    """Une 'TÍTULO I' / 'Derechos básicos' en 'TÍTULO I. Derechos básicos'.
+
+    Cuando el PDF pone el nombre del título, capítulo o sección en la línea siguiente, ese nombre se
+    añadía al final del artículo anterior (el art. 26 del Estatuto de la víctima acababa en
+    "Disposiciones comunes Oficinas de Asistencia a las Víctimas") y se perdía del contexto de los
+    artículos siguientes. Lo mismo si el nombre empieza en la línea de estructura y sigue en la
+    siguiente ('Sección 1.ª De los delitos relativos a la energía nuclear y a las radiaciones' /
+    'ionizantes'). Solo se une si la línea de estructura no lleva nombre o no termina en punto, y si
+    lo que sigue al nombre (como mucho tres líneas) es otro encabezado: así nunca se toma texto de
+    un artículo.
+    """
+    salida, i = [], 0
+    while i < len(lineas):
+        linea = lineas[i]
+        m = RE_ESTRUCTURA.match(linea)
+        sin_nombre = bool(m) and not linea[m.end():].strip(" .")
+        if m and (sin_nombre or not linea.endswith(".")):
+            for n in (1, 2, 3):
+                nombre = lineas[i + 1 : i + 1 + n]
+                if len(nombre) < n or any(es_encabezado(x) or RE_APARTADO.match(x) for x in nombre):
+                    break
+                if i + 1 + n < len(lineas) and es_encabezado(lineas[i + 1 + n]):
+                    cabeza = f"{linea.rstrip(' .')}." if sin_nombre else linea
+                    linea = f"{cabeza} {' '.join(nombre)}"
+                    i += n
+                    break
+        salida.append(linea)
+        i += 1
+    return salida
+
+
 def unir_parrafo(lineas: list[str]) -> str:
     """Une líneas cortadas por el PDF respetando los apartados ('1.', 'a)', '1.ª')."""
     texto = ""
     for l in lineas:
-        nuevo_apartado = re.match(r"^(\d+\.(ª)? |[a-zñ]\) |\d+\) |\d+\.ª )", l)
+        nuevo_apartado = RE_APARTADO.match(l)
         if texto and (nuevo_apartado or texto.endswith((".", ":", ";"))) and not texto.endswith("-"):
             texto += "\n" + l
         elif texto.endswith("-"):
@@ -78,10 +151,7 @@ def unir_parrafo(lineas: list[str]) -> str:
 
 
 def articulos_de(ley: dict) -> list[dict]:
-    lineas = lineas_limpias(FUENTES / ley["pdf"])
-
-    def es_encabezado(l):
-        return RE_ARTICULO.match(l) or RE_FIN.match(l) or RE_ESTRUCTURA.match(l)
+    lineas = unir_nombres_estructura(unir_titulos_partidos(lineas_limpias(FUENTES / ley["pdf"])))
 
     # Empieza en el primer "Artículo 1" seguido de texto (en un índice va seguido de otro encabezado)
     inicio = next(
@@ -197,11 +267,9 @@ def main():
         print(f"{ley['id']:>8}: {len(arts):4d} artículos · {len(trozos):4d} trozos")
 
     with open(SALIDA / "articulos.jsonl", "w", encoding="utf-8") as f:
-        for a in todos_art:
-            f.write(json.dumps(a, ensure_ascii=False) + "\n")
+        f.writelines(json.dumps(a, ensure_ascii=False) + "\n" for a in todos_art)
     with open(SALIDA / "trozos.jsonl", "w", encoding="utf-8") as f:
-        for t in todos_trozos:
-            f.write(json.dumps(t, ensure_ascii=False) + "\n")
+        f.writelines(json.dumps(t, ensure_ascii=False) + "\n" for t in todos_trozos)
 
     palabras = [len(t["texto"].split()) for t in todos_trozos]
     print(f"\nTotal: {len(todos_art)} artículos · {len(todos_trozos)} trozos · "
