@@ -30,6 +30,11 @@ enum TransicionTuTurno {
   final Duration entrada;
   final Duration salida;
 
+  /// La que se usa en la web: rasgar pasa a [suave] y las demás no cambian. El navegador no puede capturar la pantalla
+  /// de antes ([_RasgarAnterior]), así que rasgar repintaría las dos páginas en cada fotograma, con el recorte de la
+  /// rotura y su sombra difuminada, y en un móvil normal iría a tirones. En la app instalada, rasgar sigue igual.
+  TransicionTuTurno get enLaWeb => this == rasgar ? suave : this;
+
   RouteTransitionsBuilder get _constructor => switch (this) {
     TransicionTuTurno.rasgar => _transicionRasgar,
     TransicionTuTurno.deslizar => _transicionDeslizar,
@@ -65,7 +70,8 @@ class PaginaTuTurno<T> extends CustomTransitionPage<T> {
   Route<T> createRoute(BuildContext context) => _RutaTuTurno<T>(this);
 }
 
-/// La página de [state] para un `pageBuilder` de go_router, con [transicion] y respetando «reducir animaciones».
+/// La página de [state] para un `pageBuilder` de go_router, con [transicion] (en la web,
+/// [TransicionTuTurno.enLaWeb]) y respetando «reducir animaciones».
 PaginaTuTurno<void> paginaTuTurno(
   BuildContext context,
   GoRouterState state,
@@ -76,7 +82,7 @@ PaginaTuTurno<void> paginaTuTurno(
   name: state.name ?? state.path,
   arguments: <String, String>{...state.pathParameters, ...state.uri.queryParameters},
   restorationId: state.pageKey.value,
-  transicion: transicion,
+  transicion: kIsWeb ? transicion.enLaWeb : transicion,
   reducirMovimiento: MediaQuery.disableAnimationsOf(context),
   child: child,
 );
