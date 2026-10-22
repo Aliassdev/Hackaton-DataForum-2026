@@ -32,21 +32,20 @@ class _Pantalla extends StatelessWidget {
   );
 }
 
-/// '/' más una página por transición. Con [web], cada página lleva la transición que tendría en la web
-/// ([TransicionTuTurno.enLaWeb]): en un test no se puede cambiar kIsWeb.
+/// '/' más una página por transición. Con [web], las páginas se hacen como en la web (`paginaTuTurno(web: true)`): en
+/// un test no se puede cambiar kIsWeb.
 Future<GoRouter> _montarRouter(WidgetTester tester, {bool reducir = false, bool web = false}) async {
   final router = GoRouter(
     routes: [
-      GoRoute(path: '/', pageBuilder: (context, state) => paginaTuTurno(context, state, const _Pantalla('Inicio'))),
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) => paginaTuTurno(context, state, const _Pantalla('Inicio'), web: web),
+      ),
       for (final transicion in TransicionTuTurno.values)
         GoRoute(
           path: '/${transicion.name}',
-          pageBuilder: (context, state) => paginaTuTurno(
-            context,
-            state,
-            _Pantalla(transicion.name),
-            transicion: web ? transicion.enLaWeb : transicion,
-          ),
+          pageBuilder: (context, state) =>
+              paginaTuTurno(context, state, _Pantalla(transicion.name), transicion: transicion, web: web),
         ),
     ],
   );
@@ -161,13 +160,16 @@ void main() {
     expect(find.text('rasgar'), findsNothing);
   });
 
-  test('en la web, rasgar pasa a suave; deslizar y suave no cambian', () {
+  test('en la web, rasgar y deslizar pasan a suave, y deslizar, sin animación', () {
     expect(
-      {for (final transicion in TransicionTuTurno.values) transicion: transicion.enLaWeb},
       {
-        TransicionTuTurno.rasgar: TransicionTuTurno.suave,
-        TransicionTuTurno.deslizar: TransicionTuTurno.deslizar,
-        TransicionTuTurno.suave: TransicionTuTurno.suave,
+        for (final transicion in TransicionTuTurno.values)
+          transicion: (transicion.enLaWeb, transicion.sinAnimacionEnLaWeb),
+      },
+      {
+        TransicionTuTurno.rasgar: (TransicionTuTurno.suave, false),
+        TransicionTuTurno.deslizar: (TransicionTuTurno.suave, true),
+        TransicionTuTurno.suave: (TransicionTuTurno.suave, false),
       },
     );
   });
@@ -185,6 +187,27 @@ void main() {
       expect(pagina.transitionDuration, reducir ? Duration.zero : TransicionTuTurno.suave.entrada);
       await tester.pumpAndSettle();
       expect(find.text('Inicio'), findsNothing, reason: 'reducir: $reducir');
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('en la web, las pantallas de deslizar aparecen y se van al momento', (tester) async {
+    for (final reducir in [false, true]) {
+      final router = await _montarRouter(tester, web: true, reducir: reducir);
+      router.push('/deslizar');
+      await tester.pump();
+      await tester.pump();
+      final pagina = ModalRoute.of(tester.element(find.text('deslizar')))!.settings as PaginaTuTurno;
+      expect(pagina.transicion, TransicionTuTurno.suave, reason: 'reducir: $reducir');
+      expect(pagina.transitionDuration, Duration.zero, reason: 'reducir: $reducir');
+      expect(pagina.reverseTransitionDuration, Duration.zero, reason: 'reducir: $reducir');
+      expect(find.text('Inicio'), findsNothing, reason: 'reducir: $reducir');
+      expect(tester.binding.hasScheduledFrame, isFalse, reason: 'reducir: $reducir');
+      router.pop();
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('deslizar'), findsNothing, reason: 'reducir: $reducir');
+      expect(find.text('Inicio'), findsOneWidget, reason: 'reducir: $reducir');
       expect(tester.takeException(), isNull);
     }
   });

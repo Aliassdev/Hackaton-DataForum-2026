@@ -30,10 +30,16 @@ enum TransicionTuTurno {
   final Duration entrada;
   final Duration salida;
 
-  /// La que se usa en la web: rasgar pasa a [suave] y las demás no cambian. El navegador no puede capturar la pantalla
-  /// de antes ([_RasgarAnterior]), así que rasgar repintaría las dos páginas en cada fotograma, con el recorte de la
-  /// rotura y su sombra difuminada, y en un móvil normal iría a tirones. En la app instalada, rasgar sigue igual.
-  TransicionTuTurno get enLaWeb => this == rasgar ? suave : this;
+  /// La que se usa en la web: rasgar y deslizar pasan a [suave] (deslizar, además, sin animación:
+  /// [sinAnimacionEnLaWeb]). El navegador no puede capturar la pantalla de antes ([_RasgarAnterior]), así que rasgar
+  /// repintaría las dos páginas en cada fotograma, con el recorte de la rotura y su sombra difuminada, y en un móvil
+  /// normal iría a tirones. En la app instalada, no cambian.
+  TransicionTuTurno get enLaWeb => suave;
+
+  /// En la web, las pantallas de deslizar (Te acompaño, Mi situación, Mis preguntas y las lecciones) aparecen y se van
+  /// al momento, como con «reducir animaciones». Medido en un Android de gama media emulado: con el troquel iban a unos
+  /// 80 ms por fotograma, y con el fundido de la suave, a 38-50 ms, todavía a tirones.
+  bool get sinAnimacionEnLaWeb => this == deslizar;
 
   RouteTransitionsBuilder get _constructor => switch (this) {
     TransicionTuTurno.rasgar => _transicionRasgar,
@@ -71,19 +77,21 @@ class PaginaTuTurno<T> extends CustomTransitionPage<T> {
 }
 
 /// La página de [state] para un `pageBuilder` de go_router, con [transicion] (en la web,
-/// [TransicionTuTurno.enLaWeb]) y respetando «reducir animaciones».
+/// [TransicionTuTurno.enLaWeb] y [TransicionTuTurno.sinAnimacionEnLaWeb]) y respetando «reducir animaciones». [web]
+/// solo se cambia en los tests.
 PaginaTuTurno<void> paginaTuTurno(
   BuildContext context,
   GoRouterState state,
   Widget child, {
   TransicionTuTurno transicion = TransicionTuTurno.suave,
+  bool web = kIsWeb,
 }) => PaginaTuTurno<void>(
   key: state.pageKey,
   name: state.name ?? state.path,
   arguments: <String, String>{...state.pathParameters, ...state.uri.queryParameters},
   restorationId: state.pageKey.value,
-  transicion: kIsWeb ? transicion.enLaWeb : transicion,
-  reducirMovimiento: MediaQuery.disableAnimationsOf(context),
+  transicion: web ? transicion.enLaWeb : transicion,
+  reducirMovimiento: MediaQuery.disableAnimationsOf(context) || (web && transicion.sinAnimacionEnLaWeb),
   child: child,
 );
 
