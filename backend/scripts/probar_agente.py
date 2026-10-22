@@ -20,12 +20,12 @@ PERFIL = {"edad": "13", "procedimiento": "penal", "rol": "testigo", "fase": "ant
 
 async def main(pregunta: str) -> None:
     env = dotenv_values(ENV_PATH)
-    r = httpx.get(
-        "https://api.elevenlabs.io/v1/convai/conversation/get-signed-url",
-        params={"agent_id": env["ELEVENLABS_AGENT_ID"]},
-        headers={"xi-api-key": env["ELEVENLABS_API_KEY"]},
-        timeout=10,
-    )
+    async with httpx.AsyncClient(timeout=10) as cliente:
+        r = await cliente.get(
+            "https://api.elevenlabs.io/v1/convai/conversation/get-signed-url",
+            params={"agent_id": env["ELEVENLABS_AGENT_ID"]},
+            headers={"xi-api-key": env["ELEVENLABS_API_KEY"]},
+        )
     r.raise_for_status()
 
     async with websockets.connect(r.json()["signed_url"]) as ws:

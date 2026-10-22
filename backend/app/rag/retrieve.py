@@ -25,7 +25,7 @@ CANDIDATOS = 100
 MODOS = ("bm25", "denso", "hibrido", "hibrido_perfil", "completo")
 # Prior de dominio (fijado a priori): en códigos generales como LECrim o LEC, los artículos que
 # mencionan a menores son mucho más probables como respuesta para nuestro público.
-RE_MENORES = re.compile(r"\bmenor(es)?\b|\bniñ[oa]s?\b|adolescente|\bhijos?\b|menor de edad|catorce años|dieciocho años", re.I)
+RE_MENORES = re.compile(r"\bmenor(es)?\b|\bniñ[oa]s?\b|adolescente|\bhijos?\b|menor de edad|catorce años|dieciocho años", re.IGNORECASE)
 PESO_MENORES = 1.3
 # Peso de la consulta jurídica frente a la pregunta original. Probados 1, 1,5, 2, 3 y "solo consulta"
 # con el conjunto de referencia: ninguno mejora a 1,0 (diferencias de una pregunta), así que se deja en 1.

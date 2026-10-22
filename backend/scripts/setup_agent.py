@@ -26,8 +26,8 @@ PLACEHOLDERS = {"edad": "14", "procedimiento": "penal", "rol": "testigo", "fase"
 
 def _guardar_env(clave: str, valor: str) -> None:
     texto = ENV_PATH.read_text(encoding="utf-8")
-    if re.search(rf"^{clave}=.*$", texto, flags=re.M):
-        texto = re.sub(rf"^{clave}=.*$", f"{clave}={valor}", texto, flags=re.M)
+    if re.search(rf"^{clave}=.*$", texto, flags=re.MULTILINE):
+        texto = re.sub(rf"^{clave}=.*$", f"{clave}={valor}", texto, flags=re.MULTILINE)
     else:
         texto += f"\n{clave}={valor}\n"
     ENV_PATH.write_text(texto, encoding="utf-8")
