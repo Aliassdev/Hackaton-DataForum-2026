@@ -1,4 +1,14 @@
-from app.agent.verificacion import numero_a_letras, verificar_stream
+import pytest
+
+from app.agent.verificacion import (
+    NEGATIVA_EN_ESPANOL,
+    normalizar_salida,
+    numero_a_letras,
+    parece_ingles,
+    revisar,
+    verificar_stream,
+    verificar_texto,
+)
 
 
 def _verificar(texto: str, trozo: int = 7) -> str:
@@ -37,3 +47,100 @@ def test_no_parte_la_frase_detras_de_art():
     """«art. 22» no es un final de frase: si se partiera, la cita entre corchetes se quedaría a medias y se leería."""
     assert "".join(verificar_stream(["Puedes ir con alguien [LORPM ", "art. 22]. ", "Te lo explican antes."])) == "Puedes ir con alguien. Te lo explican antes. "
     assert "".join(verificar_stream(["Lo dice el art. 3 de la ley. Fin."])) == "Lo dice el art. tres de la ley. Fin. "
+
+
+# --- pruebas adversariales contra el Space (22/10/2026) ---
+
+def test_citas_con_corchetes_lenticulares_no_se_leen_ni_se_ven():
+    """gpt-oss cita a veces como «【LECrim art. 682】»: en pantalla se veía y en la voz se leía el número."""
+    voz = "".join(verificar_stream(["El juez puede prohibir que se grabe【LECrim art. 682】. ", "Te lo explican antes【4†L1-L5】."]))
+    assert voz == "El juez puede prohibir que se grabe. Te lo explican antes. "
+    # En el canal de texto, las citas se quitan al separar las fuentes (test_agent_ask); aquí, las de navegación
+    assert verificar_texto("Puedes denunciarlo【2†L3-L9】.") == "Puedes denunciarlo."
+
+
+def test_espacios_finos_de_los_telefonos_pasan_a_espacios_normales():
+    assert verificar_texto("Llama a ANAR al 900 20 20 10.") == "Llama a ANAR al 900 20 20 10."
+    assert normalizar_salida("116 111") == "116 111"
+    assert "".join(verificar_stream(["Llama al 900 20 20 10."])) == "Llama al novecientos veinte veinte diez. "
+
+
+@pytest.mark.parametrize("frase", ["I’m sorry, but I can’t share that.", "I'm sorry, but I can't comply with that request.", "Sure! Here is a joke for you: what do you call a fake noodle?"])
+def test_frase_en_ingles_se_cambia_por_una_negativa_en_espanol(frase):
+    assert "".join(verificar_stream([frase])).strip() == NEGATIVA_EN_ESPANOL
+    assert verificar_texto(frase) == NEGATIVA_EN_ESPANOL
+
+
+@pytest.mark.parametrize(
+    "frase",
+    ["El bullying y el sexting pueden ser delito.", "¿Has hablado con tu abogado?", "Puedes pedir ayuda online en ANAR.", "La ley de menores se aplica de 14 a 17 años."],
+)
+def test_frases_en_espanol_con_anglicismos_no_se_tocan(frase):
+    assert not parece_ingles(frase)
+
+
+def test_no_iras_a_la_carcel_no_es_una_prediccion():
+    """De 14 a 17 años no se va a una cárcel de adultos (ley de menores): esa frase no se puede borrar."""
+    assert _verificar("Con 15 años no irás a la cárcel. El juez de menores puede poner medidas educativas.") == (
+        "Con quince años no irás a la cárcel. El juez de menores puede poner medidas educativas."
+    )
+    assert "cárcel" not in _verificar("Irás a la cárcel seguro.")
+
+
+@pytest.mark.parametrize(
+    "frase",
+    [
+        "El juez de menores podrá imponer una medida de internamiento en régimen cerrado de uno a ocho años, y libertad vigilada.",
+        "La medida puede durar hasta 3 años.",
+        "Te pueden poner de 1 a 5 años de internamiento.",
+        "La libertad vigilada puede alcanzar dos años.",
+    ],
+)
+def test_sin_anos_de_internamiento(frase):
+    """gpt-oss copiaba de la LORPM las duraciones del supuesto más grave aunque el prompt lo prohíbe."""
+    salida = _verificar(frase)
+    assert "años" not in salida and "dependen de lo que pasó" in salida
+
+
+@pytest.mark.parametrize(
+    "frase",
+    [
+        "La ley de menores se aplica de 14 a 17 años.",
+        "El juez de menores puede poner medidas educativas, que dependen de lo que pasó.",
+        "Si tienes 16 o 17 años, se aplica la ley de menores.",
+    ],
+)
+def test_edades_y_medidas_sin_duracion_se_quedan(frase):
+    assert revisar(frase, voz=False) == (frase, None)
+
+
+@pytest.mark.parametrize(
+    "frase", ["El expediente de menores es confidencial.", "Tu identidad será confidencial durante el proceso.", "La audiencia es secreta para el público."]
+)
+def test_datos_del_proceso_confidenciales_no_son_una_promesa(frase):
+    assert revisar(frase, voz=False) == (frase, None)
+
+
+@pytest.mark.parametrize("frase", ["Todo lo que me cuentes es confidencial.", "Esto es totalmente secreto.", "Lo que hablamos queda siempre secreto."])
+def test_promesas_de_secreto_se_sustituyen(frase):
+    final, motivo = revisar(frase, voz=False)
+    assert motivo == "secreto_absoluto" and "tienen que actuar" in final
+
+
+@pytest.mark.parametrize("frase", ["¿Qué te pasó exactamente?", "¿que te hicieron?", "Cuéntame lo que pasó.", "¿Cómo ocurrió?"])
+def test_preguntas_por_los_hechos_se_eliminan(frase):
+    assert revisar(frase, voz=False) == (None, "pregunta_hechos")
+
+
+def test_lo_que_paso_sin_preguntar_no_se_borra():
+    frase = "Las medidas dependen de lo que pasó y de cada persona."
+    assert revisar(frase, voz=False) == (frase, None)
+
+
+def test_con_menos_de_14_sin_juramento_ni_falso_testimonio():
+    """LECrim 433: el juramento y el aviso de falso testimonio son para testigos adultos. A Lucía (11) se los contaba."""
+    frase = "El juez te explicará que debes ser veraz y que mentir es delito de falso testimonio."
+    final, motivo = revisar(frase, voz=False, menor_14=True)
+    assert motivo == "falso_testimonio" and "falso testimonio" not in final
+    assert revisar(frase, voz=False) == (frase, None)  # sin la edad o con 14 o más, se queda
+    assert "juramento" not in "".join(verificar_stream(["Declararás bajo juramento. ", "Puedes ir con alguien."], menor_14=True))

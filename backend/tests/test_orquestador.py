@@ -19,6 +19,23 @@ def test_pii_limpia_dni_telefono_y_correo():
     assert "12345678Z" not in texto and "612 345 678" not in texto and "ana@ejemplo.com" not in texto
 
 
+def test_pii_limpia_nombre_centro_y_localidad():
+    """Pruebas adversariales (22/10/2026): el nombre y el instituto llegaban al LLM tal cual."""
+    assert limpiar("soy Sergio Martin Ruiz del IES Cervantes de Leganes, la fiscalia puede venir?") == "soy [DATO] del IES [DATO], la fiscalia puede venir?"
+    assert limpiar("me llamo Lucia Fernandez Gil, vivo en calle Mayor 12 de Getafe y mi movil es 612 345 678") == (
+        "me llamo [DATO], vivo en [DATO] y mi movil es [DATO]"
+    )
+    assert limpiar("me llamo lucía y tengo 11 años") == "me llamo [DATO] y tengo 11 años"
+    assert limpiar("vivo en Madrid con mi madre y voy al colegio San José") == "vivo en [DATO] con mi madre y voy al colegio [DATO]"
+    assert limpiar("llámame al 612 34 56 78 o al +34 699-123-456") == "llámame al [DATO] o al [DATO]"
+
+
+def test_pii_no_toca_lo_que_no_es_un_dato():
+    for texto in ("soy testigo y tengo 13 años", "soy víctima de acoso", "Hola, soy TuTurno. ¿Qué quieres saber?", "me llamo la fiscal para declarar",
+                  "la Ley 8/2021 y el caso 1612345678", "llama al 116 111 o al 112", "voy al insti y me acosan"):
+        assert limpiar(texto) == texto
+
+
 def test_prompt_adapta_franja_y_perfil():
     s = prompts.sistema(PERFIL, [])
     assert "12 o 13 años" in s and "testigo" in s and "antes del juicio" in s
