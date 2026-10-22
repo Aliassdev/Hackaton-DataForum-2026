@@ -118,3 +118,48 @@ def test_conceptos_de_content_ejercicios_van_primero(tmp_path: Path, ajustar):
         assert todos["C-ser-oido"].proposiciones == ("Idea nueva",)
     finally:
         evaluador.conceptos.cache_clear()
+
+
+CONCEPTOS_U3_U7 = [
+    "C-personas", "C-proceso", "C-entender", "C-proteccion", "C-no-reenviar", "C-retirar-contenido", "C-denunciar",
+    "C-medidas", "C-derechos-detenido", "C-escuchado-familia", "C-seguir-familia",
+]
+
+
+def test_conceptos_de_las_unidades_3_a_7():
+    """La app tiene «dilo» en las unidades 3 a 7: antes daban 404 (CONCEPTO_DESCONOCIDO)."""
+    todos = evaluador.conceptos()
+    assert set(CONCEPTOS_U3_U7) <= set(todos) and len(todos) == 17
+    assert todos["C-retirar-contenido"].proposiciones[0] == "Puede pedirlo en el Canal prioritario de la AEPD"
+
+
+@pytest.mark.parametrize("concepto", CONCEPTOS_U3_U7)
+def test_grade_corrige_los_conceptos_nuevos(cliente, guardrail, llm, concepto):
+    llm.respuestas = ['{"cubiertas": [1]}']
+    resp = _corregir(cliente, "Lo que he entendido de la lección", concepto)
+    assert resp.status_code == 200
+    datos = resp.json()
+    total = len(evaluador.conceptos()[concepto].proposiciones)
+    assert datos["puntuacion"] == round(1 / total, 2) and len(datos["cubiertas"]) == 1 and len(datos["faltan"]) == total - 1
+
+
+def test_sincronizar_evaluador_solo_dilo_validados_y_con_fuente(tmp_path: Path):
+    import importlib.util
+
+    ruta = Path(__file__).resolve().parents[1] / "scripts/sincronizar_evaluador.py"
+    spec = importlib.util.spec_from_file_location("sincronizar_evaluador", ruta)
+    script = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(script)
+    dilo = {"tipo": "dilo", "pregunta": "¿?", "proposiciones": ["Idea"], "fuente": "LO 5/2000, art. 6", "validado": True}
+    (tmp_path / "unidad-10.json").write_text(json.dumps([{**dilo, "id": "E-1001", "concepto": "C-diez"}]), encoding="utf-8")
+    (tmp_path / "unidad-2.json").write_text(json.dumps([
+        {**dilo, "id": "E-201", "concepto": "C-dos"},
+        {**dilo, "id": "E-202", "concepto": "C-borrador", "validado": False},
+        {**dilo, "id": "E-203", "concepto": "C-sin-fuente", "fuente": ""},
+        {"id": "E-204", "tipo": "vf", "concepto": "C-vf", "afirmacion": "x", "correcta": True, "fuente": "x", "validado": True},
+    ]), encoding="utf-8")
+    conceptos = script.conceptos_dilo(tmp_path)
+    assert [c["concepto"] for c in conceptos] == ["C-dos", "C-diez"]  # unidad-2 antes que unidad-10
+    assert json.loads(script.contenido(conceptos))["conceptos"][0] == {
+        "concepto": "C-dos", "ejercicio": "E-201", "pregunta": "¿?", "proposiciones": ["Idea"], "fuente": "LO 5/2000, art. 6", "validado": True,
+    }

@@ -153,3 +153,120 @@ def test_sin_numeros_de_articulo_entre_parentesis():
     )
     assert _verificar("Difundirla es delito (Código Penal art. 197). Te pueden ayudar.") == "Difundirla es delito. Te pueden ayudar."
     assert verificar_texto("Tienes derechos (por ejemplo, a un abogado).") == "Tienes derechos (por ejemplo, a un abogado)."
+
+
+# --- sin género sobre la persona y «tu defensa» (medidas de calidad del 22/10/2026) ---
+
+@pytest.mark.parametrize(
+    ("frase", "esperado"),
+    [
+        ("Puedes ir acompañado de una persona de confianza.", "Puedes ir con una persona de confianza."),
+        ("Siempre puedes estar acompañada desde el primer contacto.", "Siempre puedes estar con alguien desde el primer contacto."),
+        ("Si estás asustado, puedes pedir una pausa.", "Si estás con miedo, puedes pedir una pausa."),
+        ("Entiendo que te sientes muy asustada.", "Entiendo que te sientes con mucho miedo."),
+        ("No estás obligado a declarar contra tu padre.", "No tienes que declarar contra tu padre."),
+        ("Tienes derecho a estar informada de todo.", "Tienes derecho a recibir información de todo."),
+        ("Estarás informado de la fecha.", "Recibirás información de la fecha."),
+        ("Tienes derecho a ser oído y escuchado.", "Tienes derecho a que te oigan y te escuchen."),
+        ("No estás solo.", "No estás solo ni sola."),
+        ("Puedes denunciarlo tú sola, sin un adulto.", "Puedes denunciarlo por tu cuenta, sin un adulto."),
+        ("No tienes que ir sola.", "No tienes que ir sin compañía."),
+        ("Para que te sientas segura y tranquila.", "Para que te sientas a salvo y con tranquilidad."),
+        ("Estarás protegido durante todo el proceso.", "Tendrás protección durante todo el proceso."),
+        ("Puedes contarlo tú mismo o pedir ayuda.", "Puedes contarlo tú o pedir ayuda."),
+        ("Si eres lo bastante maduro, el juez te escucha.", "Si tienes madurez suficiente, el juez te escucha."),
+        ("Cuando estés preparada, el juez te llamará.", "Cuando quieras, el juez te llamará."),
+        ("Para que estés más cómodo.", "Para que estés más a gusto."),
+        ("Si te sientes incómoda o nerviosa, dilo.", "Si te sientes a disgusto o con nervios, dilo."),
+    ],
+)
+def test_sin_genero_sobre_la_persona(frase, esperado):
+    assert verificar_texto(frase) == esperado
+
+
+@pytest.mark.parametrize(
+    "frase",
+    [
+        "La persona acompañada del menor declara después.",  # de un tercero
+        "Los testigos están obligados a declarar.",
+        "El menor tiene derecho a ser oído y escuchado.",
+        "Declaras solo una vez y se graba.",  # «solo» adverbio
+        "Solo tienes que contar lo que recuerdes.",
+        "No estás solo ni sola.",  # ya es inclusivo
+        "Estás nervioso o nerviosa, es normal.",
+        "Si no estás seguro, pregúntalo.",  # «seguro» de «saber»
+        "Puedes ser escuchada por el juez.",  # con «por el juez» no se puede dar la vuelta
+        "Esa persona no es segura para ti.",
+    ],
+)
+def test_sin_genero_no_toca_lo_que_no_habla_de_quien_pregunta(frase):
+    assert verificar_texto(frase) == frase
+
+
+def test_sin_genero_tambien_en_la_voz():
+    assert _verificar("Puedes ir acompañado de tu madre. Si estás nerviosa, dilo.") == "Puedes ir con tu madre. Si estás con nervios, dilo."
+
+
+def test_a_una_victima_no_se_le_dice_tu_defensa():
+    """N2 contra el Space: a Lucía, víctima de 11 años, «Tu defensa y el juez estarán presentes»."""
+    texto = "Tu defensa y el juez estarán presentes. Habla con tu defensor si tienes dudas."
+    assert verificar_texto(texto, victima=True) == (
+        "La defensa de la persona investigada y el juez estarán presentes. Habla con tu abogado o tu abogada si tienes dudas."
+    )
+    assert verificar_texto(texto) == texto  # a quien investigan sí se le habla de su defensa
+    voz = "".join(verificar_stream(["Tu defensa estará en la sala."], victima=True)).strip()
+    assert voz == "La defensa de la persona investigada estará en la sala."
+
+
+def test_etiqueta_larga_del_glosario_no_se_lee():
+    """Las etiquetas del glosario, con su base legal, pasan de 80 caracteres: también se quitan en la voz."""
+    frase = "Es una sala preparada [Glosario TuTurno · Sala Gesell (Ley 4/2015, art. 25.1; LECrim, arts. 449 bis y 449 ter)]."
+    assert _verificar(frase) == "Es una sala preparada."
+
+
+@pytest.mark.parametrize(
+    ("frase", "esperado"),
+    [
+        # Respuestas reales en local (22/10/2026): la forma con barra dejaba «a disgusto/a» y «tú/a»
+        ("Si te sientes incómodo/a o tienes miedo, dilo.", "Si te sientes a disgusto o tienes miedo, dilo."),
+        ("Como tienes 15 años, puedes hacerlo tú mismo/a.", "Como tienes 15 años, puedes hacerlo tú."),
+        ("Puedes ir acompañado/a de tu madre.", "Puedes ir con tu madre."),
+        ("No estás obligado/a a ir.", "No tienes que ir."),
+        ("¿Ya tienes a alguien que te haga sentir seguro?", "¿Ya tienes a alguien que te haga sentir a salvo?"),
+        ("Alguien que te haga sentir tranquilo.", "Alguien que te haga sentir con tranquilidad."),
+        ("Si te sientes inseguro, llama.", "Si te sientes con inseguridad, llama."),
+    ],
+)
+def test_sin_genero_formas_con_barra_y_sentir(frase, esperado):
+    assert verificar_texto(frase) == esperado
+
+
+def test_sin_genero_no_toca_terceras_personas_con_barra():
+    assert verificar_texto("Te informarán de cuándo llega tu abogado/a.") == "Te informarán de cuándo llega tu abogado/a."
+    assert verificar_texto("Lucía se siente tranquila con su tía.") == "Lucía se siente tranquila con su tía."
+
+
+def test_el_limite_de_la_ley_de_menores_son_14_anos():
+    """«No, a los menores de 13 años no se les juzga» (respuesta real): el límite es 14 (LORPM, arts. 1 y 3)."""
+    assert verificar_texto("No, a los menores de 13 años no se les juzga con la ley penal.") == (
+        "No, a los menores de 14 años no se les juzga con la ley penal."
+    )
+    assert _verificar("Un menor de trece años no tiene responsabilidad penal.") == "Un menor de catorce años no tiene responsabilidad penal."
+    # En un proceso de familia, «menores de 12 años» es otra regla (LEC, art. 770): no se toca
+    assert verificar_texto("Los menores de 12 años pueden ser oídos si el juez lo ve necesario.") == (
+        "Los menores de 12 años pueden ser oídos si el juez lo ve necesario."
+    )
+
+
+@pytest.mark.parametrize(
+    ("frase", "esperado"),
+    [
+        ("Como víctima, puedes ser llamada a declarar.", "Como víctima, te pueden llamar a declarar."),  # respuesta real a Sergio
+        ("Puedes ser citado como testigo.", "Te pueden citar como testigo."),
+        ("Vas a ser entrevistada en una sala preparada.", "Te van a entrevistar en una sala preparada."),
+        ("Tienes derecho a ser acompañada y protegida.", "Tienes derecho a que te acompañen y te protejan."),
+        ("Tienes derecho a ser oído y escuchado.", "Tienes derecho a que te oigan y te escuchen."),
+    ],
+)
+def test_sin_genero_en_pasiva(frase, esperado):
+    assert verificar_texto(frase) == esperado

@@ -1,15 +1,15 @@
 {
-  "_nota": "Refuerzo por perfil: multiplica la puntuación RRF de cada fragmento según su ley. peso = base × procedimiento × rol. Fijados a priori con criterio jurídico (NO ajustados mirando el conjunto de evaluación). LEC y LECrim son códigos enormes y generales: base < 1 para que no ahoguen a las leyes de menores salvo que el perfil las pida. EVD (Estatuto de la víctima): estatuto general de las víctimas de delitos, sube con rol víctima (como la LOPIVI) y algo en penal, porque regula su papel en el proceso penal. LAJG (asistencia jurídica gratuita): la mayoría de sus artículos regulan el trámite ante las Comisiones y los Colegios, así que base < 1; sube con rol víctima por el art. 2 h) (gratuidad sin mirar ingresos para ciertas víctimas). 'escuchado_familia' es el valor que envía la app (sección 8.6) para 'escuchado'.",
-  "base": {"LEC": 0.8, "LECRIM": 0.9, "RGPD": 0.9, "CP": 0.85, "LAJG": 0.9},
+  "_nota": "Refuerzo por perfil: multiplica la puntuación RRF de cada fragmento según su ley. peso = base × procedimiento × rol. Fijados a priori con criterio jurídico (NO ajustados mirando el conjunto de evaluación). LEC y LECrim son códigos enormes y generales: base < 1 para que no ahoguen a las leyes de menores salvo que el perfil las pida. EVD (Estatuto de la víctima): estatuto general de las víctimas de delitos, sube con rol víctima (como la LOPIVI) y algo en penal, porque regula su papel en el proceso penal. LAJG (asistencia jurídica gratuita): la mayoría de sus artículos regulan el trámite ante las Comisiones y los Colegios, así que base < 1; sube con rol víctima por el art. 2 h) (gratuidad sin mirar ingresos para ciertas víctimas). 'escuchado_familia' es el valor que envía la app (sección 8.6) para 'escuchado'. Fuentes validadas (ml/fuentes_validadas.py), fijadas antes de medir: GLOSARIO (glosario validado de la app) base 1.2, porque cada trozo es una definición escrita para 11-17 años, con una sola idea y su fuente legal, y es lo único del índice que conecta los nombres de la calle (Sala Gesell, orden de alejamiento, Canal prioritario) con la ley; 1.2 queda por debajo de los refuerzos de papel (1.3-1.5), para que no desplace a la ley que pide el perfil. Las citas de docs/MARCO_LEGAL.md de una ley del corpus llevan el id de esa ley y sus mismos pesos. AEPD (Canal prioritario, Canal Joven) e INCIBE (017) suben sin procedimiento abierto como la LOPDGDD y la LO 1/1982 (es lo que se puede hacer antes de denunciar) y la AEPD algo con rol víctima, como la LAJG (un trámite concreto para la víctima). LODP (LO 3/1981, Defensor del Pueblo) sube sin procedimiento, como la LO 1/1996. CE (art. 24.2: derecho a la defensa y presunción de inocencia) sube con rol investigado, por debajo de la LORPM. LOPJ (art. 453.1) sin refuerzo.",
+  "base": {"LEC": 0.8, "LECRIM": 0.9, "RGPD": 0.9, "CP": 0.85, "LAJG": 0.9, "GLOSARIO": 1.2},
   "procedimiento": {
     "penal": {"LECRIM": 1.3, "LORPM": 1.2, "LOPIVI": 1.2, "CP": 1.1, "EVD": 1.1},
     "familia": {"LEC": 1.4, "LOPJM": 1.3, "CDN": 1.2},
     "proteccion": {"LOPJM": 1.4, "LOPIVI": 1.4, "CDN": 1.1},
-    "ninguno": {"LOPJM": 1.2, "LOPIVI": 1.2, "LOHIP": 1.2, "LOPDGDD": 1.2, "CP": 1.2}
+    "ninguno": {"LOPJM": 1.2, "LOPIVI": 1.2, "LOHIP": 1.2, "LOPDGDD": 1.2, "CP": 1.2, "AEPD": 1.2, "INCIBE": 1.2, "LODP": 1.2}
   },
   "rol": {
-    "investigado": {"LORPM": 1.5},
-    "victima": {"LOPIVI": 1.3, "LECRIM": 1.1, "CP": 1.1, "EVD": 1.3, "LAJG": 1.1},
+    "investigado": {"LORPM": 1.5, "CE": 1.2},
+    "victima": {"LOPIVI": 1.3, "LECRIM": 1.1, "CP": 1.1, "EVD": 1.3, "LAJG": 1.1, "AEPD": 1.1},
     "testigo": {"LECRIM": 1.2},
     "escuchado": {"LEC": 1.2, "LOPJM": 1.2},
     "escuchado_familia": {"LEC": 1.2, "LOPJM": 1.2}

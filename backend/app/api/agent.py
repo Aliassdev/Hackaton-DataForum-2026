@@ -81,6 +81,10 @@ def perfil_de(peticion: PeticionAsk) -> dict:
 
 
 def fuente(f: Fragmento) -> Fuente:
+    """Etiqueta de la fuente para la app. Glosario y marco legal traen su norma y su artículo: «Glosario TuTurno · Sala
+    Gesell» (con su base legal como título), «LORPM» y «28.1», «AEPD · Canal prioritario» sin artículo."""
+    if f.norma is not None:
+        return Fuente(id=f.articulo_id, titulo=f.titulo or f.cita, norma=f.norma, articulo=f.articulo or "", url=f.url)
     norma, _, articulo = f.cita.rpartition(" art. ")
     articulo = RE_ARTICULO.sub(r"\1 \2", articulo)
     return Fuente(id=f.articulo_id, titulo=f.titulo or f"Artículo {articulo}", norma=norma or f.ley, articulo=articulo, url=f.url)

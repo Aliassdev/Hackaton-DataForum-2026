@@ -83,6 +83,28 @@ RECORDATORIO_ANAR = {
 # «ANAR» en mayúsculas y como palabra: sin distinguir mayúsculas, «ganarás» contenía «anar» y el recordatorio no salía
 RE_AYUDA_DICHA = re.compile(r"\bANAR\b|\b900 ?20 ?20 ?10\b|\b116 ?111\b|(?i:\bnovecientos,? veinte\b|\bciento diecis[eé]is\b)")
 
+# «¿Tengo abogado gratis?»: el LLM contestaba «sí, gratuito» aunque la LOPIVI (art. 14.1) lo remite a la Ley de
+# asistencia jurídica gratuita y el glosario validado dice «en los casos que marca la ley» (respuestas reales en local,
+# 22/10/2026; docs/MARCO_LEGAL.md lo marca como corrección). A una víctima, si la respuesta dice que es gratis sin ninguna
+# condición, se añade la precisión del glosario (G-abogado-oficio; Ley 1/1996, art. 2 h). A quien investigan no: esa
+# gratuidad sin mirar los ingresos es para las víctimas.
+RE_ABOGADO_GRATIS = re.compile(
+    r"\b(?:abogad[oa]s?|letrad[oa]s?|asistencia jurídica)\b[^.?!\n]*\b(?:grat(?:is|uit[oa]s?)|sin coste|sin pagar)\b"
+    r"|\b(?:grat(?:is|uit[oa]s?)|sin coste)\b[^.?!\n]*\b(?:abogad[oa]s?|letrad[oa]s?)\b",
+    re.IGNORECASE,
+)
+RE_CONDICION_GRATIS = re.compile(r"depende|en (?:los|algunos|ciertos) casos|ingresos|recursos|dinero|no siempre|si es un delito", re.IGNORECASE)
+PRECISION_GRATIS = (
+    "El abogado es gratis en los casos que marca la ley: si es un delito sexual, aunque tu familia tenga dinero; "
+    "en otros casos, depende de los ingresos de tu familia."
+)
+
+
+def precisar_gratis(texto: str, perfil: dict) -> bool:
+    """La respuesta dice a una víctima que el abogado es gratis sin decir de qué depende."""
+    return perfil.get("rol") == "victima" and bool(RE_ABOGADO_GRATIS.search(texto)) and not RE_CONDICION_GRATIS.search(texto)
+
+
 # La reformulación corre en estos hilos mientras el hilo de la petición busca la pregunta original. Uno por cada hilo
 # de petición (HILOS_MAX): cada petición tiene como mucho una reformulación en marcha y nunca espera a que haya hueco.
 _hilos_reformular = ThreadPoolExecutor(max_workers=settings.hilos_max, thread_name_prefix="reformular")
@@ -112,6 +134,11 @@ def menor_de_14(perfil: dict) -> bool:
     """Solo si la app ha mandado la edad (normalizar_perfil la deja como entero)."""
     edad = perfil.get("edad")
     return isinstance(edad, int) and edad < 14
+
+
+def victima_o_testigo(perfil: dict) -> bool:
+    """Por el perfil de la app: a una víctima o a un testigo no se le habla de «tu defensa» (norma 11)."""
+    return perfil.get("rol") in ("victima", "testigo")
 
 
 def malestar(pregunta: str) -> bool:
@@ -153,6 +180,16 @@ def sin_eco_del_puente(frase: str) -> str:
     return resto[:1].upper() + resto[1:] + " " if resto else ""
 
 
+def limpiar_consulta(consulta: str | None) -> str | None:
+    """Primera línea, sin comillas. Si el modelo la ha escrito dos veces seguidas («...penaledad mínima...»), una."""
+    linea = (consulta or "").strip().splitlines()[0].strip() if (consulta or "").strip() else ""
+    linea = re.sub(r"[\"«»“”]", "", linea).strip()
+    mitad = len(linea) // 2
+    if len(linea) % 2 == 0 and linea[:mitad] == linea[mitad:]:
+        linea = linea[:mitad]
+    return linea or None
+
+
 def reformular(pregunta: str, historial: list[dict], perfil: dict) -> str | None:
     texto_hist = "\n".join(f"{m['role']}: {m['content']}" for m in historial[:-1]) or "(ninguna)"
     try:
@@ -162,7 +199,7 @@ def reformular(pregunta: str, historial: list[dict], perfil: dict) -> str | None
             modelo=settings.llm_modelo_reformular,
             plazo_s=settings.reformular_plazo_s,
         )
-        return consulta.splitlines()[0].strip(' "') if consulta else None
+        return limpiar_consulta(consulta)
     except Exception as e:  # noqa: BLE001 - es opcional: ante cualquier fallo (también de red), sin reformular
         # Solo el resumen: el cuerpo del error del proveedor puede repetir lo que había generado el modelo
         log.warning("Reformulación fallida (%s): se busca solo con la pregunta original", resumen_error(e))
@@ -218,7 +255,7 @@ def responder(mensajes: list[dict], perfil: dict, puente: str | None = None) -> 
             return
         llamada = [{"role": "system", "content": prompts.sistema(perfil, contexto.fragmentos, puente=bool(puente))}] + contexto.historial
         generado = client.stream(llamada, modelo=settings.llm_modelo, plazo_s=settings.llm_plazo_voz_s)
-        for trozo in verificar_stream(generado, menor_14=menor_de_14(perfil)):
+        for trozo in verificar_stream(generado, menor_14=menor_de_14(perfil), victima=victima_o_testigo(perfil)):
             if puente and not dicho:
                 trozo = sin_eco_del_puente(trozo)
                 if not trozo:
@@ -232,6 +269,10 @@ def responder(mensajes: list[dict], perfil: dict, puente: str | None = None) -> 
         log.error("Generación fallida: %s", resumen_error(e))
     if not dicho:
         yield RESPUESTA_SEGURA_TRAS_PUENTE if puente else RESPUESTA_SEGURA
+    if dicho and precisar_gratis("".join(texto_dicho), perfil):
+        log.info("Precisión de la asistencia jurídica gratuita añadida")
+        texto_dicho.append(PRECISION_GRATIS)
+        yield PRECISION_GRATIS + " "
     if recordar_ayuda(_ultima_pregunta(mensajes)) and not RE_AYUDA_DICHA.search("".join(texto_dicho)):
         log.info("Recordatorio de ANAR añadido (malestar)")
         # Lo verificado ya acaba en espacio; la respuesta segura, no
@@ -247,9 +288,12 @@ def responder_texto(mensajes: list[dict], perfil: dict) -> RespuestaTexto:
     bruto = client.completar(llamada, modelo=settings.llm_modelo, max_tokens=MAX_TOKENS_TEXTO, temperatura=0.3)
     # Antes de separar las fuentes: así una cita con corchetes lenticulares («【LECrim art. 682】») se quita como las demás
     cuerpo, citas = prompts.separar_fuentes(normalizar_salida(bruto))
-    texto = verificar_texto(cuerpo, menor_14=menor_de_14(perfil))
+    texto = verificar_texto(cuerpo, menor_14=menor_de_14(perfil), victima=victima_o_testigo(perfil))
     if not texto:
         raise client.ErrorLLM("Respuesta vacía después de la verificación")
+    if precisar_gratis(texto, perfil):
+        log.info("Precisión de la asistencia jurídica gratuita añadida")
+        texto = con_recordatorio(texto, PRECISION_GRATIS)
     if recordar_ayuda(_ultima_pregunta(mensajes)) and not RE_AYUDA_DICHA.search(texto):
         log.info("Recordatorio de ANAR añadido (malestar)")
         texto = con_recordatorio(texto, RECORDATORIO_ANAR["texto"])

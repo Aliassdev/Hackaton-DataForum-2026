@@ -3,7 +3,9 @@
 Uso, desde la raíz del repo:
     backend/.venv/Scripts/python -X utf8 ml/ingest_leyes.py
 
-Entrada: fuentes/leyes/*.pdf (registro en content/leyes.json).
+Entrada: fuentes/leyes/*.pdf (registro en content/leyes.json), y además las fuentes validadas que no son el texto de
+una ley: el glosario de la app (content/glosario.json) y las citas literales de docs/MARCO_LEGAL.md
+(content/marco_legal.json). Las prepara ml/fuentes_validadas.py.
 Salida:  artifacts/corpus/articulos.jsonl (un artículo por línea) y trozos.jsonl (unidad de búsqueda).
 
 Decisiones:
@@ -24,6 +26,7 @@ from collections import Counter
 from pathlib import Path
 
 import pymupdf
+from fuentes_validadas import trozos_glosario, trozos_marco_legal
 
 RAIZ = Path(__file__).resolve().parent.parent
 FUENTES = RAIZ / "fuentes/leyes"
@@ -265,6 +268,11 @@ def main():
         todos_art += arts
         todos_trozos += trozos
         print(f"{ley['id']:>8}: {len(arts):4d} artículos · {len(trozos):4d} trozos")
+
+    # Fuentes validadas que no son el texto de una ley: van al final, para que los trozos de las leyes no cambien
+    glosario, marco = trozos_glosario(), trozos_marco_legal()
+    todos_trozos += glosario + marco
+    print(f"{'glosario':>8}: {len(glosario):4d} términos validados · marco legal: {len(marco)} citas literales")
 
     with open(SALIDA / "articulos.jsonl", "w", encoding="utf-8") as f:
         f.writelines(json.dumps(a, ensure_ascii=False) + "\n" for a in todos_art)

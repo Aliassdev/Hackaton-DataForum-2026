@@ -6,9 +6,15 @@
 4. Refuerzo por perfil: multiplica según la ley (content/rag_perfiles.json).
 5. Agregación por artículo: se devuelven k artículos distintos con su mejor fragmento.
 
+Además de las leyes, el índice tiene fuentes validadas (ml/fuentes_validadas.py): el glosario de la app y las citas
+literales de docs/MARCO_LEGAL.md. Sus trozos traen su propia etiqueta de cita («Glosario TuTurno · Sala Gesell (Ley
+4/2015, art. 25.1; ...)», «LORPM art. 28.1», «AEPD · Canal prioritario») y la norma y el artículo que enseña la app.
+Una cita del marco legal lleva el id de su artículo (LORPM-28): compite con el texto completo del artículo y se queda
+el mejor de los dos.
+
 Hilos: numpy y scipy (OpenBLAS) arrancan un hilo por núcleo que se queda girando un rato después de cada producto
 y le quita la CPU al codificador de torch. Con 32 núcleos, la parte densa de una consulta pasaba de unos 26 ms a
-130 ms. Nuestros productos son pequeños (3841 × 768), así que OpenBLAS va con un hilo, y torch con tantos como CPU
+130 ms. Nuestros productos son pequeños (unos 4000 × 768), así que OpenBLAS va con un hilo, y torch con tantos como CPU
 tenga de verdad el contenedor (en un Space, la cuota del cgroup, no los núcleos de la máquina).
 
 Concurrencia: las consultas del modo denso se codifican por lotes desde un solo hilo (Codificador). Es lo que más CPU
@@ -32,6 +38,8 @@ from typing import Any, Protocol
 
 import numpy as np
 
+from app.agent.verificacion import numero_a_letras
+
 log = logging.getLogger("tuturno.rag")
 
 ENCODER = "intfloat/multilingual-e5-base"
@@ -45,6 +53,13 @@ MODOS = ("bm25", "denso", "hibrido", "hibrido_perfil", "completo")
 # mencionan a menores son mucho más probables como respuesta para nuestro público.
 RE_MENORES = re.compile(r"\bmenor(es)?\b|\bniñ[oa]s?\b|adolescente|\bhijos?\b|menor de edad|catorce años|dieciocho años", re.IGNORECASE)
 PESO_MENORES = 1.3
+# Edades como las escribe la ley (SEGURIDAD.md, 7.2): con letras y por tramos («menor de catorce años», «mayores de catorce
+# años y menores de dieciocho»), mientras que quien pregunta escribe «tengo 13 años». A la consulta BM25 se le añaden la
+# edad con letras y su tramo. Con «Tengo 13 años y he hecho algo malo, ¿me pueden juzgar?», el artículo 3 de la LORPM
+# pasa del 6.º al 2.º puesto. Solo BM25: el codificador denso ya relaciona «13» y «trece».
+RE_EDAD = re.compile(r"\b(\d{1,2})\s+años\b")
+TRAMO_MENOR_14 = "menor de catorce años"
+TRAMO_14_A_17 = "mayores de catorce años y menores de dieciocho"
 # Peso de la consulta jurídica frente a la pregunta original. Probados 1, 1,5, 2, 3 y "solo consulta"
 # con el conjunto de referencia: ninguno mejora a 1,0 (diferencias de una pregunta), así que se deja en 1.
 PESO_CONSULTA = 1.0
@@ -94,6 +109,19 @@ def ajustar_hilos() -> int:
     hilos = min(torch.get_num_threads(), cpus_disponibles())
     torch.set_num_threads(hilos)
     return hilos
+
+
+def edades_de_la_ley(consulta: str) -> str:
+    """La consulta con cada edad «N años» también con letras y, si va de 10 a 17, con su tramo de la ley."""
+    extra = []
+    for m in RE_EDAD.finditer(consulta):
+        n = int(m.group(1))
+        extra.append(f"{numero_a_letras(n)} años")
+        if 10 <= n <= 13:
+            extra.append(TRAMO_MENOR_14)
+        elif 14 <= n <= 17:
+            extra.append(TRAMO_14_A_17)
+    return f"{consulta} {' '.join(extra)}" if extra else consulta
 
 
 def tokenizar(textos: list[str]):
@@ -207,11 +235,14 @@ class Fragmento:
     id: str
     articulo_id: str
     ley: str
-    cita: str  # "LORPM art. 22"
+    cita: str  # "LORPM art. 22", "Glosario TuTurno · Sala Gesell (Ley 4/2015, art. 25.1; ...)", "AEPD · Canal prioritario"
     titulo: str
     texto: str
     url: str
     puntuacion: float
+    # Lo que enseña la app en la etiqueta de la fuente (contrato 8.1). None en los artículos de ley: se saca de la cita
+    norma: str | None = None
+    articulo: str | None = None
 
 
 class Recuperador:
@@ -236,7 +267,7 @@ class Recuperador:
         return list(np.argsort(-(self.emb @ q))[:CANDIDATOS])
 
     def _bm25(self, pregunta: str) -> list[int]:
-        docs, _ = self.bm25.retrieve(tokenizar([pregunta]), k=CANDIDATOS, show_progress=False)
+        docs, _ = self.bm25.retrieve(tokenizar([edades_de_la_ley(pregunta)]), k=CANDIDATOS, show_progress=False)
         return list(docs[0])
 
     def peso_perfil(self, ley: str, perfil: dict | None) -> float:
@@ -283,9 +314,11 @@ class Recuperador:
             if t["articulo_id"] in vistos:
                 continue
             vistos.add(t["articulo_id"])
+            norma = t.get("norma")  # solo las fuentes validadas: glosario y marco legal
             salida.append(Fragmento(
-                id=t["id"], articulo_id=t["articulo_id"], ley=t["ley"], cita=f"{t['ley_corta']} art. {t['articulo']}",
+                id=t["id"], articulo_id=t["articulo_id"], ley=t["ley"], cita=t.get("cita") or f"{t['ley_corta']} art. {t['articulo']}",
                 titulo=t["titulo"], texto=t["texto"], url=t["url"], puntuacion=puntos[i],
+                norma=norma, articulo=t.get("articulo", "") if norma is not None else None,
             ))
             if len(salida) == k:
                 break

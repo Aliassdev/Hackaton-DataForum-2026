@@ -95,3 +95,60 @@ def test_si_la_reformulacion_no_responde_se_busca_con_la_pregunta_original(recup
     monkeypatch.setattr(orquestador.client, "stream", lambda *a, **k: iter(["Sí, ", "puedes ir con alguien."]))
     assert "".join(orquestador.responder(MENSAJES, PERFIL)).strip() == "Sí, puedes ir con alguien."
     assert recuperador.llamadas[0]["consulta"] is None
+
+
+def test_limpiar_consulta_juridica():
+    assert orquestador.limpiar_consulta('"sala Gesell" en el proceso\nexplicación') == "sala Gesell en el proceso"
+    assert orquestador.limpiar_consulta("abcabc") == "abc"  # escrita dos veces seguidas
+    assert orquestador.limpiar_consulta("   ") is None and orquestador.limpiar_consulta(None) is None
+
+
+def test_reformulacion_con_el_vocabulario_de_la_ley():
+    """La consulta jurídica usa las palabras de la ley («Ministerio Fiscal», no «Fiscalía»), sin cambiar el resto del
+    prompt validado: las variantes que quitaban el contexto o escribían las edades con letras salían peor en
+    content/eval/golden_rag.jsonl (ver backend/API.md)."""
+    for pista in ('"la Fiscalía" → "el Ministerio Fiscal"', "prohibición de aproximarse o comunicarse con la víctima",
+                  "asistencia jurídica gratuita", "retirada de contenidos y supresión de datos personales"):
+        assert pista in prompts.REFORMULAR
+    assert prompts.REFORMULAR.rstrip().endswith("Consulta jurídica:")
+
+
+def test_normas_11_y_12_en_los_dos_canales():
+    for canal in ("voz", "texto"):
+        s = prompts.sistema({}, [], canal=canal)
+        assert "nunca «tu defensa»" in s and "centros de protección de menores" in s and "institutos" in s
+        assert '"no tienes que" y no "no estás obligado"' in s
+
+
+def test_responder_corrige_tu_defensa_a_una_victima(monkeypatch):
+    monkeypatch.setattr(orquestador, "preparar", lambda m, p: orquestador.Contexto([{"role": "user", "content": "¿Quién estará?"}], []))
+    monkeypatch.setattr(orquestador.client, "stream", lambda *a, **k: iter(["Tu defensa ", "estará allí."]))
+    victima = "".join(orquestador.responder([{"role": "user", "content": "¿Quién estará?"}], {"rol": "victima"}))
+    investigado = "".join(orquestador.responder([{"role": "user", "content": "¿Quién estará?"}], {"rol": "investigado"}))
+    assert victima.strip() == "La defensa de la persona investigada estará allí."
+    assert investigado.strip() == "Tu defensa estará allí."
+
+
+def test_norma_3_pide_decir_las_condiciones():
+    """«¿Tengo abogado gratis?»: decía «sin coste» aunque la LOPIVI y el glosario dicen «en los casos que marca la ley»."""
+    for canal in ("voz", "texto"):
+        assert "no digas que algo es gratis o seguro para todo el mundo" in prompts.sistema({}, [], canal=canal)
+
+
+def test_abogado_gratis_con_sus_condiciones(monkeypatch):
+    """«¿Tengo abogado gratis?»: «sí, gratuito» sin condiciones (respuesta real). A una víctima se le añade la precisión
+    del glosario validado; a quien investigan, no (esa gratuidad sin mirar ingresos es para las víctimas)."""
+    monkeypatch.setattr(orquestador, "preparar", lambda m, p: orquestador.Contexto([{"role": "user", "content": "¿Tengo abogado gratis?"}], []))
+    sin_condicion = "Sí, tienes derecho a un abogado de oficio, es decir, gratuito.\n\n¿Quieres saber cómo pedirlo?\nFUENTES: ninguna"
+    monkeypatch.setattr(orquestador.client, "completar", lambda *a, **k: sin_condicion)
+    texto = orquestador.responder_texto([{"role": "user", "content": "¿Tengo abogado gratis?"}], {"rol": "victima"}).texto
+    assert texto == ("Sí, tienes derecho a un abogado de oficio, es decir, gratuito.\n\n" + orquestador.PRECISION_GRATIS
+                     + "\n\n¿Quieres saber cómo pedirlo?")
+    assert orquestador.PRECISION_GRATIS not in orquestador.responder_texto([{"role": "user", "content": "x"}], {"rol": "investigado"}).texto
+    con_condicion = "Es gratis en los casos que marca la ley; si no, depende de los ingresos de tu familia.\nFUENTES: ninguna"
+    monkeypatch.setattr(orquestador.client, "completar", lambda *a, **k: con_condicion)
+    assert orquestador.PRECISION_GRATIS not in orquestador.responder_texto([{"role": "user", "content": "x"}], {"rol": "victima"}).texto
+    # En la voz, al final
+    monkeypatch.setattr(orquestador.client, "stream", lambda *a, **k: iter(["Sí, el abogado ", "es gratis."]))
+    voz = "".join(orquestador.responder([{"role": "user", "content": "¿Tengo abogado gratis?"}], {"rol": "victima"}))
+    assert voz.strip() == "Sí, el abogado es gratis. " + orquestador.PRECISION_GRATIS

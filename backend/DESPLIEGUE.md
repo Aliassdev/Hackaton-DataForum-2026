@@ -18,17 +18,19 @@ Comandos desde `backend/` con el venv del backend (en Windows, `.venv/Scripts/py
 
 Las claves de ElevenLabs y Groq no tienen por qué salir del portátil de Iker: Jorge le pasa el token de Hugging Face por un canal privado (nunca por git ni por el chat del equipo), Iker hace `hf auth login` con él y ejecuta los pasos 3 y 4. El token se revoca después.
 
-## 1. Índice del RAG con las 12 normas
+## 1. Índice del RAG con las 12 normas y las fuentes validadas
 
 `artifacts/` no está en git: quien despliega tiene que tener el índice construido.
 
 ```bash
 cd ..   # raíz del repo
-backend/.venv/bin/python -X utf8 ml/ingest_leyes.py   # 12 normas: 3012 artículos, 3841 trozos
+backend/.venv/bin/python -X utf8 ml/ingest_leyes.py   # 12 normas (3012 artículos, 3841 trozos) + glosario (42) + marco legal (92): 3975 trozos
 backend/.venv/bin/python -X utf8 ml/build_index.py    # unos 4 minutos en CPU
-backend/.venv/bin/python -X utf8 ml/eval_rag.py       # opcional: métricas del RAG
+backend/.venv/bin/python -X utf8 ml/eval_rag.py --pausa 0.2   # opcional: métricas del RAG (con el router basta esa pausa)
 cd backend
 ```
+
+Las fuentes validadas salen de `content/glosario.json` (copia del glosario validado de la app, esquema 9.6) y de `content/marco_legal.json` (las citas literales de `docs/MARCO_LEGAL.md`). Si cambia alguno de los dos, copia el glosario de la app (`app/assets/mock/content/glosario.json`) o regenera el marco legal con `backend/.venv/bin/python -X utf8 ml/fuentes_validadas.py --marco ruta/a/docs/MARCO_LEGAL.md`, y vuelve a construir el índice. Las ideas clave de «Dilo con tus palabras» se copian igual: `backend/scripts/sincronizar_evaluador.py ruta/a/app/assets/mock/content/ejercicios`.
 
 Si existe `artifacts/models/guardrail` (BETO entrenado con `ml/train_guardrail.py`), también se despliega. Si no, el guardrail funciona solo con reglas.
 
