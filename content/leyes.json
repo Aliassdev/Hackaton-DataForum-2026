@@ -10,6 +10,8 @@
     {"id": "LOHIP", "corta": "LO 1/1982", "nombre": "Ley Orgánica 1/1982, de protección civil del derecho al honor, a la intimidad personal y familiar y a la propia imagen", "pdf": "BOE-A-1982-11196-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1982-11196#a{art}"},
     {"id": "LOPDGDD", "corta": "LOPDGDD", "nombre": "Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales", "pdf": "BOE-A-2018-16673.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673#a{art}"},
     {"id": "CP", "corta": "Código Penal", "nombre": "Ley Orgánica 10/1995, del Código Penal", "pdf": "BOE-A-1995-25444-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1995-25444#a{art}"},
-    {"id": "RGPD", "corta": "RGPD", "nombre": "Reglamento (UE) 2016/679, General de Protección de Datos", "pdf": "L00001-00088.pdf", "url": "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32016R0679"}
+    {"id": "RGPD", "corta": "RGPD", "nombre": "Reglamento (UE) 2016/679, General de Protección de Datos", "pdf": "L00001-00088.pdf", "url": "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32016R0679"},
+    {"id": "EVD", "corta": "Estatuto de la víctima", "nombre": "Ley 4/2015, de 27 de abril, del Estatuto de la víctima del delito", "pdf": "BOE-A-2015-4606-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2015-4606#a{art}"},
+    {"id": "LAJG", "corta": "Ley de asistencia jurídica gratuita", "nombre": "Ley 1/1996, de 10 de enero, de asistencia jurídica gratuita", "pdf": "BOE-A-1996-750-consolidado.pdf", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-1996-750#a{art}"}
   ]
 }

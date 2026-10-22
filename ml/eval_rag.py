@@ -1,7 +1,10 @@
 """P6 · Evaluación del RAG con ablación: qué aporta cada pieza.
 
 Uso, desde la raíz del repo:
-    backend/.venv/Scripts/python -X utf8 ml/eval_rag.py [--detalle]
+    backend/.venv/Scripts/python -X utf8 ml/eval_rag.py [--detalle] [--index DIR] [--perfiles JSON]
+
+--index y --perfiles permiten medir otro índice (por ejemplo, el anterior a añadir leyes) o comparar
+pesos de perfil sobre el mismo índice. Las métricas se guardan en <index>/metrics_rag.json.
 
 Conjunto: content/eval/golden_rag.jsonl (preguntas con lenguaje de 12-17 años, perfil y artículos
 que las responden, verificados contra el texto de la ley).
@@ -27,9 +30,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--golden", type=Path, default=RAIZ / "content/eval/golden_rag.jsonl")
     ap.add_argument("--detalle", action="store_true", help="muestra las preguntas falladas por el modo completo")
+    ap.add_argument("--index", type=Path, default=RAIZ / "artifacts/index", help="carpeta del índice que se evalúa")
+    ap.add_argument("--perfiles", type=Path, default=RAIZ / "content/rag_perfiles.json", help="pesos de refuerzo por perfil")
     args = ap.parse_args()
 
-    rec = Recuperador(RAIZ / "artifacts/index", RAIZ / "content/rag_perfiles.json")
+    rec = Recuperador(args.index, args.perfiles)
     golden = [json.loads(l) for l in args.golden.read_text(encoding="utf-8").splitlines() if l.strip()]
     rec.buscar("calentamiento")
 
@@ -83,7 +88,7 @@ def main():
         for p, rel, top in resultados[mejor]["fallos"]:
             print(f"  x {p}\n      esperado {rel} · obtenido {top}")
 
-    salida = RAIZ / "artifacts/index/metrics_rag.json"
+    salida = args.index / "metrics_rag.json"
     salida.write_text(json.dumps(resultados, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nMétricas guardadas en {salida}")
 

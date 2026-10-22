@@ -31,3 +31,18 @@
 {"pregunta": "puedo pedir que borren una foto mía de una red social", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPDGDD-94", "RGPD-17"]}
 {"pregunta": "a partir de qué edad puedo aceptar yo solo que usen mis datos en una app", "perfil": {"edad": 13, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["LOPDGDD-7", "RGPD-8"]}
 {"pregunta": "mi nombre o mi cara pueden salir en las noticias por el juicio", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LOPJM-4", "LORPM-35"]}
+{"pregunta": "me tienen que explicar las cosas con palabras que entienda aunque sea pequeña", "perfil": {"edad": 11, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-4"]}
+{"pregunta": "si todavía no he denunciado, la policía me puede explicar qué derechos tengo", "perfil": {"edad": 15, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["EVD-5"]}
+{"pregunta": "me van a avisar de cuándo es el juicio y de lo que decida el juez", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-7"]}
+{"pregunta": "puedo ir con alguien de confianza cuando tenga que declarar", "perfil": {"edad": 12, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-4", "EVD-21", "LECRIM-433"]}
+{"pregunta": "no quiero encontrarme en el juzgado con el chico que me acosa", "perfil": {"edad": 13, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-20", "EVD-25"]}
+{"pregunta": "pueden salir mi nombre o mi cara en las noticias por ser la víctima", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-22", "LOPJM-4"]}
+{"pregunta": "me pueden grabar cuando lo cuente para no tener que repetirlo en el juicio", "perfil": {"edad": 11, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-26", "LECRIM-449ter", "LECRIM-703bis"]}
+{"pregunta": "qué hace la oficina de asistencia a las víctimas y me ayuda aunque no haya denunciado", "perfil": {"edad": 16, "procedimiento": "ninguno", "rol": "victima"}, "relevantes": ["EVD-28", "EVD-10"]}
+{"pregunta": "por qué me hacen contar lo mismo tantas veces, no pueden preguntarme menos", "perfil": {"edad": 14, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-21", "EVD-25"]}
+{"pregunta": "si archivan mi denuncia puedo hacer algo", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-12"]}
+{"pregunta": "me pueden proponer una mediación con quien me hizo daño para arreglarlo", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-15", "LORPM-19"]}
+{"pregunta": "si soy víctima tengo que pagar al abogado", "perfil": {"edad": 14, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LOPIVI-14", "LAJG-2"]}
+{"pregunta": "mis padres no tienen mucho dinero, nos pueden dar un abogado gratis", "perfil": {"edad": 13, "procedimiento": "familia", "rol": "escuchado"}, "relevantes": ["LAJG-3", "LAJG-2"]}
+{"pregunta": "qué cubre la justicia gratuita, solo el abogado o algo más", "perfil": {"edad": 16, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["LAJG-6"]}
+{"pregunta": "dónde se pide el abogado gratis si soy víctima", "perfil": {"edad": 15, "procedimiento": "penal", "rol": "victima"}, "relevantes": ["EVD-16", "LAJG-12"]}

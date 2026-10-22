@@ -1,16 +1,17 @@
 {
-  "_nota": "Refuerzo por perfil: multiplica la puntuación RRF de cada fragmento según su ley. peso = base × procedimiento × rol. Fijados a priori con criterio jurídico (NO ajustados mirando el conjunto de evaluación). LEC y LECrim son códigos enormes y generales: base < 1 para que no ahoguen a las leyes de menores salvo que el perfil las pida.",
-  "base": {"LEC": 0.8, "LECRIM": 0.9, "RGPD": 0.9, "CP": 0.85},
+  "_nota": "Refuerzo por perfil: multiplica la puntuación RRF de cada fragmento según su ley. peso = base × procedimiento × rol. Fijados a priori con criterio jurídico (NO ajustados mirando el conjunto de evaluación). LEC y LECrim son códigos enormes y generales: base < 1 para que no ahoguen a las leyes de menores salvo que el perfil las pida. EVD (Estatuto de la víctima): estatuto general de las víctimas de delitos, sube con rol víctima (como la LOPIVI) y algo en penal, porque regula su papel en el proceso penal. LAJG (asistencia jurídica gratuita): la mayoría de sus artículos regulan el trámite ante las Comisiones y los Colegios, así que base < 1; sube con rol víctima por el art. 2 h) (gratuidad sin mirar ingresos para ciertas víctimas). 'escuchado_familia' es el valor que envía la app (sección 8.6) para 'escuchado'.",
+  "base": {"LEC": 0.8, "LECRIM": 0.9, "RGPD": 0.9, "CP": 0.85, "LAJG": 0.9},
   "procedimiento": {
-    "penal": {"LECRIM": 1.3, "LORPM": 1.2, "LOPIVI": 1.2, "CP": 1.1},
+    "penal": {"LECRIM": 1.3, "LORPM": 1.2, "LOPIVI": 1.2, "CP": 1.1, "EVD": 1.1},
     "familia": {"LEC": 1.4, "LOPJM": 1.3, "CDN": 1.2},
     "proteccion": {"LOPJM": 1.4, "LOPIVI": 1.4, "CDN": 1.1},
     "ninguno": {"LOPJM": 1.2, "LOPIVI": 1.2, "LOHIP": 1.2, "LOPDGDD": 1.2, "CP": 1.2}
   },
   "rol": {
     "investigado": {"LORPM": 1.5},
-    "victima": {"LOPIVI": 1.3, "LECRIM": 1.1, "CP": 1.1},
+    "victima": {"LOPIVI": 1.3, "LECRIM": 1.1, "CP": 1.1, "EVD": 1.3, "LAJG": 1.1},
     "testigo": {"LECRIM": 1.2},
-    "escuchado": {"LEC": 1.2, "LOPJM": 1.2}
+    "escuchado": {"LEC": 1.2, "LOPJM": 1.2},
+    "escuchado_familia": {"LEC": 1.2, "LOPJM": 1.2}
   }
 }
