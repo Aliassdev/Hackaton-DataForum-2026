@@ -3,7 +3,7 @@ import json
 import pytest
 
 from app.agent.clasificador import decidir
-from app.agent.safety import Guardrail, normalizar, plantilla
+from app.agent.safety import Guardrail, normalizar, plantilla, sin_leet
 from app.config import settings
 
 
@@ -150,3 +150,45 @@ def test_plantilla_crisis_lleva_anar_en_letras():
     texto = plantilla("crisis")
     assert "ANAR" in texto and "novecientos, veinte, veinte, diez" in texto
     assert not any(c.isdigit() for c in texto)  # la voz debe leer los números bien
+
+
+# Segunda ronda de pruebas (22/10/2026): condicional, inglés, cifras en vez de letras y captación de un adulto
+@pytest.mark.parametrize(
+    "texto",
+    [
+        "me kiero m4t4r",
+        "su1c1d4rm3",
+        "I want to kill myself",
+        "me tomaría un bote de pastillas",
+        "cuántas pastillas hacen falta para morir",
+        "quiero hacerme cortes",
+        "me gustaría no existir",
+        "estoy harta de vivir",
+        "no quiero seguir aquí",
+        "un hombre me pide fotos por insta y dice que si no se las mando me va a buscar",
+        "me escribe un señor mayor y me pide quedar a solas",
+    ],
+)
+def test_reglas_segunda_ronda(solo_reglas, texto):
+    assert solo_reglas.evaluar(texto).categoria == "crisis"
+
+
+@pytest.mark.parametrize(
+    "texto",
+    [
+        "una señora del juzgado quiere verme mañana",
+        "un señor me pide que declare",
+        "estoy harta de los deberes",
+        "estoy cansada de esperar el juicio",
+        "tengo 13 años y voy a 4º",
+        "me tomo pastillas para la alergia",
+        "cuántas pastillas de ibuprofeno puedo tomar para la regla",
+    ],
+)
+def test_reglas_segunda_ronda_sin_falsos_positivos(solo_reglas, texto):
+    assert solo_reglas.regla_crisis(texto) is None
+
+
+def test_sin_leet_solo_toca_palabras_con_letras_y_cifras():
+    assert sin_leet("me kiero m4t4r") == "me kiero matar"
+    assert sin_leet("tengo 13 anos y llamo al 112") == "tengo 13 anos y llamo al 112"

@@ -31,6 +31,16 @@ def normalizar(texto: str) -> str:
     return re.sub(r"\s+", " ", texto).strip()
 
 
+# Cifras pegadas a letras («m4t4rm3», «su1c1d4rm3»): se leen como letras solo para las reglas de crisis. «13 años» no
+# cambia, porque la cifra no toca ninguna letra.
+LEET = str.maketrans("4310572", "aeiostz")
+RE_CIFRA_EN_PALABRA = re.compile(r"\b(?=\w*[a-z])(?=\w*\d)\w+\b")
+
+
+def sin_leet(norm: str) -> str:
+    return RE_CIFRA_EN_PALABRA.sub(lambda m: m.group().translate(LEET), norm)
+
+
 @dataclass
 class Decision:
     categoria: str  # crisis | hechos | fuera_de_ambito | normal
@@ -55,7 +65,8 @@ class Guardrail:
 
     def regla_crisis(self, texto: str) -> str | None:
         norm = normalizar(texto)
-        return next((rid for rid, patron in self.reglas if patron.search(norm)), None)
+        variantes = {norm, sin_leet(norm)}
+        return next((rid for rid, patron in self.reglas if any(patron.search(v) for v in variantes)), None)
 
     def evaluar(self, texto: str) -> Decision:
         inicio = time.perf_counter()
