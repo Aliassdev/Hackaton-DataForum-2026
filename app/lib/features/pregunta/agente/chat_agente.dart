@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/agente/agente_provider.dart';
 import '../../../core/agente/agente_voz.dart';
-import '../../../core/agente/elevenlabs_agente_voz.dart';
 import '../../../core/agente/respuesta_agente.dart';
 import '../../../core/api/mock_api.dart';
 import '../../../core/api/tuturno_api.dart';
@@ -19,11 +18,11 @@ import 'textos_agente.dart';
 
 // «Pregunta» en modo agente (docs/ARQUITECTURA.md, sección 5.0, fase 1): las preguntas van al agente de voz de
 // ElevenLabs, que contesta con su voz y con texto. Es el mismo chat que el modo texto (ChatNotifier): solo cambia de
-// dónde sale la respuesta. El micrófono de la sesión va siempre silenciado; la voz del menor se transcribe en el móvil
-// (sttProvider) y se envía como texto.
+// dónde sale la respuesta. La sesión no usa el micrófono: la voz del menor se transcribe en el móvil (sttProvider) y se
+// envía como texto. Por eso se puede dictar con la sesión abierta.
 //
 // - La sesión se abre al entrar (después de la hoja del perfil, agente/capa_agente.dart), se cierra al salir y al pasar
-//   a segundo plano, y se vuelve a abrir al preguntar.
+//   a segundo plano, y se vuelve a abrir al preguntar. Si se cae sola, el agente reconecta por su cuenta.
 // - El primer mensaje de cada sesión es el saludo fijo del agente: no es una respuesta y no entra en el chat (se enseña
 //   arriba).
 // - Si en 30 s no llega respuesta (el backend o su túnel están caídos: ElevenLabs no avisa), «TuTurno no responde
@@ -155,12 +154,6 @@ class ChatAgenteNotifier extends ChatNotifier {
   /// El aviso de «no responde» que se sustituye si la respuesta llega tarde.
   int? _idSinRespuesta;
 
-  /// Android puede no dejarle el micrófono al dictado mientras la sesión de WebRTC lo tiene (aunque esté silenciado).
-  /// Si un dictado con la sesión abierta acaba sin entender nada, desde entonces se cierra la sesión antes de dictar y
-  /// se vuelve a abrir al preguntar (el agente empieza otra conversación, pero la voz funciona).
-  var _cerrarSesionParaDictar = false;
-  var _dictandoConSesion = false;
-
   @override
   bool get conAgente => true;
 
@@ -176,15 +169,6 @@ class ChatAgenteNotifier extends ChatNotifier {
     agente?.hablando.addListener(_alCambiarHablando);
     // Para subrayar en las respuestas los términos del glosario.
     ref.read(glosarioProvider);
-    listenSelf((anterior, actual) {
-      if (anterior == null || !anterior.escuchando || actual.escuchando) return;
-      // Acaba un dictado: ¿sin entender nada y con la sesión abierta?
-      final sinNada =
-          actual.dictado.trim().isEmpty &&
-          const {ProblemaVoz.noTeOigo, ProblemaVoz.ocupado, ProblemaVoz.otro}.contains(actual.problemaVoz);
-      if (sinNada && _dictandoConSesion) _cerrarSesionParaDictar = true;
-      _dictandoConSesion = false;
-    });
     ref.onDispose(() {
       _cerrado = true;
       _generacion++;
@@ -581,13 +565,8 @@ class ChatAgenteNotifier extends ChatNotifier {
 
   @override
   Future<void> empezarEscucha() async {
-    // Nunca se escucha mientras habla el agente: se transcribiría su voz.
+    // Nunca se escucha mientras suena el agente: se transcribiría su voz. La sesión sigue abierta: no usa el micrófono.
     if (state.agenteHablando || state.esperando || state.escuchando) return;
-    final fase = _sesion.value.fase;
-    if (_cerrarSesionParaDictar && (fase == FaseAgente.conectado || fase == FaseAgente.conectando)) {
-      await _cerrarSesion(FaseAgente.pausado);
-    }
-    _dictandoConSesion = _sesion.value.fase == FaseAgente.conectado;
     await super.empezarEscucha();
   }
 

@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuturno/core/agente/agente_provider.dart';
-import 'package:tuturno/core/agente/elevenlabs_agente_voz.dart' show ErrorAgente, TextosAgente;
+import 'package:tuturno/core/agente/agente_voz.dart' show ErrorAgente, TextosAgente;
 import 'package:tuturno/core/agente/respuesta_agente.dart';
 import 'package:tuturno/core/api/mock_api.dart';
 import 'package:tuturno/core/api/tuturno_api.dart';
@@ -470,12 +470,12 @@ void main() {
       expect(find.text(etiquetaEjemplo), findsOneWidget);
     });
 
-    testWidgets('sin permiso de micrófono no se reintenta: se explica', (tester) async {
-      final agente = FakeAgenteVoz()..fallarAlIniciar = const ErrorAgente(TextosAgente.sinPermiso);
+    testWidgets('si el agente no está preparado no se reintenta: se explica', (tester) async {
+      final agente = FakeAgenteVoz()..fallarAlIniciar = const ErrorAgente(TextosAgente.sinConfigurar);
       final p = await _abrir(tester, agente: agente);
 
       expect(p.agente.sesiones, hasLength(1));
-      expect(find.text(TextosAgente.sinPermiso), findsOneWidget);
+      expect(find.text(TextosAgente.sinConfigurar), findsOneWidget);
     });
 
     testWidgets('si se corta la sesión mientras espera, el error sale enseguida', (tester) async {
@@ -529,35 +529,32 @@ void main() {
       expect(find.text('TuTurno está hablando…'), findsOneWidget);
     });
 
-    testWidgets('si el dictado no oye nada con la sesión abierta, después se dicta con la sesión cerrada', (
-      tester,
-    ) async {
+    testWidgets('dictar no cierra la sesión (no usa el micrófono), aunque el dictado no oiga nada', (tester) async {
       final p = await _abrir(tester);
       await tester.tap(find.byKey(_micro));
       await tester.pump();
       await tester.pump();
       p.stt.fallar(ProblemaVoz.noTeOigo);
       await tester.pumpAndSettle();
-      expect(p.agente.terminados, 0);
 
-      // Segundo intento: Android quizá no le daba el micrófono con la llamada abierta. Se cierra antes de dictar.
       await tester.tap(find.byKey(_micro));
       await tester.pump();
       await tester.pump();
-      expect(p.agente.terminados, 1);
       expect(p.stt.escuchando, isTrue);
       p.stt.oir('qué es la sala gesell');
       p.stt.silencio();
       await tester.pumpAndSettle();
-      expect(find.text(tituloPausa), findsOneWidget);
+      expect(p.agente.terminados, 0);
+      expect(find.text(tituloEscucho), findsOneWidget);
 
       await tester.tap(find.byKey(_enviar));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      expect(p.agente.sesiones, hasLength(2), reason: 'al preguntar se vuelve a abrir');
+      expect(p.agente.sesiones, hasLength(1), reason: 'la misma sesión: no hace falta volver a conectar');
       expect(p.agente.enviados, ['qué es la sala gesell']);
       await _responde(tester, p.agente, 'Es una sala especial.');
       expect(_respuesta('Es una sala especial.'), findsOneWidget);
+      expect(find.textContaining(detalleConversacionNueva), findsNothing);
     });
 
     testWidgets('al pasar a segundo plano se cierra la sesión; al preguntar se vuelve a abrir', (tester) async {

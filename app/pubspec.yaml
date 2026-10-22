@@ -44,11 +44,15 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_svg: ^2.3.0
-  elevenlabs_agents: ^0.6.1
+  # Agente de voz (Pregunta): WebSocket de ElevenLabs Agents y la voz del agente en streaming (PCM, multimedia).
+  web_socket: ^1.0.1
+  audio_stream_player: ^1.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Relojes y temporizadores falsos en los tests del agente de voz (ya viene con flutter_test).
+  fake_async: ^1.3.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

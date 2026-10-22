@@ -267,7 +267,10 @@ void main() {
     });
 
     test('el agente de voz y la carpeta de imágenes de la justicia', () {
-      expect(pubspec, contains('elevenlabs_agents: ^0.6.1'));
+      // La voz del agente va por WebSocket con audio PCM, sin el SDK de LiveKit (que usaba el micrófono).
+      expect(pubspec, contains('web_socket:'));
+      expect(pubspec, contains('audio_stream_player:'));
+      expect(pubspec, isNot(contains('elevenlabs_agents:')));
       expect(pubspec, contains('- assets/justicia/'));
       expect(Directory('assets/justicia').existsSync(), isTrue);
     });

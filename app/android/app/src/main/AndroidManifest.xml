@@ -1,15 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- La plantilla de Flutter solo da INTERNET en debug: sin esta línea, la build release no tiene red. -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Voz a texto (speech_to_text). También lo pide el agente de voz (elevenlabs_agents → LiveKit/WebRTC) al abrir la
-         sesión, aunque la app silencia el micrófono de la sesión nada más conectar. -->
+    <!-- Solo para dictar (speech_to_text), y se pide la primera vez que se pulsa el micrófono. El agente de voz no usa
+         el micrófono: va por WebSocket, recibe texto y su voz suena como multimedia (volumen normal; altavoz,
+         auriculares o Bluetooth), así que no necesita modo llamada ni más permisos de audio o de red. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <!-- Agente de voz (WebRTC): modo llamada y altavoz para la voz del agente, y estado de la red para la conexión.
-         BLUETOOTH (hasta Android 11) llega solo con audioswitch. BLUETOOTH_CONNECT no se declara a propósito: sería
-         otro permiso que pedir; sin él, en Android 12 o posterior la voz del agente sale por el altavoz. -->
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <!-- allowBackup="false": el progreso y los ajustes se quedan en este móvil y no se copian
          a la nube de la cuenta de Google (que a menudo gestiona un adulto). -->
     <application
