@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../core/api/models.dart';
 import '../tema.dart';
+import 'iconos/iconos.dart';
 
 /// Etiqueta de una fuente legal (sección 4.4). Al tocarla se ve la norma y el artículo.
 class FuenteChip extends StatelessWidget {
@@ -19,7 +20,7 @@ class FuenteChip extends StatelessWidget {
     final esquema = tema.colorScheme;
     return ActionChip(
       avatar: numero == null
-          ? Icon(Icons.gavel_rounded, size: 18, color: esquema.primary)
+          ? const IconoTuTurno(TuIcono.fuente, size: 18, decorativo: true)
           : NumeroFuente(numero: numero!),
       label: Text(etiquetaFuente(fuente), maxLines: 1, overflow: TextOverflow.ellipsis),
       labelStyle: tema.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: esquema.onSurface),
@@ -115,14 +116,10 @@ class _HojaFuente extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: Espacio.xxl,
-                height: Espacio.xxl,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(colors: context.colores.pregunta),
-                ),
-                child: const Icon(Icons.gavel_rounded, color: Colors.white),
+              // El documento de la iconografía de TuTurno, como una pegatina un poco torcida.
+              Transform.rotate(
+                angle: -0.06,
+                child: const IconoTuTurno(TuIcono.fuente, size: Espacio.xxl, decorativo: true),
               ),
               const SizedBox(width: Espacio.m),
               Expanded(
@@ -136,21 +133,18 @@ class _HojaFuente extends StatelessWidget {
           const SizedBox(height: Espacio.m),
           Semantics(
             header: true,
-            child: Text(
-              fuente.titulo.isNotEmpty ? fuente.titulo : fuente.id,
-              style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-            ),
+            child: Text(fuente.titulo.isNotEmpty ? fuente.titulo : fuente.id, style: tema.textTheme.headlineSmall),
           ),
           const SizedBox(height: Espacio.l),
           if (fuente.norma.trim().isNotEmpty)
-            _Dato(icono: Icons.menu_book_rounded, etiqueta: 'Norma', valor: fuente.norma.trim(), detalle: nombre),
+            _Dato(icono: TuIcono.juzgado, etiqueta: 'Norma', valor: fuente.norma.trim(), detalle: nombre),
           if (fuente.articulo.trim().isNotEmpty)
-            _Dato(icono: Icons.article_rounded, etiqueta: 'Artículo', valor: fuente.articulo.trim()),
+            _Dato(icono: TuIcono.fuente, etiqueta: 'Artículo', valor: fuente.articulo.trim()),
           const SizedBox(height: Espacio.s),
           Container(
             padding: const EdgeInsets.all(Espacio.m),
             decoration: BoxDecoration(
-              color: Color.alphaBlend(esquema.primary.withValues(alpha: 0.1), esquema.surface),
+              color: tinte(context, esquema.primary),
               borderRadius: BorderRadius.circular(Radios.m),
             ),
             child: Text(
@@ -177,7 +171,7 @@ class _HojaFuente extends StatelessWidget {
 class _Dato extends StatelessWidget {
   const _Dato({required this.icono, required this.etiqueta, required this.valor, this.detalle});
 
-  final IconData icono;
+  final TuIcono icono;
   final String etiqueta;
   final String valor;
   final String? detalle;
@@ -192,7 +186,7 @@ class _Dato extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icono, color: esquema.primary),
+            IconoTuTurno(icono, size: 28, decorativo: true),
             const SizedBox(width: Espacio.m),
             Expanded(
               child: Column(

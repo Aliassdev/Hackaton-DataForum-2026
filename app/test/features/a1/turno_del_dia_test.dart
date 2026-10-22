@@ -213,7 +213,7 @@ void main() {
         'Mente curiosa',
         'Detective de derechos',
         'Voz con poder',
-        'Testigo estrella',
+        'Estrella de los derechos',
         'Brújula de la justicia',
         'Leyenda de TuTurno',
       ]);

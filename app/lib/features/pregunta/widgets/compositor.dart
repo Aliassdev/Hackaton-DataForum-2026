@@ -196,7 +196,7 @@ class _ChipSituacion extends StatelessWidget {
       color: tinteMarca(esquema),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radios.s),
-        side: BorderSide(color: esquema.primary.withValues(alpha: 0.3)),
+        side: BorderSide(color: bordeTinte(esquema.primary)),
       ),
       child: Padding(
         padding: const EdgeInsetsDirectional.only(start: Espacio.s + Espacio.xs),
@@ -252,7 +252,7 @@ class AvisoVoz extends StatelessWidget {
         color: tinteMarca(esquema),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radios.m),
-          side: BorderSide(color: esquema.primary.withValues(alpha: 0.3)),
+          side: BorderSide(color: bordeTinte(esquema.primary)),
         ),
         child: Padding(
           padding: const EdgeInsetsDirectional.only(start: Espacio.m),

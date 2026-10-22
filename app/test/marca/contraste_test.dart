@@ -95,6 +95,15 @@ void main() {
         expect(contraste(c.ayuda, e.surface), greaterThanOrEqualTo(aaGrande));
       });
 
+      test('los módulos son azules de la marca: nada de violeta', () {
+        for (final (modulo, colores) in [('juego', c.juego), ('aprende', c.aprende), ('pregunta', c.pregunta)]) {
+          for (final color in colores) {
+            // El azul de la marca está en 231°; el violeta del tema antiguo, en 250° o más.
+            expect(HSVColor.fromColor(color).hue, inInclusiveRange(185, 240), reason: '$modulo $color');
+          }
+        }
+      });
+
       test('tickets y sellos', () {
         expect(contraste(c.tintaTicket, c.ticket), greaterThanOrEqualTo(aaa));
         expect(contraste(c.sello, e.surface), greaterThanOrEqualTo(aa));

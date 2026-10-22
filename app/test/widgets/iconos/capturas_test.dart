@@ -24,7 +24,7 @@ Future<void> _cargarFuentes() async {
       'AtkinsonHyperlegible-Italic.ttf',
       'AtkinsonHyperlegible-BoldItalic.ttf',
     ],
-    'LondrinaSolid': ['LondrinaSolid-Regular.ttf', 'LondrinaSolid-Black.ttf'],
+    'MaryKate': ['MaryKate-Medium-ES.ttf'],
   };
   for (final MapEntry(key: familia, value: ficheros) in familias.entries) {
     final cargador = FontLoader(familia);

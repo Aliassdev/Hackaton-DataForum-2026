@@ -109,10 +109,7 @@ class _PortadaState extends State<_Portada> {
                       orden: orden++,
                       child: Semantics(
                         header: true,
-                        child: Text(
-                          '¿Por dónde empiezas?',
-                          style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                        ),
+                        child: Text('¿Por dónde empiezas?', style: tema.textTheme.headlineSmall),
                       ),
                     ),
                     const SizedBox(height: Espacio.s + Espacio.xs),

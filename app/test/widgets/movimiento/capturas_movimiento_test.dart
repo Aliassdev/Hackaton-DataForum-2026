@@ -29,7 +29,7 @@ Future<void> _cargarFuentes() async {
     'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
     'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
   ]);
-  await cargar('LondrinaSolid', ['assets/fonts/LondrinaSolid-Regular.ttf', 'assets/fonts/LondrinaSolid-Black.ttf']);
+  await cargar('MaryKate', ['assets/fonts/MaryKate-Medium-ES.ttf']);
   final flutter =
       Platform.environment['FLUTTER_ROOT'] ??
       File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;
@@ -203,7 +203,7 @@ void main() {
             pageBuilder: (context, state) => paginaTuTurno(
               context,
               state,
-              _Pagina('Módulo ${transicion.name}', const Color(0xFF5B2BCF)),
+              _Pagina('Módulo ${transicion.name}', const Color(0xFF1A2AA6)),
               transicion: transicion,
             ),
           ),

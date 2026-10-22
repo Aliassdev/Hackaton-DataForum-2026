@@ -257,10 +257,7 @@ class _Seccion extends StatelessWidget {
                     header: true,
                     child: Text(
                       titulo,
-                      style: tema.textTheme.headlineSmall?.copyWith(
-                        color: context.colores.tintaTicket,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: tema.textTheme.headlineSmall?.copyWith(color: context.colores.tintaTicket),
                     ),
                   ),
                 ),
@@ -300,7 +297,7 @@ class _PegatinaLetra extends StatelessWidget {
                 'Aa',
                 style: tema.textTheme.titleLarge?.copyWith(
                   fontFamily: Fuentes.titulos,
-                  fontWeight: FontWeight.w900,
+                  fontFamilyFallback: const [Fuentes.texto],
                   color: ColoresMarca.azulNoche,
                   height: 1,
                 ),

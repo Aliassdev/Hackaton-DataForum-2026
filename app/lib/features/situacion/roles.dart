@@ -133,10 +133,7 @@ class EncabezadoSelectorRol extends StatelessWidget {
             children: [
               Semantics(
                 header: true,
-                child: Text(
-                  '¿Qué papel tienes en el caso?',
-                  style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
+                child: Text('¿Qué papel tienes en el caso?', style: tema.textTheme.headlineSmall),
               ),
               const SizedBox(height: Espacio.s),
               Text(

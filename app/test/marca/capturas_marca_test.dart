@@ -30,7 +30,7 @@ Future<void> _cargarFuentes() async {
     'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
     'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
   ]);
-  await cargar(Fuentes.titulos, ['assets/fonts/LondrinaSolid-Regular.ttf', 'assets/fonts/LondrinaSolid-Black.ttf']);
+  await cargar(Fuentes.titulos, ['assets/fonts/MaryKate-Medium-ES.ttf']);
   final flutter =
       Platform.environment['FLUTTER_ROOT'] ??
       File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;

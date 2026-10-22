@@ -683,6 +683,10 @@ class _PintorSombraTicket extends CustomPainter {
     textDirection: direccion,
   );
 
+  /// La sombra no se lleva toques: los recibe lo que haya dentro (o detrás).
+  @override
+  bool? hitTest(Offset position) => false;
+
   @override
   bool shouldRepaint(_PintorSombraTicket anterior) =>
       anterior.silueta != silueta ||

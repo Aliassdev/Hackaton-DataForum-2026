@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tuturno/widgets/modulos.dart' as modulos;
 import 'package:tuturno/widgets/movimiento/movimiento.dart';
 
 import 'entorno.dart';
@@ -227,5 +228,130 @@ void main() {
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       semantica.dispose();
     });
+
+    testWidgets('lleva la sombra barata de los tickets solo si va elevado, y se pulsa con TicketPulsable', (
+      tester,
+    ) async {
+      await montar(
+        tester,
+        SizedBox(
+          width: 360,
+          child: TicketTuTurno(titulo: 'Vive el caso', numero: '01', onTap: () {}),
+        ),
+      );
+      expect(find.descendant(of: find.byType(TicketTuTurno), matching: find.byType(TicketPulsable)), findsOneWidget);
+      expect(find.descendant(of: find.byType(TicketTuTurno), matching: find.byType(SombraTicket)), findsOneWidget);
+
+      await montar(
+        tester,
+        const SizedBox(
+          width: 360,
+          child: TicketTuTurno(titulo: 'Vive el caso', numero: '01', elevado: false),
+        ),
+      );
+      expect(find.descendant(of: find.byType(TicketTuTurno), matching: find.byType(TicketPulsable)), findsNothing);
+      final sombra = tester.widget<SombraTicket>(
+        find.descendant(of: find.byType(TicketTuTurno), matching: find.byType(SombraTicket)),
+      );
+      expect(sombra.elevacion, 0);
+    });
   });
+
+  group('Sombras de los tickets (baratas en el móvil)', () {
+    const rect = Rect.fromLTWH(0, 0, 300, 100);
+    const ticket = TicketBorder(talon: 80, radio: 20, radioMuesca: 12);
+
+    test('la nítida sigue la silueta, muescas incluidas; la desenfocada va sobre el rectángulo redondeado', () {
+      final lienzo = _LienzoEspia();
+      const sombras = [
+        BoxShadow(color: Color(0x290E1A4F), offset: Offset(0, 1.5)),
+        BoxShadow(color: Color(0x1D0E1A4F), offset: Offset(0, 6), blurRadius: 18),
+      ];
+      pintarSombrasTicket(lienzo, rect, silueta: ticket, sombras: sombras, radio: 20);
+
+      expect(lienzo.caminos, hasLength(1));
+      final (camino, pincel) = lienzo.caminos.single;
+      expect(pincel.maskFilter, isNull, reason: 'sin desenfoque: un relleno normal');
+      expect(pincel.color.toARGB32(), sombras.first.color.toARGB32());
+      expect(camino.contains(const Offset(220, 4.5)), isFalse, reason: 'la muesca de arriba, desplazada 1,5');
+      expect(camino.contains(const Offset(150, 51.5)), isTrue);
+
+      expect(lienzo.rectangulos, hasLength(1));
+      final (rrect, _) = lienzo.rectangulos.single;
+      expect(rrect.outerRect, rect.shift(const Offset(0, 6)));
+      expect(rrect.tlRadiusX, 20);
+    });
+
+    test('el margen encoge el rectángulo de la amplia (la cola de un bocadillo no cuenta)', () {
+      final lienzo = _LienzoEspia();
+      pintarSombrasTicket(
+        lienzo,
+        rect,
+        silueta: ticket,
+        sombras: const [BoxShadow(color: Color(0x29000000), blurRadius: 10)],
+        radio: 8,
+        margen: const EdgeInsets.only(left: 12),
+      );
+      expect(lienzo.caminos, isEmpty);
+      expect(lienzo.rectangulos.single.$1.outerRect, const Rect.fromLTRB(12, 0, 300, 100));
+    });
+
+    test('el radio sale de la forma: ticket, rectángulo redondeado u otra', () {
+      expect(radioDeForma(ticket), 20);
+      expect(radioDeForma(RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))), 14);
+      expect(radioDeForma(const CircleBorder()), 0);
+    });
+
+    testWidgets('SombraTicket pinta debajo del papel sin tocar el hijo; con elevación 0, nada', (tester) async {
+      await montar(tester, const SombraTicket(forma: ticket, child: SizedBox(width: 300, height: 100)));
+      expect(find.descendant(of: find.byType(SombraTicket), matching: find.byType(CustomPaint)), findsOneWidget);
+      expect(tester.getSize(find.byType(SombraTicket)), const Size(300, 100));
+
+      await montar(tester, const SombraTicket(forma: ticket, elevacion: 0, child: SizedBox(width: 300, height: 100)));
+      expect(find.descendant(of: find.byType(SombraTicket), matching: find.byType(CustomPaint)), findsNothing);
+    });
+  });
+
+  group('TicketPulsable', () {
+    testWidgets('se pulsa, vibra suave (o no) y se sigue pudiendo importar desde modulos.dart', (tester) async {
+      final vibraciones = registrarVibraciones(tester);
+      var pulsado = 0;
+      const forma = TicketBorder(talon: 60);
+      Widget pulsable({required bool vibrar}) => SizedBox(
+        width: 300,
+        height: 80,
+        child: modulos.TicketPulsable(
+          forma: forma,
+          decoracion: const ShapeDecoration(color: Colors.white, shape: forma),
+          vibrar: vibrar,
+          onTap: () => pulsado++,
+          child: const Center(child: Text('Ticket')),
+        ),
+      );
+
+      await montar(tester, pulsable(vibrar: true));
+      await tester.tap(find.text('Ticket'));
+      await tester.pumpAndSettle();
+      expect(pulsado, 1);
+      expect(vibraciones, ['HapticFeedbackType.lightImpact']);
+
+      await montar(tester, pulsable(vibrar: false));
+      await tester.tap(find.text('Ticket'));
+      await tester.pumpAndSettle();
+      expect(pulsado, 2);
+      expect(vibraciones, hasLength(1));
+    });
+  });
+}
+
+/// Lienzo que solo apunta lo que se le pide pintar (caminos y rectángulos redondeados).
+class _LienzoEspia extends Fake implements Canvas {
+  final caminos = <(Path, Paint)>[];
+  final rectangulos = <(RRect, Paint)>[];
+
+  @override
+  void drawPath(Path path, Paint paint) => caminos.add((path, paint));
+
+  @override
+  void drawRRect(RRect rrect, Paint paint) => rectangulos.add((rrect, paint));
 }

@@ -1,6 +1,22 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/tema.dart';
+
+/// El peso que declara un fichero TrueType (usWeightClass de su tabla OS/2), que es el que usa Flutter.
+int pesoDeclarado(Uint8List fuente) {
+  final datos = ByteData.sublistView(fuente);
+  final tablas = datos.getUint16(4);
+  for (var i = 0; i < tablas; i++) {
+    final registro = 12 + 16 * i;
+    if (String.fromCharCodes(fuente.sublist(registro, registro + 4)) == 'OS/2') {
+      return datos.getUint16(datos.getUint32(registro + 8) + 4);
+    }
+  }
+  throw StateError('La fuente no tiene tabla OS/2');
+}
 
 void main() {
   for (final brillo in Brightness.values) {
@@ -30,17 +46,23 @@ void main() {
         expect(colores.fondoPapel, isNotEmpty);
       });
 
-      test('títulos grandes y números con MaryKate; el resto con Atkinson Hyperlegible', () {
+      test('títulos grandes y números con MaryKate (la letra del logotipo); el resto con Atkinson Hyperlegible', () {
         final t = tema.textTheme;
         expect(Fuentes.titulos, 'MaryKate');
-        for (final estilo in [t.displayLarge, t.displayMedium, t.displaySmall]) {
+        for (final estilo in [
+          t.displayLarge,
+          t.displayMedium,
+          t.displaySmall,
+          t.headlineLarge,
+          t.headlineMedium,
+          t.headlineSmall,
+        ]) {
           expect(estilo!.fontFamily, Fuentes.titulos);
-          // MaryKate tiene un solo peso: se pide normal para que los signos que le faltan salgan de Atkinson normal.
+          // Su único peso, pedido como normal: los signos que le faltan (º, …, –) salen de Atkinson normal.
           expect(estilo.fontWeight, FontWeight.w400);
           expect(estilo.fontFamilyFallback, [Fuentes.texto]);
-        }
-        for (final estilo in [t.headlineLarge, t.headlineMedium, t.headlineSmall]) {
-          expect(estilo!.fontFamily, Fuentes.titulos);
+          // Sus espacios entre palabras son muy anchos: el tema los estrecha.
+          expect(estilo.wordSpacing, lessThan(0));
         }
         for (final estilo in [
           t.titleLarge,
@@ -85,8 +107,71 @@ void main() {
         expect(borde.resolve({})!.color, tema.colorScheme.primary);
         expect(borde.resolve({WidgetState.disabled})!.color, isNot(tema.colorScheme.primary));
       });
+
+      test('la barra superior se tiñe de azul al desplazar, nunca de gris', () {
+        final barra = tema.appBarTheme;
+        final quieta = WidgetStateProperty.resolveAs<Color>(barra.backgroundColor!, {});
+        final desplazada = WidgetStateProperty.resolveAs<Color>(barra.backgroundColor!, {WidgetState.scrolledUnder});
+        expect(quieta, tema.colorScheme.surface);
+        if (brillo == Brightness.light) {
+          // Sin velo: el azul del tema sobre el papel cálido daba un gris (#EEEDEE).
+          expect(barra.surfaceTintColor, Colors.transparent);
+          expect(desplazada, isNot(quieta));
+          expect(desplazada.b - desplazada.r, greaterThan(0.03), reason: 'azul pálido, no gris');
+          expect(desplazada.computeLuminance(), greaterThan(0.85), reason: 'la tinta azul noche sigue siendo AAA');
+        } else {
+          expect(barra.surfaceTintColor, ColoresMarca.azulCielo);
+        }
+      });
     });
   }
+
+  test('MaryKate está declarada y su fichero dice que pesa 900: Flutter nunca le simula la negrita', () {
+    // Con un solo peso, Flutter la engorda (y la emborrona) si se pide 600 o más y el fichero declara 200 menos.
+    expect(pesoDeclarado(File('assets/fonts/MaryKate-Medium-ES.ttf').readAsBytesSync()), 900);
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    expect(pubspec, contains('family: ${Fuentes.titulos}'));
+    expect(pubspec, contains('asset: assets/fonts/MaryKate-Medium-ES.ttf'));
+    expect(pubspec, isNot(contains('family: LondrinaSolid')));
+  });
+
+  testWidgets('tinte() y bordeTinte(): el color principal tiñe con un azul claro de la marca (mezclado saldría gris)', (
+    tester,
+  ) async {
+    late BuildContext contexto;
+    Future<void> montar(Brightness brillo) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: temaTuTurno(brillo),
+          home: Builder(
+            builder: (context) {
+              contexto = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      // Al cambiar de tema, MaterialApp lo anima: se espera a que acabe.
+      await tester.pumpAndSettle();
+    }
+
+    await montar(Brightness.dark);
+    expect(tinte(contexto, ColoresMarca.amarillo), ColoresMarca.azulCielo.withValues(alpha: 0.18));
+    expect(tinte(contexto, ColoresTuTurno.oscuro.exito), ColoresTuTurno.oscuro.exito.withValues(alpha: 0.18));
+    final fondo = Color.alphaBlend(tinte(contexto, ColoresMarca.amarillo), esquemaTuTurno(Brightness.dark).surface);
+    expect(fondo.b - fondo.r, greaterThan(0.15), reason: 'azul, no gris');
+
+    await montar(Brightness.light);
+    // En claro, el azul eléctrico al 10 % sobre el papel cálido salía gris (#E9E9ED): tiñe con azul hielo.
+    expect(tinte(contexto, ColoresMarca.azul), ColoresMarca.azulHielo.withValues(alpha: 0.8));
+    final claro = Color.alphaBlend(tinte(contexto, ColoresMarca.azul), esquemaTuTurno(Brightness.light).surface);
+    expect(claro.b - claro.r, greaterThan(0.06), reason: 'azul claro, no gris');
+    expect(tinte(contexto, ColoresMarca.amarillo), ColoresMarca.amarillo.withValues(alpha: 0.10));
+    expect(tinte(contexto, ColoresTuTurno.claro.exito), ColoresTuTurno.claro.exito.withValues(alpha: 0.10));
+
+    expect(bordeTinte(ColoresMarca.amarillo), ColoresMarca.azulCielo.withValues(alpha: 0.3));
+    expect(bordeTinte(ColoresMarca.azul), ColoresMarca.azul.withValues(alpha: 0.3));
+  });
 
   test('ColoresTuTurno se mezcla entre temas y copyWith conserva lo que no cambia', () {
     final mitad = ColoresTuTurno.claro.lerp(ColoresTuTurno.oscuro, 0.5);
@@ -125,6 +210,13 @@ void main() {
     expect(sombras, hasLength(2));
     expect(sombras.first.color, ColoresTuTurno.claro.sombraPapel);
     expect(sombras.last.blurRadius, greaterThan(sombras.first.blurRadius));
+    // Las de los tickets: la corta, igual pero sin desenfoque (sigue la silueta); la amplia, la misma.
+    final ticket = sombrasTicket(contexto, elevacion: 2);
+    expect(ticket, hasLength(2));
+    expect(ticket.first.blurRadius, 0);
+    expect(ticket.first.color, sombras.first.color);
+    expect(ticket.first.offset, sombras.first.offset);
+    expect(ticket.last, sombras.last);
 
     await tester.pumpWidget(app(sinAnimaciones: true));
     expect(duracion(contexto, Duracion.media), Duration.zero);

@@ -215,9 +215,10 @@ class CartaTermino extends StatelessWidget {
                         if (numero != null)
                           Text(
                             'Nº ${'$numero'.padLeft(cifras, '0')}${total == null ? '' : '/${'$total'.padLeft(cifras, '0')}'}',
+                            // La º no está en la letra de los títulos: sale de la del texto.
                             style: tema.textTheme.titleLarge?.copyWith(
                               fontFamily: Fuentes.titulos,
-                              fontWeight: FontWeight.w700,
+                              fontFamilyFallback: const [Fuentes.texto],
                               color: ColoresMarca.amarillo,
                               letterSpacing: 0.6,
                             ),
@@ -235,11 +236,7 @@ class CartaTermino extends StatelessWidget {
                         header: true,
                         child: Text(
                           entrada.termino,
-                          style: tema.textTheme.headlineMedium?.copyWith(
-                            color: ColoresMarca.amarillo,
-                            fontWeight: FontWeight.w700,
-                            height: 1.1,
-                          ),
+                          style: tema.textTheme.headlineMedium?.copyWith(color: ColoresMarca.amarillo, height: 1.1),
                         ),
                       ),
                     ),

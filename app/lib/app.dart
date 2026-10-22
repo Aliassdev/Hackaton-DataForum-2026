@@ -15,6 +15,7 @@ import 'features/pregunta/pregunta_screen.dart';
 import 'features/situacion/situacion_screen.dart';
 import 'tema.dart';
 import 'widgets/estados.dart';
+import 'widgets/iconos/iconos.dart';
 import 'widgets/movimiento/transiciones.dart';
 import 'widgets/tuturno_scaffold.dart';
 
@@ -39,12 +40,19 @@ class TuTurnoApp extends ConsumerWidget {
         final sistema = mq.textScaler.scale(16) / 16;
         return MediaQuery(
           data: mq.copyWith(textScaler: TextScaler.linear(sistema * factorTexto)),
-          child: child!,
+          // La flecha de «atrás» de todas las barras es la de la iconografía de TuTurno. El botón conserva su
+          // descripción («Atrás») para el lector de pantalla.
+          child: ActionIconTheme(data: _iconosDeAccion, child: child!),
         );
       },
     );
   }
 }
+
+final _iconosDeAccion = ActionIconThemeData(
+  backButtonIconBuilder: (context) =>
+      const IconoTuTurno(TuIcono.volver, estilo: EstiloIcono.mono, size: 26, decorativo: true),
+);
 
 /// Rutas de la sección 6.3, más /ajustes.
 ///

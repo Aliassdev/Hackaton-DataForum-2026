@@ -110,11 +110,7 @@ class _SaludoTutState extends ConsumerState<SaludoTut> {
                   header: true,
                   child: Text(
                     SaludoTut.saludoPara(hora),
-                    style: tema.textTheme.headlineSmall?.copyWith(
-                      color: colores.tintaTicket,
-                      fontWeight: FontWeight.w700,
-                      height: 1.1,
-                    ),
+                    style: tema.textTheme.headlineSmall?.copyWith(color: colores.tintaTicket, height: 1.1),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -177,10 +173,7 @@ class PaseProgreso extends ConsumerWidget {
                 clave: racha,
                 animar: false,
                 inclinacion: 0,
-                child: Text(
-                  '$racha',
-                  style: textos.headlineSmall?.copyWith(color: tinta, fontWeight: FontWeight.w700, height: 1),
-                ),
+                child: Text('$racha', style: textos.headlineSmall?.copyWith(color: tinta, height: 1)),
               ),
               Text(dias, style: textos.labelMedium?.copyWith(color: tinta)),
             ],
@@ -321,7 +314,8 @@ class PaseProgreso extends ConsumerWidget {
   }
 }
 
-/// Barrita de progreso del nivel: amarilla sobre azul noche (o sobre azul en el tema oscuro).
+/// Barrita de progreso del nivel: el relleno amarillo, con borde, sobre una pista clara con su borde (en el tema
+/// oscuro, la pista es azul). Sin puntos se ve vacía: ni llena ni desactivada.
 class _Barra extends StatelessWidget {
   const _Barra({required this.valor});
 
@@ -329,13 +323,16 @@ class _Barra extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final tema = Theme.of(context);
+    final oscuro = tema.brightness == Brightness.dark;
     return Container(
-      height: 8,
+      height: 10,
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
-        color: oscuro ? ColoresMarca.azul : ColoresMarca.azulNoche,
-        borderRadius: BorderRadius.circular(4),
+        color: oscuro ? tema.colorScheme.surfaceContainerHighest : ColoresMarca.azulHielo,
+        borderRadius: BorderRadius.circular(5),
+        // El borde de la pista llega a 3:1 sobre el papel del pase en los dos temas.
+        border: Border.all(color: (oscuro ? ColoresMarca.azulCielo : ColoresMarca.azulNoche).withValues(alpha: 0.5)),
       ),
       child: TweenAnimationBuilder<double>(
         tween: Tween(end: valor),
@@ -391,10 +388,7 @@ class _HojaProgreso extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Semantics(
-              header: true,
-              child: Text('Tu progreso', style: textos.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-            ),
+            Semantics(header: true, child: Text('Tu progreso', style: textos.headlineSmall)),
             const SizedBox(height: Espacio.m),
             Row(
               children: [
@@ -471,9 +465,13 @@ class _FilaNivel extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: Espacio.xs),
         padding: const EdgeInsets.symmetric(horizontal: Espacio.s + 2, vertical: Espacio.s),
+        // Tu nivel, marcado con rotulador amarillo; en el tema oscuro, con el tinte de la marca (amarillo translúcido
+        // sobre azul noche saldría gris).
         decoration: actual
             ? BoxDecoration(
-                color: ColoresMarca.amarillo.withValues(alpha: tema.brightness == Brightness.dark ? 0.16 : 0.32),
+                color: tema.brightness == Brightness.dark
+                    ? tinte(context, ColoresMarca.amarillo)
+                    : ColoresMarca.amarillo.withValues(alpha: 0.32),
                 borderRadius: BorderRadius.circular(Radios.s),
               )
             : null,

@@ -252,13 +252,7 @@ class _QueEsTuTurnoState extends State<_QueEsTuTurno> with AutomaticKeepAliveCli
         Entrada(
           orden: orden++,
           retraso: _trasLogo,
-          child: Semantics(
-            header: true,
-            child: Text(
-              '¿Qué es TuTurno?',
-              style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
+          child: Semantics(header: true, child: Text('¿Qué es TuTurno?', style: tema.textTheme.headlineMedium)),
         ),
         const SizedBox(height: Espacio.s),
         Entrada(
@@ -329,7 +323,7 @@ class _PortadaMarcaState extends State<_PortadaMarca> {
                   lema: Text(
                     '¡Es tu turno!',
                     textAlign: TextAlign.center,
-                    style: tema.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                    style: tema.textTheme.headlineSmall?.copyWith(color: Colors.white),
                   ),
                   onTerminada: () {
                     if (mounted) setState(() => _conTut = true);
@@ -410,11 +404,7 @@ class _AntesDeEmpezar extends StatelessWidget {
           orden: orden++,
           child: Semantics(
             header: true,
-            child: Text(
-              'Antes de empezar',
-              textAlign: TextAlign.center,
-              style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
+            child: Text('Antes de empezar', textAlign: TextAlign.center, style: tema.textTheme.headlineMedium),
           ),
         ),
         const SizedBox(height: Espacio.m),

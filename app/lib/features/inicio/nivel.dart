@@ -30,12 +30,15 @@ class Nivel {
   }
 
   /// Títulos de los niveles, en orden. A partir del último, se repite con el número de nivel.
+  ///
+  /// Ninguno es un papel de un proceso (testigo, víctima…): quien usa la app puede estar viviendo uno de verdad, y
+  /// declarar no es algo que se gane con puntos.
   static const titulosNivel = [
     'Ticket en mano',
     'Mente curiosa',
     'Detective de derechos',
     'Voz con poder',
-    'Testigo estrella',
+    'Estrella de los derechos',
     'Brújula de la justicia',
     'Leyenda de TuTurno',
   ];

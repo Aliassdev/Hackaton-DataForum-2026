@@ -246,17 +246,20 @@ extension ColoresDelTema on BuildContext {
 /// Fondo suave teñido con [color]: para notas, iconos, ejemplos y estados vacíos. Con texto onSurface encima el
 /// contraste es AA en los dos temas.
 ///
-/// En el tema oscuro, el amarillo de la marca (su color principal) tiñe de azul cielo: amarillo y azul noche son casi
-/// complementarios y, mezclados, darían un gris que no es de la marca.
+/// El color principal de cada tema tiñe con un azul claro de la marca (azul hielo en claro y azul cielo en oscuro),
+/// porque mezclado con la superficie saldría gris: en claro, el azul eléctrico al 10 % sobre el papel cálido; en
+/// oscuro, el amarillo sobre el azul noche, que son casi complementarios.
 Color tinte(BuildContext context, Color color) {
   final oscuro = Theme.of(context).brightness == Brightness.dark;
-  final base = oscuro && color == ColoresMarca.amarillo ? ColoresMarca.azulCielo : color;
-  return base.withValues(alpha: oscuro ? 0.18 : 0.10);
+  if (oscuro && color == ColoresMarca.amarillo) return ColoresMarca.azulCielo.withValues(alpha: 0.18);
+  if (!oscuro && color == ColoresMarca.azul) return ColoresMarca.azulHielo.withValues(alpha: 0.8);
+  return color.withValues(alpha: oscuro ? 0.18 : 0.10);
 }
 
 /// Borde a juego con [tinte]. El amarillo pasa a azul cielo: translúcido, sobre azul noche saldría oliva y sobre el
 /// papel no se vería.
-Color bordeTinte(Color color) => (color == ColoresMarca.amarillo ? ColoresMarca.azulCielo : color).withValues(alpha: 0.3);
+Color bordeTinte(Color color) =>
+    (color == ColoresMarca.amarillo ? ColoresMarca.azulCielo : color).withValues(alpha: 0.3);
 
 /// Color de las sombras de papel del tema. Si el tema no trae [ColoresTuTurno] (por ejemplo, en una prueba con un
 /// MaterialApp sin [temaTuTurno]), el del tema claro.
@@ -391,9 +394,9 @@ TextTheme _tipografia(TextTheme base) {
     displayLarge: titulo(base.displayLarge, 57, 1.05),
     displayMedium: titulo(base.displayMedium, 45, 1.08),
     displaySmall: titulo(base.displaySmall, 36, 1.12),
-    headlineLarge: titulo(base.headlineLarge, 32, 1.15),
-    headlineMedium: titulo(base.headlineMedium, 28, 1.18),
-    headlineSmall: titulo(base.headlineSmall, 24, 1.2),
+    headlineLarge: titulo(base.headlineLarge, 34, 1.15),
+    headlineMedium: titulo(base.headlineMedium, 30, 1.18),
+    headlineSmall: titulo(base.headlineSmall, 26, 1.2),
   );
 }
 

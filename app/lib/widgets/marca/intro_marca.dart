@@ -116,16 +116,20 @@ class _IntroMarcaState extends State<IntroMarca> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final logo = CustomPaint(
-      size: Size(widget.alto * LogoTuTurno.proporcion, widget.alto),
-      painter: PintorMarca(
-        trazos: TrazosLogo.letras,
-        lienzo: const Size(TrazosLogo.ancho, TrazosLogo.alto),
-        color: (widget.tono ?? TonoMarca.delTema(context)).color,
-        pegatina: widget.pegatina,
-        colorSombra: sombraPapelDe(context),
-        poses: _poses,
-        repaint: _controlador,
+    // En su propia capa: mientras caen las letras no se vuelve a pintar el resto de la pantalla y, cuando se anima lo
+    // de alrededor (textos que entran, Tut), no se vuelven a desenfocar las sombras de las letras.
+    final logo = RepaintBoundary(
+      child: CustomPaint(
+        size: Size(widget.alto * LogoTuTurno.proporcion, widget.alto),
+        painter: PintorMarca(
+          trazos: TrazosLogo.letras,
+          lienzo: const Size(TrazosLogo.ancho, TrazosLogo.alto),
+          color: (widget.tono ?? TonoMarca.delTema(context)).color,
+          pegatina: widget.pegatina,
+          colorSombra: sombraPapelDe(context),
+          poses: _poses,
+          repaint: _controlador,
+        ),
       ),
     );
     final etiqueta = widget.etiqueta;

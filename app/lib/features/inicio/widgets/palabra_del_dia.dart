@@ -56,10 +56,7 @@ class NotaPalabra extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Espacio.s),
-          Text(
-            entrada.termino,
-            style: textos.headlineSmall?.copyWith(color: tinta, fontWeight: FontWeight.w700),
-          ),
+          Text(entrada.termino, style: textos.headlineSmall?.copyWith(color: tinta)),
           const SizedBox(height: Espacio.xs),
           Text(
             entrada.definicion,

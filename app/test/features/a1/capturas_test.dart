@@ -47,7 +47,7 @@ Future<void> _cargarFuentes() async {
     'assets/fonts/AtkinsonHyperlegible-Italic.ttf',
     'assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf',
   ]);
-  await cargar('LondrinaSolid', ['assets/fonts/LondrinaSolid-Regular.ttf', 'assets/fonts/LondrinaSolid-Black.ttf']);
+  await cargar('MaryKate', ['assets/fonts/MaryKate-Medium-ES.ttf']);
   // FLUTTER_ROOT, o la carpeta de Flutter deducida de flutter_tester (bin/cache/artifacts/engine/<plataforma>/).
   final flutter =
       Platform.environment['FLUTTER_ROOT'] ??

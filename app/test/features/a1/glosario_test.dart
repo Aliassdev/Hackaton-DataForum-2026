@@ -5,6 +5,7 @@ import 'package:tuturno/core/providers.dart';
 import 'package:tuturno/features/glosario/detalle_termino.dart';
 import 'package:tuturno/features/glosario/glosario_screen.dart';
 import 'package:tuturno/features/pregunta/pregunta_screen.dart';
+import 'package:tuturno/tema.dart';
 import 'package:tuturno/widgets/iconos/iconos.dart';
 import 'package:tuturno/widgets/movimiento/carta_holo.dart';
 import 'package:tuturno/widgets/movimiento/contador_flip.dart';
@@ -207,7 +208,12 @@ void main() {
 
       final hoja = find.byType(BottomSheet);
       expect(find.descendant(of: hoja, matching: find.byType(CartaHolo)), findsOneWidget);
-      expect(find.descendant(of: hoja, matching: find.text('Nº 02/03')), findsOneWidget);
+      final numero = find.descendant(of: hoja, matching: find.text('Nº 02/03'));
+      expect(numero, findsOneWidget);
+      // El número va con la letra de los títulos, que no tiene «º»: sale de la del texto (si no, se vería un cuadrito).
+      final estilo = tester.widget<Text>(numero).style!;
+      expect(estilo.fontFamily, Fuentes.titulos);
+      expect(estilo.fontFamilyFallback, contains(Fuentes.texto));
       expect(find.descendant(of: hoja, matching: find.text('Citación')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
