@@ -323,3 +323,10 @@ def test_ask_con_11_anos_sin_falso_testimonio(cliente, guardrail, recuperador, l
     llm.respuestas = ["Dirás lo que sabes. Mentir es delito de falso testimonio.\nFUENTES: ninguna"]
     datos = _preguntar(cliente, "¿Qué tengo que decir en el juicio?", perfil={"edad": "16", "rol": "testigo"}).json()
     assert "falso testimonio" in datos["respuesta"]
+
+
+def test_ask_ganaras_no_cuenta_como_haber_nombrado_a_anar(cliente, guardrail, recuperador, llm):
+    """«ganarás» contiene «anar»: el recordatorio no salía (prueba L1 contra el Space)."""
+    llm.respuestas = ["No puedo decirte si ganarás. El juez decide según las pruebas.\nFUENTES: ninguna"]
+    datos = _preguntar(cliente, "voy a ganar el juicio contra los q me acosan?").json()
+    assert datos["respuesta"].endswith(orquestador.RECORDATORIO_ANAR["texto"])

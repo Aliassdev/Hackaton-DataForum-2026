@@ -80,7 +80,8 @@ RECORDATORIO_ANAR = {
     "voz": "Si lo necesitas, en la Fundación ANAR te escuchan a cualquier hora: novecientos, veinte, veinte, diez.",
     "texto": "Si lo necesitas, en la Fundación ANAR te escuchan a cualquier hora: 900 20 20 10.",
 }
-RE_AYUDA_DICHA = re.compile(r"ANAR|novecientos,? veinte|900 ?20 ?20 ?10|116 ?111|ciento diecis[eé]is", re.IGNORECASE)
+# «ANAR» en mayúsculas y como palabra: sin distinguir mayúsculas, «ganarás» contenía «anar» y el recordatorio no salía
+RE_AYUDA_DICHA = re.compile(r"\bANAR\b|\b900 ?20 ?20 ?10\b|\b116 ?111\b|(?i:\bnovecientos,? veinte\b|\bciento diecis[eé]is\b)")
 
 # La reformulación corre en estos hilos mientras el hilo de la petición busca la pregunta original. Uno por cada hilo
 # de petición (HILOS_MAX): cada petición tiene como mucho una reformulación en marcha y nunca espera a que haya hueco.
