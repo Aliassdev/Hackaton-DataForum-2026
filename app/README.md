@@ -40,9 +40,25 @@ flutter analyze && flutter test
 flutter build apk --release --dart-define-from-file=env/release.example.json
 ```
 
-- Sale en `build/app/outputs/flutter-apk/app-release.apk`. Va firmada con la clave de depuración: se instala desde el archivo (hay que permitir «instalar apps desconocidas»). Si el móvil tiene otra versión firmada con otra clave, desinstálala antes.
+- Sale en `build/app/outputs/flutter-apk/app-release.apk`, universal (vale para todos los móviles). Se instala desde el archivo (hay que permitir «instalar apps desconocidas»).
+- La release es `io.github.aliassdev.tuturno`, firmada con la clave de release (más abajo). Debug y profile siguen siendo `com.example.tuturno`, así que las dos conviven en el mismo móvil.
 - Pregunta habla con el agente de voz: el backend da la URL firmada de cada sesión.
 - Usa siempre la release para enseñar la app: en debug, las animaciones van a tirones.
+- `android/app/proguard-rules.pro` lleva las reglas de R8 que necesita `shared_preferences_android` 2.5.1. Sin ellas, la release no arranca.
+
+### Firma de la release
+
+- La release se firma con la clave de TuTurno si existe `android/key.properties` (no se sube: está en `android/.gitignore`):
+  ```properties
+  storeFile=/ruta/a/tuturno-release.jks
+  storePassword=…
+  keyAlias=tuturno
+  keyPassword=…
+  ```
+  Puede ser un enlace al `key.properties` que está junto al almacén de claves, fuera del repositorio (por ejemplo, en `~/development/tuturno-release/`).
+- Sin `android/key.properties`, la release se firma con la clave de depuración de tu ordenador y Gradle lo avisa. Sirve para probar, pero esa APK no se puede publicar ni instalar encima de la publicada.
+- Todas las versiones publicadas tienen que ir firmadas con la misma clave. Si se pierde, la app ya instalada no se podrá actualizar: guarda una copia del `.jks` y de sus contraseñas en un sitio seguro, nunca en git.
+- Para comprobar la firma: `apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk`. El certificado de TuTurno tiene el SHA-256 `8ce8411cbee2cc60ffdc2efacee7c487eea1ee1abbd7ba214dad96279205161c`.
 
 ### APK del móvil del escenario (la del jurado)
 
@@ -57,9 +73,10 @@ Sin `DEMO`, «Ver borradores» no hace nada («El juzgado por dentro» sale «en
 ### Web (iPhone y ordenador)
 
 ```bash
-flutter build web --release --base-href /tuturno/ --dart-define-from-file=env/release.example.json
+flutter build web --release --base-href /Hackaton-DataForum-2026/app/ --dart-define-from-file=env/release.example.json --no-web-resources-cdn
 ```
 
+- Se publica en GitHub Pages, en `https://aliassdev.github.io/Hackaton-DataForum-2026/app/` (por eso el `--base-href`). Con `--no-web-resources-cdn`, CanvasKit sale de nuestra web y no del CDN de Google.
 - En la web, Pregunta va en modo texto contra el backend (`POST /api/agent/ask`), sin el agente de voz.
 - La dirección del backend también se puede cambiar sin recompilar: `api_url` de `build/web/config.json` (junto a `index.html`) gana a `API_URL`. Vacío, se usa `API_URL`.
 - El backend permite CORS desde `https://aliassdev.github.io`.
