@@ -38,8 +38,8 @@ void main() {
       expect(tester.takeException(), isNull, reason: caso);
     }
 
-    testWidgets('«SALA 1», «SALA 2» y «PARTICIPA», en claro y en oscuro', (tester) async {
-      expect([for (final modulo in Modulo.values) modulo.sala], ['SALA 1', 'SALA 2', 'PARTICIPA']);
+    testWidgets('«SALA 1», «SALA 2» e «INFORMACIÓN», en claro y en oscuro', (tester) async {
+      expect([for (final modulo in Modulo.values) modulo.sala], ['SALA 1', 'SALA 2', 'INFORMACIÓN']);
       for (final brillo in Brightness.values) {
         tester.platformDispatcher.platformBrightnessTestValue = brillo;
         await arrancarApp(tester);
@@ -69,7 +69,8 @@ void main() {
         expect(datos.label, contains(modulo.sala!));
         expect(datos.label, contains(modulo.tituloEnTarjeta));
       }
-      expect(find.byType(CartelSala), findsNWidgets(Modulo.values.length));
+      // Uno por módulo, y el «PARTICIPA» de Mi situación.
+      expect(find.byType(CartelSala), findsNWidgets(Modulo.values.length + 1));
       semantica.dispose();
     });
   });

@@ -6,6 +6,7 @@ import '../../core/providers.dart';
 import '../../tema.dart';
 import '../../widgets/animaciones.dart';
 import '../../widgets/iconos/iconos.dart';
+import '../../widgets/justicia/cartel_sala.dart';
 import '../../widgets/justicia/fondo_justicia.dart';
 import '../../widgets/marca/marca.dart';
 import '../../widgets/modulos.dart';
@@ -39,8 +40,8 @@ class InicioScreen extends ConsumerWidget {
 
 /// La portada: el vestíbulo del palacio de justicia de papel (tema-justicia.md). Tut saluda, la racha y el nivel, el
 /// ticket «¡Es tu turno!» del día saliendo del panel de turnos, los tres módulos como tickets con el cartel de su sala,
-/// Mi situación («tu guía») y la palabra del día. Detrás del saludo y del pase, el palacio en silueta y unas pocas
-/// formas de papel recortado que flotan despacio; los dos se quedan atrás al desplazar (paralaje).
+/// Mi situación («tu guía», con el cartel «PARTICIPA») y la palabra del día. Detrás del saludo y del pase, el palacio en
+/// silueta y unas pocas formas de papel recortado que flotan despacio; los dos se quedan atrás al desplazar (paralaje).
 class _Portada extends StatefulWidget {
   const _Portada({super.key});
 
@@ -172,11 +173,16 @@ class _EntradaMiSituacion extends ConsumerWidget {
   /// Lo que dice el ticket sin papel.
   static const descripcion = 'Me toca ir a la policía o al juzgado y quiero saber qué me espera';
 
+  /// El cartel de su puerta, como el de las salas: aquí es donde participa (su camino, lo que puede pedir y Mis
+  /// preguntas). Pregunta, que resuelve dudas, lleva «INFORMACIÓN».
+  static const cartel = 'PARTICIPA';
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final camino = ref.watch(tuCaminoProvider);
     final oscuro = Theme.of(context).brightness == Brightness.dark;
     return TicketTuTurno(
+      cartel: const CartelSala(texto: cartel),
       etiqueta: camino == null ? null : 'Mi situación',
       titulo: camino?.titulo ?? 'Mi situación',
       descripcion: camino?.descripcion ?? descripcion,

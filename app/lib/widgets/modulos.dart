@@ -53,7 +53,7 @@ enum Modulo {
     insignias: (Icons.chat_bubble_rounded, Icons.auto_awesome_rounded),
     tuIcono: TuIcono.pregunta,
     tuInsignias: (TuIcono.microfono, TuIcono.idea),
-    sala: 'PARTICIPA',
+    sala: 'INFORMACIÓN',
   );
 
   const Modulo({
@@ -91,7 +91,8 @@ enum Modulo {
   final (TuIcono, TuIcono) tuInsignias;
 
   /// Cartel de su puerta en el palacio de justicia de papel ([CartelSala]): «SALA 1» en Vive el caso, «SALA 2» en
-  /// Aprende y «PARTICIPA» en Pregunta. Sin cartel (null), la tarjeta no lo pinta: así queda lo que está fuera de la
+  /// Aprende e «INFORMACIÓN» en Pregunta (el mostrador, donde se resuelven las dudas). «PARTICIPA» es el de Mi
+  /// situación, que no es un módulo. Sin cartel (null), la tarjeta no lo pinta: así queda lo que está fuera de la
   /// metáfora, como Ayuda.
   final String? sala;
 

@@ -9,7 +9,7 @@ import '../iconos/tu_icono.dart';
 
 /// Cartel de la puerta de una sala: una placa de papel con borde de tinta de 2, dos tornillos y el texto en
 /// mayúsculas con algo de espacio entre letras. Para los tickets de módulo («SALA 1»), las unidades de Aprende
-/// («SALA 2 · Si te toca declarar») y Pregunta en el inicio («INFORMACIÓN»).
+/// («SALA 2 · Si te toca declarar»), Pregunta en el inicio («INFORMACIÓN») y Mi situación («PARTICIPA»).
 ///
 /// Es una placa de verdad: papel con tinta azul noche en los dos temas (15,9:1), así que se lee igual sobre el
 /// degradado de un módulo que sobre el fondo. Se lee como texto normal, «SALA 1. Tus derechos» (no es un botón). La

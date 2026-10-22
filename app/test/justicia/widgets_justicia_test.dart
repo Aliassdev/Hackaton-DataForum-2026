@@ -323,7 +323,7 @@ void main() {
     test('cada módulo tiene el cartel de su sala; Ayuda no es un módulo: se queda fuera de la metáfora', () {
       expect(
         {for (final modulo in Modulo.values) modulo: modulo.sala},
-        {Modulo.juego: 'SALA 1', Modulo.aprende: 'SALA 2', Modulo.pregunta: 'PARTICIPA'},
+        {Modulo.juego: 'SALA 1', Modulo.aprende: 'SALA 2', Modulo.pregunta: 'INFORMACIÓN'},
       );
       expect(Modulo.values.map((modulo) => modulo.titulo), isNot(contains('Ayuda')));
     });

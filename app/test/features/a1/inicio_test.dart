@@ -22,6 +22,7 @@ import 'package:tuturno/tema.dart';
 import 'package:tuturno/widgets/ayuda_button.dart';
 import 'package:tuturno/widgets/fuente_chip.dart';
 import 'package:tuturno/widgets/iconos/iconos.dart';
+import 'package:tuturno/widgets/justicia/cartel_sala.dart';
 import 'package:tuturno/widgets/justicia/fondo_justicia.dart';
 import 'package:tuturno/widgets/marca/marca.dart';
 import 'package:tuturno/widgets/modulos.dart';
@@ -391,6 +392,38 @@ void main() {
       expect(find.descendant(of: ticket, matching: find.text('TU')), findsOneWidget);
       expect(find.descendant(of: ticket, matching: find.text('GUÍA')), findsOneWidget);
       expect(find.textContaining(RegExp('tu expediente', caseSensitive: false)), findsNothing);
+    });
+
+    testWidgets('Mi situación lleva el cartel «PARTICIPA», leído con el ticket y sin decir el papel ni la fase', (
+      tester,
+    ) async {
+      // Es donde se participa (su camino, lo que puede pedir y Mis preguntas); Te acompaño, que resuelve dudas, es
+      // «INFORMACIÓN».
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final semantica = tester.ensureSemantics();
+      for (final (caso, preferencias, titulo, escala) in [
+        ('sin papel', <String, Object>{}, 'Mi situación', 1.0),
+        ('con papel y fase, letra a 1,3', _entrada(rol: 'investigado', fase: 'durante'), TuCamino.tituloNeutro, 1.3),
+      ]) {
+        tester.platformDispatcher.textScaleFactorTestValue = escala;
+        await arrancarApp(tester, preferencias: preferencias, tamano: const Size(360, 640));
+        final ticket = find.ancestor(of: find.text(titulo), matching: find.byType(TicketTuTurno));
+        await tester.ensureVisible(ticket);
+        await tester.pumpAndSettle();
+        final cartel = find.descendant(of: ticket, matching: find.byType(CartelSala));
+        expect(cartel, findsOneWidget, reason: caso);
+        expect(tester.widget<CartelSala>(cartel).texto, 'PARTICIPA', reason: caso);
+        expect(tester.getBottomLeft(cartel).dy, lessThan(tester.getTopLeft(find.text(titulo)).dy), reason: caso);
+        expect(tester.getRect(ticket).inflate(1).contains(tester.getRect(cartel).bottomRight), isTrue, reason: caso);
+        expect(tester.getSize(ticket).height, greaterThanOrEqualTo(48), reason: caso);
+        final datos = tester.getSemantics(ticket).getSemanticsData();
+        expect(datos.label, contains('PARTICIPA'), reason: caso);
+        expect(datos.label, contains(titulo), reason: caso);
+        expect(datos.label, isNot(contains(RegExp('nvestig|urante'))), reason: caso);
+        expect(datos.flagsCollection.isButton, isTrue, reason: caso);
+        expect(tester.takeException(), isNull, reason: caso);
+      }
+      semantica.dispose();
     });
 
     testWidgets('con tu papel en el ticket, Mi situación es «Tu camino» (sin decir el papel) y lleva directo', (

@@ -280,6 +280,7 @@ class TicketTuTurno extends StatelessWidget {
     required this.titulo,
     this.descripcion,
     this.etiqueta,
+    this.cartel,
     this.numero,
     this.etiquetaNumero = 'Nº',
     this.talon,
@@ -303,6 +304,10 @@ class TicketTuTurno extends StatelessWidget {
 
   /// Texto corto encima del título («Tu turno», «Módulo»…). Se muestra en mayúsculas.
   final String? etiqueta;
+
+  /// Cartel encima de la etiqueta y del título, como el de la puerta de una sala (`CartelSala`, en
+  /// lib/widgets/justicia/). Se lee con el resto del ticket.
+  final Widget? cartel;
 
   /// Número del talón («07», «A-12»).
   final String? numero;
@@ -379,6 +384,7 @@ class TicketTuTurno extends StatelessWidget {
     );
 
     final etiqueta = this.etiqueta;
+    final cartel = this.cartel;
     final descripcion = this.descripcion;
     final cuerpo = Padding(
       padding: const EdgeInsets.fromLTRB(Espacio.l - Espacio.xs, Espacio.m + 2, Espacio.m, Espacio.m + 2),
@@ -398,6 +404,7 @@ class TicketTuTurno extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (cartel != null) ...[cartel, const SizedBox(height: Espacio.s)],
                 if (etiqueta != null) ...[
                   Text(
                     etiqueta.toUpperCase(),
