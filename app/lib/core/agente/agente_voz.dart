@@ -8,10 +8,16 @@ enum EstadoAgente { desconectado, conectando, conectado }
 /// Un mensaje de la conversación: del agente o del usuario.
 @immutable
 class MensajeAgente {
-  const MensajeAgente({required this.texto, required this.deAgente});
+  const MensajeAgente({required this.texto, required this.deAgente, this.corrigeA});
 
   final String texto;
   final bool deAgente;
+
+  /// Si no es null, este mensaje no es nuevo: corrige uno anterior del agente al que se ha interrumpido.
+  /// [corrigeA] es el texto original y [texto], lo que llegó a decir antes de la interrupción (puede ser «...»).
+  final String? corrigeA;
+
+  bool get esCorreccion => corrigeA != null;
 }
 
 abstract interface class AgenteVoz {

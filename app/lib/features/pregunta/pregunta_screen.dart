@@ -3,11 +3,16 @@ import 'dart:ui' show FlutterView;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/agente/agente_provider.dart';
 import '../../core/api/models.dart';
 import '../../core/providers.dart';
 import '../../tema.dart';
 import '../../widgets/movimiento/hapticos.dart';
 import '../../widgets/tuturno_scaffold.dart';
+import 'agente/capa_agente.dart';
+import 'agente/chat_agente.dart';
+import 'agente/textos_agente.dart' show textoBorrarAgente;
+import 'agente/vista_inicial_agente.dart';
 import 'chat_controller.dart';
 import 'widgets/compositor.dart';
 import 'widgets/mensajes.dart';
@@ -55,7 +60,10 @@ class _PreguntaScreenState extends ConsumerState<PreguntaScreen> with WidgetsBin
   var _teclado = false;
   FlutterView? _vista;
 
-  ProveedorChat get _proveedor => chatProvider(widget.situacion);
+  /// Modo agente (agente de voz de ElevenLabs, agente/): se decide al entrar y no cambia mientras dura la pantalla.
+  late final bool _modoAgente = ref.read(modoAgenteProvider);
+
+  ProveedorChat get _proveedor => (_modoAgente ? chatAgenteProvider : chatProvider)(widget.situacion);
 
   ChatNotifier get _chat => ref.read(_proveedor.notifier);
 
@@ -107,7 +115,12 @@ class _PreguntaScreenState extends ConsumerState<PreguntaScreen> with WidgetsBin
 
   /// Si se corrige lo dictado, deja de actualizarse con la voz.
   void _alEditar() {
-    if (_texto.text.trim().isEmpty) _preguntaPorVoz = false;
+    if (_texto.text.trim().isEmpty) {
+      _preguntaPorVoz = false;
+    } else {
+      // Modo agente: mientras se escribe o se dicta, el agente no toma la palabra.
+      _chat.avisarQueEscribe();
+    }
     if (_puestoPorVoz != null && _texto.text != _puestoPorVoz) {
       _puestoPorVoz = null;
       _sincronizarDictado = false;
@@ -171,7 +184,7 @@ class _PreguntaScreenState extends ConsumerState<PreguntaScreen> with WidgetsBin
       builder: (context) => AlertDialog(
         icon: const Icon(Icons.restart_alt_rounded),
         title: const Text('¿Empezar de nuevo?'),
-        content: const Text('Se borra esta conversación. TuTurno no la guarda.'),
+        content: Text(_modoAgente ? textoBorrarAgente : 'Se borra esta conversación. TuTurno no la guarda.'),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
           FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Borrar')),
@@ -217,11 +230,19 @@ class _PreguntaScreenState extends ConsumerState<PreguntaScreen> with WidgetsBin
       acciones: [if (compacto) _MenuOpciones(proveedor: _proveedor, onBorrar: _borrar)],
       body: Column(
         children: [
+          // Modo agente: banda de estado, hoja del perfil, sesión con el agente y segundo plano.
+          if (_modoAgente) CapaAgente(situacion: widget.situacion),
           Expanded(
             child: AnimatedSwitcher(
               duration: duracion(context, Duracion.media),
               child: vacio
-                  ? VistaInicial(key: const ValueKey('vista-inicial'), situacion: situacion, onEjemplo: _enviar)
+                  ? (_modoAgente
+                        ? VistaInicialAgente(
+                            key: const ValueKey('vista-inicial'),
+                            situacion: widget.situacion,
+                            onEjemplo: _enviar,
+                          )
+                        : VistaInicial(key: const ValueKey('vista-inicial'), situacion: situacion, onEjemplo: _enviar))
                   : _ListaMensajes(
                       key: const ValueKey('lista'),
                       mensajes: mensajes,
@@ -232,6 +253,7 @@ class _PreguntaScreenState extends ConsumerState<PreguntaScreen> with WidgetsBin
                       onLeer: (id) => _chat.alternarLectura(id),
                       onReintentar: (id) => _chat.reintentar(id, vozAutomatica: _vozAutomatica),
                       onSugerencia: _enviar,
+                      onEjemplo: _modoAgente ? () => (_chat as ChatAgenteNotifier).usarEjemplos() : null,
                     ),
             ),
           ),
@@ -262,6 +284,7 @@ class _MenuOpciones extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final vozActivada = ref.watch(ajustesProvider.select((a) => a.vozActivada));
     final puedeBorrar = ref.watch(proveedor.select((s) => s.mensajes.isNotEmpty || s.escuchando));
+    final conAgente = ref.watch(proveedor.notifier).conAgente;
     return PopupMenuButton<String>(
       key: const Key('menu-pregunta'),
       tooltip: 'Más opciones',
@@ -276,7 +299,12 @@ class _MenuOpciones extends ConsumerWidget {
         }
       },
       itemBuilder: (context) => [
-        CheckedPopupMenuItem(value: 'voz', checked: vozActivada, child: const Text('Leer las respuestas en voz alta')),
+        if (!conAgente)
+          CheckedPopupMenuItem(
+            value: 'voz',
+            checked: vozActivada,
+            child: const Text('Leer las respuestas en voz alta'),
+          ),
         PopupMenuItem(
           value: 'nueva',
           enabled: puedeBorrar,
@@ -302,6 +330,7 @@ class _ListaMensajes extends StatelessWidget {
     required this.onLeer,
     required this.onReintentar,
     required this.onSugerencia,
+    this.onEjemplo,
   });
 
   final List<MensajeChat> mensajes;
@@ -312,6 +341,9 @@ class _ListaMensajes extends StatelessWidget {
   final ValueChanged<int> onLeer;
   final ValueChanged<int> onReintentar;
   final ValueChanged<String> onSugerencia;
+
+  /// Modo agente: ver una respuesta de ejemplo cuando el agente no responde.
+  final VoidCallback? onEjemplo;
 
   static const _claveEscribiendo = ValueKey('escribiendo');
 
@@ -360,6 +392,7 @@ class _ListaMensajes extends StatelessWidget {
             activo: !esperando,
             revelar: nuevo && ultimo,
             onReintentar: () => onReintentar(mensaje.id),
+            onEjemplo: ultimo ? onEjemplo : null,
           );
         } else {
           contenido = BurbujaAsistente(

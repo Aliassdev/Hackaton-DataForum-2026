@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'api/models.dart' show RolProceso;
 import 'providers.dart';
 
 // Respuestas del formulario de entrada de Pregunta. Se guardan solo en el móvil y viajan como
@@ -73,6 +74,30 @@ class Entrada {
     'procedimiento': procedimiento?.valor ?? noLoSe,
     'rol': rol?.valor ?? noLoSe,
     'fase': fase?.valor ?? noLoSe,
+  };
+
+  /// Variables de la sesión del agente con los valores que lee el backend de B (backend/app/agent/perfil.py):
+  /// edad en cifras; procedimiento penal | familia | proteccion; rol victima | testigo | investigado | escuchado;
+  /// fase antes | durante | despues. Van siempre las cuatro claves. Lo que no se ha respondido (o «No lo sé») va
+  /// vacío: el backend lo trata como «sin dato» y ElevenLabs acepta los valores vacíos (comprobado el 22-10).
+  ///
+  /// Con «Mi situación» ([situacion]), el papel sale de ahí si aquí no se ha elegido.
+  Map<String, String> variablesAgente({RolProceso? situacion}) => {
+    'edad': edad?.toString() ?? '',
+    'procedimiento': switch (procedimiento) {
+      Procedimiento.penal => 'penal',
+      Procedimiento.familia => 'familia',
+      Procedimiento.proteccion => 'proteccion',
+      Procedimiento.noLoSe || null => '',
+    },
+    'rol': switch (rol) {
+      RolEntrada.victima => 'victima',
+      RolEntrada.testigo => 'testigo',
+      RolEntrada.investigado => 'investigado',
+      RolEntrada.escuchadoFamilia => 'escuchado',
+      RolEntrada.noLoSe || null => situacion?.name ?? '',
+    },
+    'fase': fase?.valor ?? '',
   };
 
   Entrada copyWith({

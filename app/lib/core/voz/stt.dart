@@ -52,12 +52,22 @@ abstract interface class Stt {
 ///
 /// [SpeechToText.initialize] solo se ejecuta una vez y sus callbacks no se pueden cambiar después, así que se
 /// registran aquí una sola vez y se reparten a la sesión de escucha activa.
+///
+/// Con [enElDispositivo], pide el reconocimiento del propio móvil (Android 12 o posterior, si lo tiene; si no, el
+/// plugin usa el normal sin avisar, que puede ir por la red). Si el del móvil falla antes de entender nada (por
+/// ejemplo, porque no tiene el español descargado), se avisa con «prueba otra vez» y desde entonces se usa el normal.
 class SttReal implements Stt {
-  SttReal({SpeechToText? speech}) : _speech = speech ?? SpeechToText();
+  SttReal({SpeechToText? speech, bool enElDispositivo = true})
+    : _speech = speech ?? SpeechToText(),
+      _reconocerEnElMovil = enElDispositivo;
 
   final SpeechToText _speech;
   Future<bool>? _inicializando;
   _Sesion? _sesion;
+  bool _reconocerEnElMovil;
+
+  /// Si la próxima escucha pedirá el reconocimiento del propio móvil.
+  bool get enElDispositivo => _reconocerEnElMovil;
 
   static const idioma = 'es-ES';
 
@@ -99,12 +109,14 @@ class SttReal implements Stt {
     void Function(double nivel)? onNivel,
     void Function(ProblemaVoz problema)? onProblema,
   }) async {
-    final sesion = _Sesion(onFin: onFin, onProblema: onProblema);
+    final sesion = _Sesion(onFin: onFin, onProblema: onProblema, enElDispositivo: _reconocerEnElMovil);
     _sesion = sesion;
     try {
       await _speech.listen(
         onResult: (resultado) {
-          if (identical(_sesion, sesion)) onTexto(resultado.recognizedWords);
+          if (!identical(_sesion, sesion)) return;
+          if (resultado.recognizedWords.trim().isNotEmpty) sesion.oyoAlgo = true;
+          onTexto(resultado.recognizedWords);
         },
         onSoundLevelChange: onNivel == null
             ? null
@@ -115,6 +127,7 @@ class SttReal implements Stt {
           partialResults: true,
           listenMode: ListenMode.dictation,
           localeId: idioma,
+          onDevice: sesion.enElDispositivo,
           cancelOnError: true,
           // Android corta solo tras unos segundos de silencio; esto es solo un tope.
           listenFor: const Duration(seconds: 45),
@@ -160,7 +173,15 @@ class SttReal implements Stt {
   void _alError(SpeechRecognitionError error) {
     final sesion = _sesion;
     if (sesion == null) return;
-    sesion.problema(problemaDesdeCodigo(error.errorMsg));
+    var problema = problemaDesdeCodigo(error.errorMsg);
+    const deLaMaquina = {ProblemaVoz.idioma, ProblemaVoz.otro, ProblemaVoz.sinRed};
+    if (sesion.enElDispositivo && !sesion.oyoAlgo && deLaMaquina.contains(problema)) {
+      // El reconocimiento del móvil no está listo: desde ahora, el normal. Sin el del móvil sí hay español, así que no
+      // se dice que el móvil no lo reconoce: basta con probar otra vez.
+      _reconocerEnElMovil = false;
+      if (problema == ProblemaVoz.idioma) problema = ProblemaVoz.otro;
+    }
+    sesion.problema(problema);
     sesion.terminar();
   }
 
@@ -187,10 +208,16 @@ class SttReal implements Stt {
 }
 
 class _Sesion {
-  _Sesion({required this.onFin, this.onProblema});
+  _Sesion({required this.onFin, this.onProblema, this.enElDispositivo = false});
 
   final void Function() onFin;
   final void Function(ProblemaVoz problema)? onProblema;
+
+  /// Esta escucha pidió el reconocimiento del propio móvil.
+  final bool enElDispositivo;
+
+  /// Ya ha llegado algún texto.
+  var oyoAlgo = false;
   var _terminada = false;
   var _avisado = false;
 

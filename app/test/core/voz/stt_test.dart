@@ -207,6 +207,62 @@ void main() {
     expect(segunda.textos, ['nuevo']);
   });
 
+  group('reconocimiento en el propio móvil', () {
+    test('por defecto lo pide (onDevice)', () async {
+      await stt.inicializar();
+      await _Sesion().escuchar(stt);
+
+      expect(stt.enElDispositivo, isTrue);
+      expect(speech.opcionesEscucha!.onDevice, isTrue);
+    });
+
+    test('se puede desactivar', () async {
+      final normal = SttReal(speech: speech, enElDispositivo: false);
+      await normal.inicializar();
+      await _Sesion().escuchar(normal);
+
+      expect(speech.opcionesEscucha!.onDevice, isFalse);
+    });
+
+    test('si no tiene el español, avisa con «prueba otra vez» y la próxima vez usa el normal', () async {
+      await stt.inicializar();
+      final primera = _Sesion();
+      await primera.escuchar(stt);
+
+      speech.alEstado!(SpeechToText.notListeningStatus);
+      speech.alError!(SpeechRecognitionError('error_language_unavailable', true));
+
+      expect(primera.problemas, [ProblemaVoz.otro]);
+      expect(primera.fines, 1);
+      expect(stt.enElDispositivo, isFalse);
+
+      await _Sesion().escuchar(stt);
+      expect(speech.opcionesEscucha!.onDevice, isFalse);
+    });
+
+    test('los errores de siempre (permiso, no te oigo) no lo cambian', () async {
+      await stt.inicializar();
+      final sesion = _Sesion();
+      await sesion.escuchar(stt);
+
+      speech.alError!(SpeechRecognitionError('error_no_match', true));
+
+      expect(sesion.problemas, [ProblemaVoz.noTeOigo]);
+      expect(stt.enElDispositivo, isTrue);
+    });
+
+    test('si ya había entendido algo, el error no lo cambia', () async {
+      await stt.inicializar();
+      final sesion = _Sesion();
+      await sesion.escuchar(stt);
+
+      speech.resultado('qué es');
+      speech.alError!(SpeechRecognitionError('error_client', true));
+
+      expect(stt.enElDispositivo, isTrue);
+    });
+  });
+
   test('traduce los códigos de error de Android y de web', () {
     expect(SttReal.problemaDesdeCodigo('error_permission'), ProblemaVoz.sinPermiso);
     expect(SttReal.problemaDesdeCodigo('not-allowed'), ProblemaVoz.sinPermiso);

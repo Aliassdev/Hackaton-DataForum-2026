@@ -17,6 +17,8 @@ import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../../../widgets/movimiento/ticket.dart';
 import '../../../widgets/texto_con_terminos.dart';
+import '../agente/telefonos.dart';
+import '../agente/textos_agente.dart' show etiquetaEjemplo;
 import '../chat_controller.dart';
 import '../textos.dart';
 import 'tickets.dart';
@@ -266,6 +268,9 @@ class BurbujaAsistente extends ConsumerWidget {
               label: const Text('Ver teléfonos de ayuda'),
             ),
           ],
+          // Modo agente: los teléfonos que ha dicho, para llamar (en crisis, sin los de la tarjeta de ayuda).
+          if (mensaje.telefonos.isNotEmpty)
+            BotonesTelefono(telefonos: mensaje.telefonos, sinLosDeLaTarjeta: respuesta.tipo == TipoRespuesta.crisis),
         ],
       ),
     );
@@ -315,6 +320,7 @@ class BurbujaAsistente extends ConsumerWidget {
           const SizedBox(height: Espacio.m),
         ],
         FilaAsistente(
+          etiqueta: mensaje.ejemplo ? etiquetaEjemplo : 'TuTurno · IA',
           child: TicketVertical(
             key: const Key('ticket-respuesta'),
             color: colores.ticket,
@@ -593,12 +599,16 @@ class BurbujaError extends StatelessWidget {
     required this.onReintentar,
     this.activo = true,
     this.revelar = false,
+    this.onEjemplo,
   });
 
   final MensajeChat mensaje;
   final VoidCallback onReintentar;
   final bool activo;
   final bool revelar;
+
+  /// Modo agente: si no es null, botón para ver una respuesta de ejemplo (el agente no responde).
+  final VoidCallback? onEjemplo;
 
   @override
   Widget build(BuildContext context) {
@@ -645,6 +655,19 @@ class BurbujaError extends StatelessWidget {
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Reintentar'),
               ),
+              if (onEjemplo != null)
+                TextButton.icon(
+                  key: const Key('ver-ejemplo'),
+                  style: TextButton.styleFrom(foregroundColor: esquema.onErrorContainer),
+                  onPressed: activo
+                      ? () {
+                          Hapticos.toque();
+                          onEjemplo!();
+                        }
+                      : null,
+                  icon: const IconoTuTurno(TuIcono.info, estilo: EstiloIcono.mono, decorativo: true),
+                  label: const Text('Ver una respuesta de ejemplo'),
+                ),
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: esquema.onErrorContainer),
                 onPressed: () => context.push('/ayuda'),

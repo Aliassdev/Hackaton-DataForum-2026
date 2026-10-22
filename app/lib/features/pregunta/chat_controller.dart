@@ -26,12 +26,25 @@ class MensajeChat {
     this.preguntaOriginal,
     this.historialOriginal = const [],
     this.vozAutomaticaOriginal = false,
+    this.ejemplo = false,
+    this.telefonos = const [],
   });
 
   factory MensajeChat.usuario(int id, String texto) => MensajeChat._(id: id, autor: Autor.usuario, texto: texto);
 
-  factory MensajeChat.asistente(int id, AskResponse respuesta) =>
-      MensajeChat._(id: id, autor: Autor.asistente, texto: respuesta.respuesta, respuesta: respuesta);
+  factory MensajeChat.asistente(
+    int id,
+    AskResponse respuesta, {
+    bool ejemplo = false,
+    List<String> telefonos = const [],
+  }) => MensajeChat._(
+    id: id,
+    autor: Autor.asistente,
+    texto: respuesta.respuesta,
+    respuesta: respuesta,
+    ejemplo: ejemplo,
+    telefonos: telefonos,
+  );
 
   factory MensajeChat.error(
     int id,
@@ -64,6 +77,12 @@ class MensajeChat {
   /// Si la respuesta de la pregunta original se iba a leer sola (se preguntó con la voz).
   final bool vozAutomaticaOriginal;
 
+  /// Modo agente: respuesta de ejemplo (la API simulada) porque el agente no responde. Se marca como ejemplo.
+  final bool ejemplo;
+
+  /// Modo agente: teléfonos de la respuesta, en cifras, para enseñarlos como botones (agente/telefonos.dart).
+  final List<String> telefonos;
+
   bool get esUsuario => autor == Autor.usuario;
 
   TipoRespuesta get tipo => respuesta?.tipo ?? TipoRespuesta.normal;
@@ -80,6 +99,7 @@ class EstadoChat {
     this.nivelVoz = 0,
     this.problemaVoz,
     this.hablandoId,
+    this.agenteHablando = false,
   });
 
   final List<MensajeChat> mensajes;
@@ -104,6 +124,9 @@ class EstadoChat {
   /// Mensaje que se está leyendo en voz alta.
   final int? hablandoId;
 
+  /// Modo agente: el agente de voz está hablando. Mientras, no se escucha con el micrófono.
+  final bool agenteHablando;
+
   bool get escuchando => voz != EstadoVoz.inactivo;
 
   EstadoChat copyWith({
@@ -115,6 +138,7 @@ class EstadoChat {
     double? nivelVoz,
     ProblemaVoz? Function()? problemaVoz,
     int? Function()? hablandoId,
+    bool? agenteHablando,
   }) => EstadoChat(
     mensajes: mensajes ?? this.mensajes,
     esperando: esperando ?? this.esperando,
@@ -124,6 +148,7 @@ class EstadoChat {
     nivelVoz: nivelVoz ?? this.nivelVoz,
     problemaVoz: problemaVoz != null ? problemaVoz() : this.problemaVoz,
     hablandoId: hablandoId != null ? hablandoId() : this.hablandoId,
+    agenteHablando: agenteHablando ?? this.agenteHablando,
   );
 }
 
@@ -181,7 +206,7 @@ class ChatNotifier extends Notifier<EstadoChat> {
       problemaVoz: () => null,
       hablandoId: () => null,
     );
-    await _preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
+    await preguntar(pregunta, historial, vozAutomatica: vozAutomatica);
   }
 
   /// Repite la pregunta de un mensaje de error. Se lee sola solo si la original se iba a leer.
@@ -195,14 +220,17 @@ class ChatNotifier extends Notifier<EstadoChat> {
       ],
       esperando: true,
     );
-    await _preguntar(
+    await preguntar(
       error.preguntaOriginal!,
       error.historialOriginal,
       vozAutomatica: vozAutomatica && error.vozAutomaticaOriginal,
     );
   }
 
-  Future<void> _preguntar(String pregunta, List<Mensaje> historial, {required bool vozAutomatica}) async {
+  /// Pide la respuesta de [pregunta] (ya está en la conversación y [EstadoChat.esperando] es true) y la añade. El modo
+  /// agente lo sobrescribe para preguntar al agente de voz en vez de a la API.
+  @protected
+  Future<void> preguntar(String pregunta, List<Mensaje> historial, {required bool vozAutomatica}) async {
     final conversacion = _conversacion;
     final situacion = state.situacion;
     final peticion = AskRequest(
@@ -359,7 +387,17 @@ class ChatNotifier extends Notifier<EstadoChat> {
     return turnos.length <= AskRequest.maxHistorial ? turnos : turnos.sublist(turnos.length - AskRequest.maxHistorial);
   }
 
+  /// true en el modo agente (features/pregunta/agente/chat_agente.dart).
+  bool get conAgente => false;
+
+  /// Mientras se escribe o se dicta. Solo lo usa el modo agente, para que el agente no interrumpa.
+  void avisarQueEscribe() {}
+
   bool _vigente(int sesion) => ref.mounted && sesion == _sesionVoz;
+
+  /// Para los mensajes que añade el modo agente.
+  @protected
+  int nuevoId() => _nuevoId();
 
   int _nuevoId() => _siguienteId++;
 

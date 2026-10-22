@@ -47,7 +47,7 @@ class Compositor extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (:voz, :esperando, :situacion, :problema, :hayMensajes) = ref.watch(
+    final (:voz, :esperando, :situacion, :problema, :hayMensajes, :hablaAgente) = ref.watch(
       proveedor.select(
         (s) => (
           voz: s.voz,
@@ -55,14 +55,20 @@ class Compositor extends ConsumerWidget {
           situacion: s.situacion,
           problema: s.problemaVoz,
           hayMensajes: s.mensajes.isNotEmpty,
+          hablaAgente: s.agenteHablando,
         ),
       ),
     );
+    // Modo agente: el agente habla con su voz, y «Voz / Sin voz» (que es la del móvil) no lo callaría.
+    final conAgente = ref.watch(proveedor.notifier).conAgente;
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
     final escuchando = voz != EstadoVoz.inactivo;
     final estadoMicro = esperando
         ? EstadoMicro.desactivado
+        // Modo agente: no se escucha mientras habla el agente (se transcribiría su voz).
+        : hablaAgente && voz == EstadoVoz.inactivo
+        ? EstadoMicro.hablaAgente
         : switch (voz) {
             EstadoVoz.preparando => EstadoMicro.preparando,
             EstadoVoz.escuchando => EstadoMicro.escuchando,
@@ -156,7 +162,7 @@ class Compositor extends ConsumerWidget {
                 const SizedBox(height: Espacio.xs),
                 Row(
                   children: [
-                    const Expanded(child: Center(child: _BotonVozAutomatica())),
+                    Expanded(child: Center(child: conAgente ? const SizedBox.shrink() : const _BotonVozAutomatica())),
                     BotonMicro(estado: estadoMicro, proveedor: proveedor, onPressed: onMicro),
                     Expanded(
                       child: Center(
@@ -470,7 +476,18 @@ class _BotonLateral extends StatelessWidget {
   }
 }
 
-enum EstadoMicro { inactivo, preparando, escuchando, desactivado, noDisponible }
+enum EstadoMicro {
+  inactivo,
+  preparando,
+  escuchando,
+  desactivado,
+  noDisponible,
+
+  /// Modo agente: el agente está hablando.
+  hablaAgente;
+
+  bool get activo => this != desactivado && this != hablaAgente;
+}
 
 String _etiquetaMicro(EstadoMicro estado) => switch (estado) {
   EstadoMicro.inactivo => 'Pulsa para hablar',
@@ -478,6 +495,7 @@ String _etiquetaMicro(EstadoMicro estado) => switch (estado) {
   EstadoMicro.escuchando => 'Te escucho… Pulsa para parar',
   EstadoMicro.desactivado => 'Espera a que te conteste…',
   EstadoMicro.noDisponible => 'Micrófono no disponible',
+  EstadoMicro.hablaAgente => 'TuTurno está hablando…',
 };
 
 String _semanticaMicro(EstadoMicro estado) => switch (estado) {
@@ -486,6 +504,7 @@ String _semanticaMicro(EstadoMicro estado) => switch (estado) {
   EstadoMicro.escuchando => 'Te estoy escuchando. Pulsa para parar',
   EstadoMicro.desactivado => 'Micrófono desactivado mientras llega la respuesta',
   EstadoMicro.noDisponible => 'Micrófono no disponible. Puedes escribir tu pregunta o pulsar para intentarlo otra vez',
+  EstadoMicro.hablaAgente => 'Micrófono desactivado mientras habla TuTurno',
 };
 
 /// Texto bajo el micrófono.
@@ -572,7 +591,7 @@ class _BotonMicroState extends ConsumerState<BotonMicro> with SingleTickerProvid
     final estado = widget.estado;
     final esquema = Theme.of(context).colorScheme;
     final escuchando = estado == EstadoMicro.escuchando;
-    final activo = estado != EstadoMicro.desactivado;
+    final activo = estado.activo;
     final nivel = escuchando ? ref.watch(widget.proveedor.select((s) => s.nivelVoz)) : 0.0;
     final sinMovimiento = duracion(context, Duracion.media) == Duration.zero;
     final tinta = activo ? esquema.onPrimary : esquema.onSurfaceVariant;
@@ -720,7 +739,7 @@ class BotonMicroPequeno extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activo = estado != EstadoMicro.desactivado;
+    final activo = estado.activo;
     final esquema = Theme.of(context).colorScheme;
     final escuchando = estado == EstadoMicro.escuchando;
     final icono = switch (estado) {
