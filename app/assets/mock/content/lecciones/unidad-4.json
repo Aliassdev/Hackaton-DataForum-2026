@@ -1,0 +1,38 @@
+{
+  "id": "U4",
+  "titulo": "Si eres víctima o testigo: tus derechos",
+  "conceptos": [
+    "C-entender",
+    "C-informacion",
+    "C-proteccion",
+    "C-intimidad-victima",
+    "C-testigo"
+  ],
+  "lecciones": [
+    {
+      "id": "U4-L1",
+      "titulo": "Que te hablen claro",
+      "ejercicios": [
+        "E-401",
+        "E-402",
+        "E-403",
+        "E-404",
+        "E-405",
+        "E-406"
+      ]
+    },
+    {
+      "id": "U4-L2",
+      "titulo": "Protección e intimidad",
+      "ejercicios": [
+        "E-407",
+        "E-408",
+        "E-409",
+        "E-410",
+        "E-411",
+        "E-412"
+      ]
+    }
+  ],
+  "validado": true
+}

@@ -20,6 +20,14 @@ class Partida {
   /// Empieza por la primera escena.
   factory Partida.nueva(Caso caso) => Partida._(caso: caso, recorrido: [caso.primera.id]);
 
+  /// Empieza directamente en la escena [escenaId] (el atajo de la demo), como si se hubiera llegado por el camino más
+  /// corto: así el progreso dice por qué escena va («5 de 11»). No se gana ninguna carta de las escenas saltadas. Si la
+  /// escena no existe, empieza por la primera; si existe pero no se llega a ella desde la primera, empieza en ella.
+  factory Partida.enEscena(Caso caso, String escenaId) {
+    if (caso.escena(escenaId) == null) return Partida.nueva(caso);
+    return Partida._(caso: caso, recorrido: caso.caminoHasta(escenaId) ?? [escenaId]);
+  }
+
   final Caso caso;
 
   /// Escenas visitadas, en orden. La última es la actual.

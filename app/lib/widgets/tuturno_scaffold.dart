@@ -49,7 +49,7 @@ class TuTurnoScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: tituloWidget ?? Text(titulo),
+        title: tituloWidget ?? TituloBarra(titulo),
         shape: BordeTroquelado(color: esquema.onSurface.withValues(alpha: 0.18)),
         actions: [
           ...acciones,
@@ -62,6 +62,64 @@ class TuTurnoScaffold extends StatelessWidget {
       body: SafeArea(top: false, child: body),
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: bottomNavigationBar,
+    );
+  }
+}
+
+/// El título de una barra que no se corta (auditoría P1-1 y P1-2): en un móvil estrecho, con Glosario y Ayuda al lado,
+/// solo quedan unos 110 puntos. Va con el estilo de la barra (20) si cabe en una línea; si no, más pequeño (hasta 16);
+/// si aun así no cabe, en dos líneas, y si una sola palabra no cabe, encogido lo justo. Con un título muy largo que no
+/// cabe ni así, dos líneas y «…».
+class TituloBarra extends StatelessWidget {
+  const TituloBarra(this.texto, {super.key});
+
+  final String texto;
+
+  /// El tamaño más pequeño al que se baja antes de pasar a dos líneas.
+  static const tamanoMinimo = 16.0;
+
+  /// Lo más que se encoge una palabra que no cabe (más pequeña no se leería bien).
+  static const encogidoMaximo = 0.7;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = DefaultTextStyle.of(context).style;
+    final escalador = MediaQuery.textScalerOf(context);
+    final direccion = Directionality.of(context);
+    return LayoutBuilder(
+      builder: (context, limites) {
+        TextPainter medir(TextStyle estilo, {int? lineas, double ancho = double.infinity}) => TextPainter(
+          text: TextSpan(text: texto, style: estilo),
+          textDirection: direccion,
+          textScaler: escalador,
+          maxLines: lineas,
+        )..layout(maxWidth: ancho);
+        bool cabe(TextStyle estilo, int lineas) {
+          final medida = medir(estilo, lineas: lineas, ancho: limites.maxWidth);
+          final si = !medida.didExceedMaxLines && medida.height <= limites.maxHeight;
+          medida.dispose();
+          return si;
+        }
+
+        final tamano = base.fontSize ?? 20;
+        for (var t = tamano; t >= tamanoMinimo; t -= 2) {
+          final estilo = base.copyWith(fontSize: t);
+          if (cabe(estilo, 1)) return Text(texto, style: estilo, maxLines: 1, softWrap: false);
+        }
+        final pequeno = base.copyWith(fontSize: tamanoMinimo, height: 1.1);
+        if (cabe(pequeno, 2)) return Text(texto, style: pequeno, maxLines: 2, softWrap: true);
+        final natural = medir(pequeno);
+        final encogido = limites.maxWidth / natural.width;
+        natural.dispose();
+        if (encogido >= encogidoMaximo) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(texto, style: pequeno, maxLines: 1, softWrap: false),
+          );
+        }
+        return Text(texto, style: pequeno, maxLines: 2, softWrap: true, overflow: TextOverflow.ellipsis);
+      },
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tema.dart';
 import 'iconos/iconos.dart';
+import 'justicia/cartel_sala.dart';
 import 'movimiento/fondo_papel.dart';
 import 'movimiento/ticket.dart';
 
@@ -29,6 +30,7 @@ enum Modulo {
     insignias: (Icons.style_rounded, Icons.star_rounded),
     tuIcono: TuIcono.juego,
     tuInsignias: (TuIcono.carta, TuIcono.estrella),
+    sala: 'SALA 1',
   ),
   aprende(
     titulo: 'Aprende',
@@ -39,6 +41,7 @@ enum Modulo {
     insignias: (Icons.bolt_rounded, Icons.local_fire_department_rounded),
     tuIcono: TuIcono.aprende,
     tuInsignias: (TuIcono.xp, TuIcono.racha),
+    sala: 'SALA 2',
   ),
   pregunta(
     titulo: 'Pregunta',
@@ -49,6 +52,7 @@ enum Modulo {
     insignias: (Icons.chat_bubble_rounded, Icons.auto_awesome_rounded),
     tuIcono: TuIcono.pregunta,
     tuInsignias: (TuIcono.microfono, TuIcono.idea),
+    sala: 'INFORMACIÓN',
   );
 
   const Modulo({
@@ -60,6 +64,7 @@ enum Modulo {
     required this.insignias,
     required this.tuIcono,
     required this.tuInsignias,
+    this.sala,
   });
 
   final String titulo;
@@ -76,6 +81,11 @@ enum Modulo {
   /// Icono propio de TuTurno (lib/widgets/iconos/) y sus insignias: los que se usan en las pantallas nuevas.
   final TuIcono tuIcono;
   final (TuIcono, TuIcono) tuInsignias;
+
+  /// Cartel de su puerta en el palacio de justicia de papel ([CartelSala]): «SALA 1» en Vive el caso, «SALA 2» en
+  /// Aprende e «INFORMACIÓN» en Pregunta (el mostrador). Sin cartel (null), la tarjeta no lo pinta: así queda lo que
+  /// está fuera de la metáfora, como Ayuda.
+  final String? sala;
 
   List<Color> colores(BuildContext context) => switch (this) {
     Modulo.juego => context.colores.juego,
@@ -290,8 +300,8 @@ class _CirculoFondo extends StatelessWidget {
 }
 
 /// Tarjeta grande de un módulo en el inicio: un ticket de turno a dos tintas. El cuerpo lleva el degradado del módulo
-/// con su título y una línea de descripción; el talón amarillo, el icono del módulo como una pegatina. Por la línea de
-/// puntos se «arranca» al entrar (la transición rasgar de los módulos).
+/// con el cartel de su sala ([Modulo.sala], si tiene), su título y una línea de descripción; el talón amarillo, el icono
+/// del módulo como una pegatina. Por la línea de puntos se «arranca» al entrar (la transición rasgar de los módulos).
 class TarjetaModulo extends StatelessWidget {
   const TarjetaModulo({super.key, required this.modulo, required this.onTap});
 
@@ -311,12 +321,14 @@ class TarjetaModulo extends StatelessWidget {
       colorTalon: ColoresMarca.amarillo,
       colorPerforado: tema.scaffoldBackgroundColor,
     );
+    final sala = modulo.sala;
     final textos = Padding(
       padding: const EdgeInsets.fromLTRB(Espacio.l - 4, Espacio.m, Espacio.m, Espacio.m),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (sala != null) ...[CartelSala(texto: sala), const SizedBox(height: Espacio.s)],
           Text(modulo.titulo, style: tema.textTheme.headlineSmall?.copyWith(color: Colors.white)),
           const SizedBox(height: Espacio.xs / 2),
           Text(modulo.descripcion, style: tema.textTheme.bodyMedium?.copyWith(color: Colors.white, height: 1.35)),

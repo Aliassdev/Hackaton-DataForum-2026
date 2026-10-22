@@ -46,6 +46,7 @@ EscenaPixel(fondo: sala, elementos: [...], alPulsar: (id) {}); // un lugar con p
 - Los pies van abajo: la última fila del personaje es su sombra en el suelo (`x`), y la de encima, las suelas.
 - El ancla (el punto que se coloca en la escena) es, por defecto, el centro del borde de abajo: los pies. Se cambia con `ancla: (x: 5, y: 9)` (por ejemplo, la punta de un bocadillo).
 - En un móvil de 1080 píxeles, un fondo de 160 sale a 6 píxeles de pantalla por píxel del dibujo (unos 2,2 puntos): un detalle de 1 píxel se ve, pero no hay sitio para letras. **Nunca hay texto dentro del dibujo**: los títulos y los diálogos van fuera, con las letras del tema.
+- En los textos del kit (`TextoPixel` o `textoConCifras`), las cifras van en Atkinson Hyperlegible, del mismo tamaño: en Pixelify, el 5 es igual que la S y el 0 que la O («15 años» se leería «1S años»).
 
 ## La paleta
 
@@ -111,7 +112,15 @@ Las claves que se confunden al leer (`l`, `I`, `O`, `0`) no existen. Para el bri
 - Los agresores no aparecen. La persona investigada, si sale, es una figura neutra: ropa gris, cara tranquila, sin rasgos de enfado ni de miedo.
 - Nadie llora ni da miedo: los personajes están serenos, escuchan o sonríen un poco.
 - Ningún menor declara en la sala de vistas: los menores de 14 años declaran antes, en la prueba preconstituida (LECrim, arts. 449 ter y 703 bis). El testigo de la sala es una persona adulta.
-- La toga solo en la sala, en la audiencia (LOPJ, art. 187.1). En un despacho (la Fiscalía), traje: `PersonajesPixel.buscar('El fiscal', lugar: 'fiscalia')` ya da el fiscal sin toga.
+- La toga solo en la sala, en la audiencia (LOPJ, art. 187.1). En un despacho (la Fiscalía), traje: `PersonajesPixel.buscar('El fiscal', lugar: 'fiscalia')` ya da el fiscal sin toga, y `PersonajesPixel.buscar('Su abogada', lugar: 'fiscalia')`, la abogada sin toga (`abogada-despacho`).
+- Cada protagonista tiene su familia: la madre de Sara es `madre-sara`, distinta de la de Sergio.
+
+### Justicia de verdad (tema-justicia)
+
+- Nada de mazos (en España no se usan), placas ni medallas, ni escudos oficiales: sobre el estrado de la sala de vistas va una balanza en un medallón.
+- En estrados, todos se sientan a la misma altura (LOPJ, art. 187.2, como guía de dibujo): en la sala de vistas y en la del Juzgado de Menores no hay tarima, y la mesa del juez tiene el tablero a la altura de las demás.
+- En la audiencia de menores no hay cámaras ni público. La cámara de la pared (`camaraPared`) es la de la Sala Gesell.
+- La comisaría lleva un cartel de avisos de papel, sin estrellas de sheriff (la policía de España no las lleva).
 
 ## Fotogramas y animaciones en reposo
 

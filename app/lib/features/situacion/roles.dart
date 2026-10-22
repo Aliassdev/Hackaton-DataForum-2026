@@ -53,12 +53,6 @@ extension InfoRol on RolProceso {
           'pregúntalo y te lo explico.',
   };
 
-  IconData get icono => switch (this) {
-    RolProceso.testigo => Icons.visibility_rounded,
-    RolProceso.victima => Icons.shield_rounded,
-    RolProceso.investigado => Icons.balance_rounded,
-  };
-
   /// Icono de TuTurno del papel: el micrófono de quien cuenta lo que sabe, el escudo de la protección y el juzgado
   /// donde se revisa lo que pasó (sin juzgar: todavía no se ha decidido nada).
   TuIcono get tuIcono => switch (this) {

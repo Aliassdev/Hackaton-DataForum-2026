@@ -488,7 +488,7 @@ class ChatAgenteNotifier extends ChatNotifier {
     final situacion = state.situacion;
     MensajeChat mensaje;
     try {
-      final respuesta = await ref
+      var respuesta = await ref
           .read(respuestasEjemploProvider)
           .ask(
             AskRequest(
@@ -498,6 +498,15 @@ class ChatAgenteNotifier extends ChatNotifier {
               historial: historial,
             ),
           );
+      // La misma red de seguridad que con el agente (sección 10.2, como en _mensajeDeRespuesta): si la pregunta suena a
+      // peligro, la tarjeta de ayuda sale siempre, diga lo que diga el ejemplo.
+      if (respuesta.tipo != TipoRespuesta.crisis && pareceCrisis(pregunta)) {
+        respuesta = AskResponse(
+          tipo: TipoRespuesta.crisis,
+          respuesta: MockTuTurnoApi.plantillas[TipoRespuesta.crisis]!,
+          latenciaMs: respuesta.latenciaMs,
+        );
+      }
       mensaje = MensajeChat.asistente(nuevoId(), respuesta, ejemplo: true);
     } catch (_) {
       mensaje = MensajeChat.error(nuevoId(), ApiException.mensajeSeguro, pregunta: pregunta, historial: historial);

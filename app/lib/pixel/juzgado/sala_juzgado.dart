@@ -2,10 +2,14 @@
 //
 // - La sala de vistas (un juicio de personas adultas) es la de lib/pixel/escenarios («sala_vistas»), la misma que sale
 //   en las escenas del juego, con los personajes del juzgado de lib/pixel/personajes. El público de espaldas es de
-//   esta carpeta.
+//   esta carpeta. Sobre el estrado, en vez de un escudo oficial, la balanza en un medallón (tema-justicia, §9).
 // - La sala del Juzgado de Menores (la audiencia del caso de Sergio) es de esta carpeta: el estrado, las mesas, el
 //   banco del chico y de su madre, los bancos del público vacíos y un cordón que cierra el paso. El fiscal es el de
 //   lib/pixel/personajes, el mismo que en las escenas de la Fiscalía; el resto del reparto es de reparto_juzgado.dart.
+//
+// Fidelidad (tema-justicia, §2 y §11): nada de mazo, ni placas ni medallas; toga solo en la sala (en los estrados);
+// en las dos salas, la mesa del juez a la misma altura que las de las partes y sin tarima (LOPJ, art. 187.2, como guía
+// de dibujo: los textos no lo dicen), y en la audiencia de Sergio, ni público ni cámaras.
 //
 // Si a lib/pixel/personajes le falta algún personaje, o a la sala de vistas algún puesto, se usa el de reserva de esta
 // carpeta: la actividad no se rompe mientras los otros equipos cambian sus dibujos.
@@ -116,7 +120,7 @@ class MontajeJuzgado {
 
   final ModoJuzgado modo;
 
-  /// La sala vacía, de 160 × 96.
+  /// La sala vacía, de 160 × 96 (la de vistas, con la balanza en el medallón: [fondoSinEscudo]).
   final Sprite fondo;
 
   /// Quién está y dónde.
@@ -176,13 +180,14 @@ MontajeJuzgado _montarSalaVistas() {
     return PuestoJuzgado(id: id, sprite: spriteDelRol(id), x: punto.x, y: punto.y - subir);
   }
 
+  final sinEscudo = fondoSinEscudo(sala.fondo.fotogramas.first);
   return MontajeJuzgado._(
     modo: ModoJuzgado.salaVistas,
-    fondo: sala.fondo,
+    fondo: identical(sinEscudo, sala.fondo.fotogramas.first) ? sala.fondo : Sprite('sala de vistas', sinEscudo),
     muebles: sala.delante,
     puestos: [
-      en('jueza', 'jueza', (x: 80, y: 50)),
-      en('letrada', 'letrada', (x: 109, y: 51)),
+      en('jueza', 'jueza', (x: 80, y: 56)),
+      en('letrada', 'letrada', (x: 109, y: 57)),
       en('fiscal', 'fiscal', (x: 18, y: 72)),
       en('abogadaVictima', 'abogada_victima', (x: 43, y: 72)),
       en('investigada', 'persona_investigada', (x: 117, y: 72)),
@@ -194,6 +199,22 @@ MontajeJuzgado _montarSalaVistas() {
       en('publico', 'publico', (x: 24, y: 100), subir: 12),
     ],
   );
+}
+
+/// [filas] (el fondo de la sala de vistas de lib/pixel/escenarios) sin el escudo de España que hay sobre el estrado:
+/// es un escudo oficial y no va en la app (tema-justicia, §9). Donde estaba, la pared y la madera de al lado (la veta
+/// se repite cada 6 píxeles) y, encima, la balanza en un medallón, la misma de la sala de menores. Si el escudo ya no
+/// está (porque se ha cambiado el fondo en lib/pixel/escenarios), devuelve [filas] tal cual.
+@visibleForTesting
+List<String> fondoSinEscudo(List<String> filas) {
+  // El escudo mide 9 × 15 y va pegado en (76, -2): ocupa las filas 0 a 12. Su firma, los cuarteles de la fila 5.
+  const x = 76, ancho = 9, alto = 13, veta = 18;
+  if (filas.length < alto || filas.first.length < x + ancho || !filas[5].startsWith('NRRRNWWWN', x)) return filas;
+  final lienzo = LienzoPixel(filas.first.length, filas.length)..pegar(filas, 0, 0);
+  for (var y = 0; y < alto; y++) {
+    lienzo.pegar([filas[y].substring(x - veta, x - veta + ancho)], x, y);
+  }
+  return (lienzo..pegar(_emblema, x - 2, 1)).filas;
 }
 
 /// La sala del Juzgado de Menores, de esta carpeta.
@@ -223,8 +244,9 @@ MontajeJuzgado _montarMenores() {
 
 /// Los muebles que tapan a los personajes que tienen detrás, y la chispa que señala a quien falta por conocer.
 abstract final class MueblesJuzgado {
-  /// El estrado (104 × 18): el tablero con micrófonos y papeles y el frente de madera con cuarterones. Tapa al juez
-  /// de cintura para abajo.
+  /// El estrado (104 × 14): la mesa del juez, de madera con cuarterones, con un micrófono y papeles. Mide lo mismo de
+  /// alto que las mesas de las partes y no va sobre una tarima: en los estrados, todos a la misma altura (LOPJ, art.
+  /// 187.2, como guía de dibujo). Tapa al juez de cintura para abajo, como las mesas a quien se sienta detrás.
   static final estrado = Sprite('estrado', _pintarEstrado());
 
   /// Una mesa de las partes (56 × 14), con papeles, una carpeta y un micrófono.
@@ -254,37 +276,15 @@ const _chispaGrande = ['...N...', '..NYN..', '.NYWYN.', 'NYWWWYN', '.NYWYN.', '.
 
 const _chispaPequena = ['.......', '...N...', '..NYN..', '.NYyYN.', '..NYN..', '...N...', '.......'];
 
-List<String> _pintarEstrado() {
-  const ancho = 104, alto = 18;
-  final l = LienzoPixel(ancho, alto)
-    ..rect(0, 2, ancho, 3, 'm')
-    ..lineaH(0, 2, ancho, 'N')
-    ..lineaH(0, 3, ancho, 'o')
-    ..lineaH(0, 5, ancho, 'N')
-    ..rect(1, 6, ancho - 2, alto - 6, 't')
-    ..lineaV(0, 2, alto - 2, 'N')
-    ..lineaV(ancho - 1, 2, alto - 2, 'N');
-  for (var x = 4; x < ancho - 8; x += 12) {
-    l
-      ..marco(x, 8, 9, alto - 11, 'T')
-      ..lineaH(x + 1, 9, 7, 'm');
-  }
-  l.lineaH(1, alto - 1, ancho - 2, 'T');
-  // Dos micrófonos y unos papeles.
-  for (final x in [52, 80]) {
-    l
-      ..punto(x, 0, 'N')
-      ..punto(x + 1, 0, 'N')
-      ..punto(x, 1, 'K');
-  }
-  l
-    ..rect(40, 1, 6, 1, 'W')
-    ..rect(70, 1, 5, 1, 'W');
-  return l.filas;
-}
+List<String> _pintarEstrado() =>
+    _pintarTablero(104, microfonos: const [51], papeles: const [(36, 7, 'W'), (60, 6, 'W'), (82, 5, 'Y')]);
 
-List<String> _pintarMesa() {
-  const ancho = 56, alto = 14;
+List<String> _pintarMesa() => _pintarTablero(56, microfonos: const [28], papeles: const [(8, 7, 'W'), (38, 6, 'Y')]);
+
+/// Una mesa de madera de [ancho] × 14 vista de frente: el tablero (con [papeles] encima, cada uno con su x, su largo y
+/// su color, y un micrófono de 2 píxeles en cada x de [microfonos]) y el frente con cuarterones.
+List<String> _pintarTablero(int ancho, {required List<int> microfonos, required List<(int, int, String)> papeles}) {
+  const alto = 14;
   final l = LienzoPixel(ancho, alto)
     ..rect(0, 2, ancho, 2, 'm')
     ..lineaH(0, 1, ancho, 'N')
@@ -296,13 +296,15 @@ List<String> _pintarMesa() {
   for (var x = 4; x < ancho - 6; x += 12) {
     l.marco(x, 6, 9, alto - 8, 'T');
   }
-  l
-    ..lineaH(1, alto - 1, ancho - 2, 'T')
-    // Papeles, una carpeta amarilla y un micrófono.
-    ..rect(8, 0, 7, 1, 'W')
-    ..rect(ancho - 18, 0, 6, 1, 'Y')
-    ..punto(ancho ~/ 2, 0, 'N')
-    ..punto(ancho ~/ 2 + 1, 0, 'N');
+  l.lineaH(1, alto - 1, ancho - 2, 'T');
+  for (final (x, largo, color) in papeles) {
+    l.rect(x, 0, largo, 1, color);
+  }
+  for (final x in microfonos) {
+    l
+      ..punto(x, 0, 'N')
+      ..punto(x + 1, 0, 'N');
+  }
   return l.filas;
 }
 
@@ -358,9 +360,8 @@ const _emblema = [
 ];
 
 /// El fondo de la sala del Juzgado de Menores: pared de piedra clara con dos ventanas con cortinas azules, la balanza
-/// de la justicia sobre el estrado, una puerta al fondo, la cámara que graba, zócalo y suelo de madera, la tarima del
-/// estrado, una alfombra azul en el pasillo y la barandilla del público, con un cordón que cierra el paso: hoy no hay
-/// público.
+/// de la justicia sobre el estrado, una puerta al fondo, zócalo y suelo de madera, una alfombra azul en el pasillo y la
+/// barandilla del público, con un cordón que cierra el paso: hoy no hay público. Ni tarima ni cámaras.
 @visibleForTesting
 List<String> pintarSalaMenores() {
   final l = LienzoPixel(_anchoSala, _altoSala, 'p');
@@ -419,16 +420,9 @@ List<String> pintarSalaMenores() {
     ..lineaH(16, 3, 28, 'N')
     ..lineaH(114, 3, 28, 'N')
     ..pegar(_emblema, 74, 1);
+  // Sin tarima (el juez, a la misma altura que las partes) y sin cámaras (tema-justicia, §2: ni público ni cámaras en
+  // la audiencia de Sergio).
   _puerta(l, 3, 12, 11, _suelo - 12);
-  l
-    // La cámara que graba la audiencia, la misma que la de la Sala Gesell.
-    ..pegar(camaraPared, 146, 3)
-    // Tarima del estrado.
-    ..rect(30, _suelo, 100, 5, 'm')
-    ..lineaH(30, _suelo, 100, 'o')
-    ..lineaH(30, _suelo + 4, 100, 'T')
-    ..lineaV(29, _suelo, 5, 'N')
-    ..lineaV(130, _suelo, 5, 'N');
   _pintarBarandilla(l);
   _pintarCordon(l);
   return l.filas;

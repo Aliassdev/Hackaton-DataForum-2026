@@ -522,4 +522,334 @@ List<PiezaIcono> dibujoDe(TuIcono icono) => switch (icono) {
     _capa(_p([38, 71, 62, 71, 61, 86, 39, 86], radio: 3), _azul),
     _detalle(Recorte.linea([43, 78.5, 57, 78.5]), _papel, trazo: 3.2, desde: 32),
   ],
+  TuIcono.balanza => [
+    _capa(_p([21, 33, 7, 61, 35, 61], radio: 2), _celeste),
+    _capa(_p([79, 33, 65, 61, 93, 61], radio: 2), _celeste),
+    _capa(
+      Path()
+        ..moveTo(6, 60)
+        ..lineTo(36, 60)
+        ..quadraticBezierTo(36, 77, 21, 77)
+        ..quadraticBezierTo(6, 77, 6, 60)
+        ..close(),
+      _amarillo,
+    ),
+    _capa(
+      Path()
+        ..moveTo(64, 60)
+        ..lineTo(94, 60)
+        ..quadraticBezierTo(94, 77, 79, 77)
+        ..quadraticBezierTo(64, 77, 64, 60)
+        ..close(),
+      _amarillo,
+    ),
+    _capa(_p([46.5, 86, 53.5, 86, 52.5, 28, 47.5, 28], radio: 1.5), _azul),
+    _capa(_p([13, 29, 87, 29, 86, 37, 14, 37]), _azul),
+    _capa(Recorte.circulo(50, 22, 7.5, semilla: 2), _amarillo),
+    _capa(_p([27, 93, 73, 93, 68, 82, 32, 82], radio: 3), _azul),
+    _detalle(Recorte.linea([38, 87.5, 62, 87.5]), _papel, trazo: 3, desde: 48),
+  ],
+  TuIcono.toga => [
+    _capa(_p([16, 30, 50, 13, 84, 30, 80, 34, 50, 21, 20, 34]), _amarillo),
+    _tira(
+      Path()
+        ..moveTo(50, 18)
+        ..lineTo(50, 13)
+        ..cubicTo(50, 7, 58, 6, 59.5, 11),
+      _amarillo,
+      4.5,
+    ),
+    _capa(_p([33, 21, 67, 21, 81, 91, 19, 91], radio: 4), _azul),
+    _capa(_p([40, 21, 60, 21, 50, 42], radio: 2), _papel),
+    _detalle(_p([48, 25, 52, 25, 53.2, 36, 50, 40.5, 46.8, 36], radio: 1.2), _tinta, desde: 48),
+    _capa(_p([33, 22, 18, 30, 9, 66, 26, 68, 34, 40], radio: 3), _azul),
+    _capa(_p([67, 22, 82, 30, 91, 66, 74, 68, 66, 40], radio: 3), _azul),
+    _capa(
+      Path()
+        ..moveTo(8.5, 63)
+        ..lineTo(25.5, 64.5)
+        ..lineTo(25.1, 71)
+        ..quadraticBezierTo(23, 75.5, 20.9, 71.6)
+        ..quadraticBezierTo(18.7, 75.8, 16.6, 71.8)
+        ..quadraticBezierTo(14.5, 75.8, 12.4, 71.6)
+        ..quadraticBezierTo(10.2, 74.8, 8.2, 70.4)
+        ..close(),
+      _papel,
+    ),
+    _capa(
+      Path()
+        ..moveTo(91.5, 63)
+        ..lineTo(74.5, 64.5)
+        ..lineTo(74.9, 71)
+        ..quadraticBezierTo(77, 75.5, 79.1, 71.6)
+        ..quadraticBezierTo(81.3, 75.8, 83.4, 71.8)
+        ..quadraticBezierTo(85.5, 75.8, 87.6, 71.6)
+        ..quadraticBezierTo(89.8, 74.8, 91.8, 70.4)
+        ..close(),
+      _papel,
+    ),
+    _detalle(Recorte.linea([50, 46, 50, 86]), _papel, trazo: 3, desde: 48),
+  ],
+  TuIcono.estrado => [
+    _capa(Recorte.caja(15, 12, 33, 48, radio: 7, giro: -1), _azul),
+    _capa(Recorte.caja(41, 12, 59, 48, radio: 7), _azul),
+    _capa(Recorte.caja(67, 12, 85, 48, radio: 7, giro: 1), _azul),
+    _capa(_p([9, 40, 91, 40, 90, 67, 10, 67], radio: 3), _amarillo),
+    _detalle(
+      _juntar([
+        Recorte.linea([30, 47, 30, 61]),
+        Recorte.linea([70, 47, 70, 61]),
+      ]),
+      _tinta,
+      trazo: 3,
+      desde: 48,
+    ),
+    _detalle(
+      _juntar([
+        Recorte.linea([50, 46, 50, 61]),
+        Recorte.linea([42, 49, 58, 49]),
+        Recorte.linea([44, 61, 56, 61]),
+      ]),
+      _tinta,
+      trazo: 3,
+      desde: 40,
+    ),
+    _detalle(
+      _juntar([Recorte.arco(42.5, 53, 4, 0, 180), Recorte.arco(57.5, 53, 4, 0, 180)]),
+      _tinta,
+      trazo: 3,
+      desde: 56,
+    ),
+    _capa(_p([5, 67, 95, 67, 93, 79, 7, 79]), _azul),
+    _capa(_p([13, 79, 87, 79, 85, 91, 15, 91]), _celeste),
+  ],
+  TuIcono.campanilla => [
+    _capa(
+      Recorte.girar(_p([44.5, 13, 55.5, 13, 56.5, 33, 43.5, 33], radio: 3), -12, centro: const Offset(50, 52)),
+      _azul,
+    ),
+    _capa(Recorte.girar(Recorte.circulo(50, 12, 6.5, semilla: 1), -12, centro: const Offset(50, 52)), _azul),
+    _capa(
+      Recorte.girar(
+        Path()
+          ..moveTo(50, 28)
+          ..cubicTo(35, 28, 30.5, 40, 29.5, 57)
+          ..cubicTo(28.8, 67, 23, 71, 18, 75)
+          ..lineTo(82, 75)
+          ..cubicTo(77, 71, 71.2, 67, 70.5, 57)
+          ..cubicTo(69.5, 40, 65, 28, 50, 28)
+          ..close(),
+        -12,
+        centro: const Offset(50, 52),
+      ),
+      _amarillo,
+    ),
+    _detalle(
+      Recorte.girar(Recorte.arco(50, 52, 13, 200, 55), -12, centro: const Offset(50, 52)),
+      _papel,
+      trazo: 4.5,
+      desde: 32,
+    ),
+    _capa(Recorte.girar(_p([15, 73, 85, 73, 87, 82, 13, 82], radio: 3.5), -12, centro: const Offset(50, 52)), _azul),
+    _capa(Recorte.girar(Recorte.circulo(50, 88, 5.5, semilla: 3), -12, centro: const Offset(50, 52)), _amarillo),
+  ],
+  TuIcono.selloConseguido => [
+    _capa(
+      Recorte.girar(Recorte.estrella(50, 50, 43, interior: 38, puntas: 16), -8, centro: const Offset(50, 50)),
+      _azul,
+    ),
+    _capa(Recorte.circulo(50, 50, 29, semilla: 2), _amarillo),
+    _detalle(Recorte.anillo(50, 50, 24.5, 21.5), _tinta, desde: 48),
+    _detalle(
+      Recorte.girar(_p([33, 51, 40, 44, 47, 51, 63, 35, 70, 42, 47, 65], radio: 2), -8, centro: const Offset(50, 50)),
+      _tinta,
+    ),
+  ],
+  TuIcono.expediente => [
+    _capa(_p([12, 20, 38, 18, 45, 25, 87, 23, 88, 86, 13, 88], radio: 3), _azul),
+    _capa(Recorte.caja(18, 21, 82, 74, radio: 2, giro: 4), _papel),
+    _detalle(
+      _juntar([
+        Recorte.linea([30, 30, 66, 33]),
+        Recorte.linea([30, 38, 58, 40.5]),
+      ]),
+      _tinta,
+      trazo: 3,
+      desde: 56,
+    ),
+    _capa(_p([9, 35, 84, 31, 88, 91, 13, 93], radio: 3), _amarillo),
+    _capa(Recorte.caja(24, 47, 64, 72, radio: 3, giro: -2.5), _papel),
+    _detalle(
+      Recorte.girar(
+        _juntar([
+          Recorte.linea([30, 55, 56, 55]),
+          Recorte.linea([30, 63, 48, 63]),
+        ]),
+        -2.5,
+        centro: const Offset(44, 59.5),
+      ),
+      _tinta,
+      trazo: 3.4,
+      desde: 40,
+    ),
+    _capa(_p([70, 31.5, 77, 31, 80.5, 92, 73.5, 92.5], radio: 1.5), _azul),
+  ],
+  TuIcono.citacion => [
+    _capa(Recorte.ticket(const Rect.fromLTRB(23, 8, 77, 56), muesca: 5.5, radio: 5, giro: 5), _amarillo),
+    _detalle(Recorte.girar(Recorte.anillo(50, 28, 10, 6.6), 5, centro: const Offset(50, 32)), _tinta, desde: 40),
+    _detalle(
+      Recorte.girar(
+        _juntar([
+          Recorte.linea([50, 28, 50, 22]),
+          Recorte.linea([50, 28, 54.5, 30]),
+        ]),
+        5,
+        centro: const Offset(50, 32),
+      ),
+      _tinta,
+      trazo: 3,
+      desde: 48,
+    ),
+    _capa(_p([9, 46, 91, 46, 91, 90, 9, 90], radio: 4.5), _azul),
+    _detalle(Recorte.linea([13, 50, 50, 73, 87, 50]), _papel, trazo: 4.2, desde: 32),
+  ],
+  TuIcono.puertaSala => [
+    _capa(_p([14, 27, 86, 27, 86, 93, 14, 93], radio: 3), _amarillo),
+    _capa(_p([20, 33, 49, 33, 49, 93, 20, 93], radio: 2), _azul),
+    _capa(_p([51, 33, 80, 33, 80, 93, 51, 93], radio: 2), _azul),
+    _detalle(
+      _juntar([Recorte.caja(25, 39, 44, 58, radio: 2), Recorte.caja(56, 39, 75, 58, radio: 2)]),
+      _papel,
+      trazo: 3,
+      desde: 56,
+    ),
+    _detalle(_juntar([Recorte.caja(42, 62, 46, 74, radio: 2), Recorte.caja(54, 62, 58, 74, radio: 2)]), _papel),
+    _capa(Recorte.caja(28, 6, 72, 22, radio: 4, giro: -2), _papel),
+    _detalle(
+      Recorte.girar(
+        _juntar([
+          Recorte.linea([35, 12, 56, 12]),
+          Recorte.linea([35, 17.5, 48, 17.5]),
+        ]),
+        -2,
+        centro: const Offset(50, 14),
+      ),
+      _tinta,
+      trazo: 3,
+      desde: 40,
+    ),
+    _detalle(Recorte.girar(Recorte.circulo(64, 14, 3.4), -2, centro: const Offset(50, 14)), _tinta, desde: 32),
+  ],
+  TuIcono.turnoPalabra => [
+    _tira(_juntar([Recorte.arco(46, 40, 24, -62, 50), Recorte.arco(46, 40, 36, -60, 46)]), _amarillo, 5.5),
+    _tira(
+      Path()
+        ..moveTo(50, 84)
+        ..cubicTo(50, 67, 37, 61, 41, 47),
+      _azul,
+      5.5,
+    ),
+    _capa(Recorte.caja(30, 22, 52, 50, radio: 11, giro: -28), _amarillo),
+    _detalle(
+      Recorte.girar(
+        _juntar([
+          Recorte.linea([35, 31, 47, 31]),
+          Recorte.linea([35, 38, 47, 38]),
+        ]),
+        -28,
+        centro: const Offset(41, 36),
+      ),
+      _tinta,
+      trazo: 3,
+      desde: 48,
+    ),
+    _capa(_p([28, 80, 72, 80, 76, 93, 24, 93], radio: 3.5), _azul),
+    _detalle(Recorte.circulo(62, 86.5, 3.6, semilla: 1), _amarillo, desde: 32),
+  ],
+  TuIcono.ley => [
+    _capa(Recorte.girar(Recorte.caja(28, 13, 84, 91, radio: 5), -5, centro: const Offset(50, 50)), _papel),
+    _detalle(
+      Recorte.girar(
+        _juntar([
+          Recorte.linea([80, 22, 80, 84]),
+          Recorte.linea([75.5, 87, 30, 87]),
+        ]),
+        -5,
+        centro: const Offset(50, 50),
+      ),
+      _tinta,
+      trazo: 3,
+      desde: 56,
+    ),
+    _capa(Recorte.girar(Recorte.caja(17, 9, 75, 87), -5, centro: const Offset(50, 50)), _azul),
+    _detalle(
+      Recorte.girar(Recorte.linea([26, 15, 26, 81]), -5, centro: const Offset(50, 50)),
+      _papel,
+      trazo: 4,
+      desde: 32,
+    ),
+    _capa(Recorte.girar(Recorte.circulo(50, 42, 14, semilla: 4), -5, centro: const Offset(50, 50)), _amarillo),
+    _detalle(
+      Recorte.girar(
+        _juntar([
+          Recorte.linea([50, 34, 50, 49]),
+          Recorte.linea([42, 37, 58, 37]),
+          Recorte.linea([45, 49, 55, 49]),
+        ]),
+        -5,
+        centro: const Offset(50, 50),
+      ),
+      _tinta,
+      trazo: 3,
+      desde: 40,
+    ),
+    _detalle(
+      Recorte.girar(
+        _juntar([Recorte.arco(42.5, 41, 3.6, 0, 180), Recorte.arco(57.5, 41, 3.6, 0, 180)]),
+        -5,
+        centro: const Offset(50, 50),
+      ),
+      _tinta,
+      trazo: 3,
+      desde: 56,
+    ),
+    _capa(
+      Recorte.girar(_p([55, 84, 64, 84, 64, 97, 59.5, 92.5, 55, 97], radio: 1.5), -5, centro: const Offset(50, 50)),
+      _amarillo,
+    ),
+  ],
+  TuIcono.manoAlzada => [
+    _capa(Recorte.caja(12, 46, 26, 76, radio: 7, giro: -36), _azul),
+    _capa(_p([24, 50, 76, 50, 73, 76, 60, 87, 38, 87, 26, 75], radio: 9), _azul),
+    _capa(Recorte.caja(26, 24, 38, 62, giro: -9), _azul),
+    _capa(Recorte.caja(39, 13, 51, 60, giro: -3), _azul),
+    _capa(Recorte.caja(51, 13, 63, 60, giro: 3), _azul),
+    _capa(Recorte.caja(63, 24, 75, 62, giro: 9), _azul),
+    _capa(_p([35, 83, 63, 83, 65, 94, 33, 94], radio: 3), _amarillo),
+  ],
+  TuIcono.panelTurnos => [
+    _tira(
+      _juntar([
+        Recorte.linea([30, 6, 30, 22]),
+        Recorte.linea([70, 6, 70, 22]),
+      ]),
+      _azul,
+      4.5,
+    ),
+    _capa(Recorte.caja(7, 21, 93, 81, radio: 9), _azul),
+    _capa(Recorte.caja(17, 32, 47, 70, radio: 4), _papel),
+    _capa(Recorte.caja(53, 32, 83, 70, radio: 4), _papel),
+    _detalle(Recorte.anillo(32, 51, 10.5, 5.5), _tinta, desde: 32),
+    _detalle(_p([60, 42, 76, 42, 76, 47, 68.5, 64, 63, 64, 70, 47, 60, 47], radio: 1), _tinta, desde: 32),
+    _detalle(
+      _juntar([
+        Recorte.linea([17, 51, 47, 51]),
+        Recorte.linea([53, 51, 83, 51]),
+      ]),
+      _papel,
+      trazo: 2.4,
+      desde: 56,
+    ),
+    _detalle(Recorte.circulo(87, 27.5, 2.6), _amarillo, desde: 48),
+  ],
 };

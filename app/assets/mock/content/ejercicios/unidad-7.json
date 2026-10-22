@@ -1,0 +1,166 @@
+[
+  {
+    "id": "E-701",
+    "tipo": "eleccion",
+    "concepto": "C-escuchado-familia",
+    "dificultad": 1,
+    "pregunta": "Los padres de Hugo, de 12 años, se separan y no se ponen de acuerdo. ¿Tiene que escucharle el juez?",
+    "opciones": [
+      "Sí: desde los 12 años, el juez tiene que escucharle siempre",
+      "No: los hijos nunca hablan con el juez",
+      "Solo cuando cumpla 18 años"
+    ],
+    "correcta": 0,
+    "explicacion": "Si los padres no se ponen de acuerdo, el juez tiene que oír siempre a los hijos de 12 años o más. Con menos de 12, también puede oírlos si lo ve necesario.",
+    "fuente": "LEC, art. 770",
+    "validado": true
+  },
+  {
+    "id": "E-702",
+    "tipo": "vf",
+    "concepto": "C-escuchado-familia",
+    "dificultad": 1,
+    "afirmacion": "Si tienes menos de 12 años, el juez no puede escucharte cuando tus padres se separan.",
+    "correcta": false,
+    "explicacion": "Sí puede: si lo ve necesario, el juez puede escucharte aunque tengas menos de 12 años. Tienes derecho a que te escuchen, tengas la edad que tengas.",
+    "fuente": "LEC, art. 770; LO 1/1996, art. 9.1",
+    "validado": true
+  },
+  {
+    "id": "E-703",
+    "tipo": "eleccion",
+    "concepto": "C-tu-opinion",
+    "dificultad": 2,
+    "pregunta": "Cuando el juez te escucha, ¿quién decide al final?",
+    "opciones": [
+      "El juez, teniendo en cuenta tu opinión",
+      "Tú: lo que digas es lo que se hace",
+      "Tus padres, sin preguntarte"
+    ],
+    "correcta": 0,
+    "explicacion": "Tu opinión cuenta. Pero no tienes que elegir tú: decide el juez.",
+    "fuente": "LO 1/1996, art. 9; LEC, art. 770",
+    "validado": true
+  },
+  {
+    "id": "E-704",
+    "tipo": "vf",
+    "concepto": "C-tu-opinion",
+    "dificultad": 2,
+    "afirmacion": "Te pueden escuchar a ti directamente o a través de alguien que hable por ti.",
+    "correcta": true,
+    "explicacion": "Tienes derecho a que te escuchen en todo procedimiento que te afecte, directamente o por medio de un representante.",
+    "fuente": "CDN, art. 12.2",
+    "validado": true
+  },
+  {
+    "id": "E-705",
+    "tipo": "ordenar",
+    "concepto": "C-tu-opinion",
+    "dificultad": 2,
+    "enunciado": "Hugo va a hablar con la jueza. Ordena los pasos.",
+    "pasos": [
+      "Le avisan de que le quieren escuchar",
+      "Le explican con palabras claras qué se va a decidir",
+      "Hugo habla con la jueza y da su opinión",
+      "La jueza toma la decisión"
+    ],
+    "fuente": "LO 1/1996, art. 9; LEC, art. 770; CDN, art. 12.2",
+    "validado": true
+  },
+  {
+    "id": "E-706",
+    "tipo": "dilo",
+    "concepto": "C-escuchado-familia",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras cuándo te escucha el juez si tus padres se separan y no se ponen de acuerdo.",
+    "proposiciones": [
+      "Desde los 12 años, el juez tiene que escucharte",
+      "Con menos de 12, puede escucharte si lo ve necesario",
+      "Tu opinión cuenta, pero decide el juez"
+    ],
+    "fuente": "LEC, art. 770; LO 1/1996, art. 9",
+    "validado": true
+  },
+  {
+    "id": "E-707",
+    "tipo": "eleccion",
+    "concepto": "C-seguir-familia",
+    "dificultad": 1,
+    "pregunta": "Si en una familia hay problemas, pero no son tan graves, ¿qué es lo normal?",
+    "opciones": [
+      "Ayudar a la familia para que el niño o la niña siga en casa",
+      "Que el niño o la niña se vaya siempre a vivir con otra familia",
+      "Que nadie haga nada"
+    ],
+    "correcta": 0,
+    "explicacion": "En esos casos, la administración ayuda a la familia sin separar al niño o a la niña de su casa. A eso se le llama situación de riesgo.",
+    "fuente": "LO 1/1996, art. 17.1",
+    "validado": true
+  },
+  {
+    "id": "E-708",
+    "tipo": "vf",
+    "concepto": "C-seguir-familia",
+    "dificultad": 2,
+    "afirmacion": "Solo si quienes cuidan de un niño o una niña no cumplen, no pueden o no saben protegerle, la administración se hace cargo.",
+    "correcta": true,
+    "explicacion": "A eso se le llama desamparo: cuando le falta la ayuda necesaria porque quienes le cuidan no pueden protegerle. La regla es seguir con la familia.",
+    "fuente": "LO 1/1996, arts. 17.1 y 18.2",
+    "validado": true
+  },
+  {
+    "id": "E-709",
+    "tipo": "eleccion",
+    "concepto": "C-seguir-familia",
+    "dificultad": 2,
+    "pregunta": "La madre de Leo es víctima de violencia en casa. ¿Qué busca la ley?",
+    "opciones": [
+      "Apoyarles para que Leo pueda seguir viviendo con ella",
+      "Separar a Leo de su madre",
+      "Que Leo decida él solo qué hacer"
+    ],
+    "correcta": 0,
+    "explicacion": "Si quien cuida de un niño es víctima de violencia de género o doméstica, las autoridades tienen que apoyarles. Así puede seguir viviendo con esa persona.",
+    "fuente": "LO 1/1996, art. 12.3",
+    "validado": true
+  },
+  {
+    "id": "E-710",
+    "tipo": "vf",
+    "concepto": "C-defender-derechos",
+    "dificultad": 2,
+    "afirmacion": "Si eres víctima en un proceso penal y tus intereses chocan con los de tus padres, la Fiscalía pedirá que te represente un defensor judicial.",
+    "correcta": true,
+    "explicacion": "Si el fiscal ve que los intereses de quienes te representan chocan con los tuyos, pedirá al juez que nombre a un defensor judicial para ti.",
+    "fuente": "Ley 4/2015, art. 26.2 a)",
+    "validado": true
+  },
+  {
+    "id": "E-711",
+    "tipo": "emparejar",
+    "concepto": "C-defender-derechos",
+    "dificultad": 2,
+    "pares": [
+      ["Fiscalía", "Puedes contarle que no se respetan tus derechos"],
+      ["Defensor del Pueblo", "Recibe quejas sobre las administraciones"],
+      ["Defensor judicial", "Puede representarte si tus intereses chocan con los de tus padres"]
+    ],
+    "fuente": "LO 1/1996, art. 10.2; LO 3/1981, art. 10.1; Ley 4/2015, art. 26.2 a)",
+    "validado": true
+  },
+  {
+    "id": "E-712",
+    "tipo": "dilo",
+    "concepto": "C-seguir-familia",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué dice la ley sobre seguir viviendo con tu familia.",
+    "proposiciones": [
+      "Lo normal es ayudar a la familia para que sigas en casa",
+      "Solo si no te pueden proteger se busca otra forma de cuidarte",
+      "Nadie puede prometer cómo acabará, pero te tienen que escuchar"
+    ],
+    "fuente": "LO 1/1996, arts. 9.1, 17.1 y 18.2",
+    "validado": true
+  }
+]

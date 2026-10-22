@@ -1,7 +1,8 @@
 // Reparto provisional de «¿Quién es quién en el juzgado?»: los personajes de la sala de vistas y de la audiencia del
 // Juzgado de Menores, en pixel art (adultos de 24 × 36). Siguen la guía de lib/pixel/LEEME.md: contorno azul noche de
 // 1 píxel, luz de arriba a la izquierda y caras tranquilas. Las togas son negras, como las de los personajes de
-// lib/pixel/personajes.
+// lib/pixel/personajes, y solo las llevan quienes están en los estrados; nadie lleva placa ni medalla (son insignias
+// oficiales: tema-justicia, §2).
 //
 // Cuando lib/pixel/personajes tenga ya los suyos (la jueza, el fiscal, las abogadas, la letrada, la policía, la persona
 // investigada y el testigo), se cambian en un solo sitio: el mapa de sprites de sala_juzgado.dart.
@@ -75,7 +76,8 @@ List<String> parpadear(List<String> filas, {int fila = 9, List<int> columnas = c
   return retocar(filas, {fila: cerrados});
 }
 
-/// La jueza: moño negro, piel 5, toga negra con puñetas blancas y la medalla dorada.
+/// La jueza: moño negro, piel 5, toga negra con puñetas blancas y corbata oscura (sin placa ni medalla: son insignias
+/// oficiales).
 const _jueza = [
   '..........NNNN..........',
   '.........NKzzNN.........',
@@ -93,12 +95,12 @@ const _jueza = [
   '.......NN555566NN.......',
   '........NN6666NN........',
   '......NNzWW55WWzNN......',
-  '.....NKzzYWWWWYzzzN.....',
-  '....NKzzzzYzzYzzzzzN....',
-  '....NKNzzzzYYzzzzNzN....',
-  '....NKNzzzyYYozzzNzN....',
-  '....NKNzzzYYoozzzNzN....',
-  '...NKzNzzzzoozzzzNzzN...',
+  '.....NKzzzWWWWzzzzN.....',
+  '....NKzzzzzWWzzzzzzN....',
+  '....NKNzzzzKKzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '...NKzNzzzzzzzzzzNzzN...',
   '...NKzNzzzzzzzzzzNzzN...',
   '...NWWNzzzzzzzzzzNWWN...',
   '....N5NzzzzzzzzzzN6N....',
@@ -115,7 +117,7 @@ const _jueza = [
   '....xxxxxxxxxxxxxxxx....',
 ];
 
-/// El fiscal: pelo y barba grises, piel 1, toga con puñetas, corbata azul y placa dorada.
+/// El fiscal: pelo y barba grises, piel 1, toga con puñetas y corbata azul (sin placa).
 const _fiscal = [
   '........................',
   '........................',
@@ -135,8 +137,8 @@ const _fiscal = [
   '......NNzWW11WWzNN......',
   '.....NKzzzWAAWzzzzN.....',
   '....NKzzzzzAAzzzzzzN....',
-  '....NKNzzzzAAzyYzNzN....',
-  '....NKNzzzzzzzYozNzN....',
+  '....NKNzzzzAAzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
   '....NKNzzzzzzzzzzNzN....',
   '...NKzNzzzzzzzzzzNzzN...',
   '...NKzNzzzzzzzzzzNzzN...',
@@ -235,7 +237,7 @@ const _abogadoDefensa = [
   '....xxxxxxxxxxxxxxxx....',
 ];
 
-/// La letrada de la Administración de Justicia: media melena rubia, piel 3, toga con puñetas, blusa lila y placa plateada.
+/// La Letrada de la Administración de Justicia: media melena rubia, piel 3, toga con puñetas y blusa lila (sin placa).
 const _letrada = [
   '........................',
   '........NNNNNNNN........',
@@ -255,8 +257,8 @@ const _letrada = [
   '......NNzLL33LLzNN......',
   '.....NKzzzLLLLzzzzN.....',
   '....NKzzzzzLLzzzzzzN....',
-  '....NKNzzzzzzzWgzNzN....',
-  '....NKNzzzzzzzgGzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
   '....NKNzzzzzzzzzzNzN....',
   '...NKzNzzzzzzzzzzNzzN...',
   '...NKzNzzzzzzzzzzNzzN...',
@@ -395,7 +397,8 @@ const _policia = [
   '......xxxxxxxxxxxx......',
 ];
 
-/// El juez de menores: calvo con pelo blanco a los lados, piel 3, toga con puñetas y medalla.
+/// El juez de menores: calvo con pelo blanco a los lados, piel 3, toga con puñetas y corbata oscura (sin placa ni
+/// medalla: son insignias oficiales).
 const _juezMenores = [
   '........................',
   '........................',
@@ -413,12 +416,12 @@ const _juezMenores = [
   '.......NN333344NN.......',
   '........NN4444NN........',
   '......NNzWW33WWzNN......',
-  '.....NKzzYWWWWYzzzN.....',
-  '....NKzzzzYzzYzzzzzN....',
-  '....NKNzzzzYYzzzzNzN....',
-  '....NKNzzzyYYozzzNzN....',
-  '....NKNzzzYYoozzzNzN....',
-  '...NKzNzzzzoozzzzNzzN...',
+  '.....NKzzzWWWWzzzzN.....',
+  '....NKzzzzzWWzzzzzzN....',
+  '....NKNzzzzKKzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '...NKzNzzzzzzzzzzNzzN...',
   '...NKzNzzzzzzzzzzNzzN...',
   '...NWWNzzzzzzzzzzNWWN...',
   '....N3NzzzzzzzzzzN4N....',
@@ -436,7 +439,7 @@ const _juezMenores = [
 ];
 
 /// La abogada del menor: pelo afro, piel 6, toga y corbata coral (la defensa va siempre en coral, como el abogado de
-/// lib/pixel/personajes; en amarillo se confundía con la medalla y el cordón dorado del juez de menores).
+/// lib/pixel/personajes).
 const _letradaMenor = [
   '.......NNNNNNNNNN.......',
   '.....NNKKKzzzzzzNNN.....',

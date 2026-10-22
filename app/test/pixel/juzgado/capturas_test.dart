@@ -31,14 +31,18 @@ Future<void> _cargarFuentes() async {
     await cargador.load();
   }
 
-  // Las del tema de ahora y las del rediseño (MaryKate para los títulos y Nunito para el texto).
+  // Las del tema: Atkinson (lectura fácil), Nunito (el texto), MaryKate (los títulos) y Pixelify (el kit pixel).
   await cargar('AtkinsonHyperlegible', [
     'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
     'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
     'assets/fonts/AtkinsonHyperlegible-Italic.ttf',
     'assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf',
   ]);
-  await cargar('LondrinaSolid', ['assets/fonts/LondrinaSolid-Regular.ttf', 'assets/fonts/LondrinaSolid-Black.ttf']);
+  await cargar('PixelifySans', [
+    'assets/fonts/PixelifySans-Regular.ttf',
+    'assets/fonts/PixelifySans-SemiBold.ttf',
+    'assets/fonts/PixelifySans-Bold.ttf',
+  ]);
   await cargar('Nunito', [
     'assets/fonts/Nunito-Regular.ttf',
     'assets/fonts/Nunito-SemiBold.ttf',

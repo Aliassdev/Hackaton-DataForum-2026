@@ -2,10 +2,10 @@ import '../motor/motor.dart';
 import 'escenario_pixel.dart';
 import 'teselas.dart';
 
-/// Una comisaría amable: paredes blancas y azules, una placa con una estrella (sin escudos reales ni letras), una
-/// ventana con persiana, un tablón con carteles de dibujos, sillas de espera, una fuente de agua, plantas y el
-/// mostrador de atención. Nada de armas, rejas ni esposas. El mostrador tapa a quien atiende detrás (el puesto
-/// «policia»).
+/// Una comisaría amable: paredes blancas y azules, un cartel de avisos de papel (sin escudos reales, sin letras y sin
+/// estrellas de sheriff, que la policía de España no lleva), una ventana con persiana, un tablón con carteles de
+/// dibujos, sillas de espera, una fuente de agua, plantas y el mostrador de atención. Nada de armas, rejas ni esposas.
+/// El mostrador tapa a quien atiende detrás (el puesto «policia»).
 final escenarioComisaria = EscenarioPixel(
   lugar: 'comisaria',
   descripcion:
@@ -55,9 +55,9 @@ final _comisaria = _pintarComisaria();
     ..apoyar(plantaGrande, 86, 66)
     ..sombraSuelo(91, 64, 12, filas: 1);
 
-  // La placa con la estrella, en la pared entre la ventana y el mostrador (detrás de la cabeza de quien atiende
-  // parecía una aureola).
-  l.pegar(_placa, 88, 5);
+  // Un cartel de avisos, en la pared entre la ventana y el mostrador (detrás de la cabeza de quien atiende, cualquier
+  // cosa redonda parecería una aureola).
+  l.pegar(_cartelAvisos, 91, 8);
 
   final mostrador = _dibujarMostrador();
   l.pegar(mostrador, _mostradorX, _mostradorY);
@@ -100,38 +100,29 @@ const _fuente = [
   '...........',
 ];
 
-/// La placa (26 × 26): un círculo azul con aro amarillo y una estrella.
-const _placa = [
-  '.........NNNNNNNN.........',
-  '.......NNYYYYYYYYNN.......',
-  '.....NNYYooooooooYYNN.....',
-  '....NYYooAAAAAAAAooYYN....',
-  '...NYooAAAAAAAAAAAAooYN...',
-  '..NYoAAAAAAAYAAAAAAAAoYN..',
-  '..NYoAAAAAAAYAAAAAAAAoYN..',
-  '.NYoAAAAAAAYYYAAAAAAAAoYN.',
-  '.NYoAAAAAAAYYYAAAAAAAAoYN.',
-  'NYoAAAAAAAYYYYYAAAAAAAAoYN',
-  'NYoAYYYYYYYYyYYYYYYYYAAoYN',
-  'NYoAAYYYYYYyyyYYYYYYAAAoYN',
-  'NYoAAAYYYYYyyyYYYYYAAAAoYN',
-  'NYoAAAAYYYYYyYYYYYAAAAAoYN',
-  'NYoAAAAAYYYYYYYYYAAAAAAoYN',
-  'NYoAAAAAYYYYYYYYYAAAAAAoYN',
-  'NYoAAAAYYYYYYYYYYYAAAAAoYN',
-  '.NYoAAAYYYYAAAYYYYAAAAoYN.',
-  '.NYoAAYYYAAAAAAAYYYAAAoYN.',
-  '..NYoAYYAAAAAAAAAYYAAoYN..',
-  '..NYoAAAAAAAAAAAAAAAAoYN..',
-  '...NYooAAAAAAAAAAAAooYN...',
-  '....NYYooAAAAAAAAooYYN....',
-  '.....NNYYooooooooYYNN.....',
-  '.......NNYYYYYYYYNN.......',
-  '.........NNNNNNNN.........',
+/// Un cartel de avisos de papel (20 × 17), con una banda azul arriba, líneas en vez de letras y una chincheta.
+const _cartelAvisos = [
+  '.........NN.........',
+  '........NRRN........',
+  'NNNNNNNNNRRNNNNNNNNN',
+  'NAAAAAAAAAAAAAAAAAAN',
+  'NAAAAAAAAAAAAAAAAAAN',
+  'NPPPPPPPPPPPPPPPPPPN',
+  'NPggggggggggggggPPPN',
+  'NPPPPPPPPPPPPPPPPPPN',
+  'NPggggggggggggPPPPPN',
+  'NPPPPPPPPPPPPPPPPPPN',
+  'NPggggggggggggggggPN',
+  'NPPPPPPPPPPPPPPPPPPN',
+  'NPgggggggggPPPPPPPPN',
+  'NPPPPPPPPPPPPPPPPPPN',
+  'NPPPPPPPPPPPPPPPPPpN',
+  'NPPPPPPPPPPPPPPPPppN',
+  'NNNNNNNNNNNNNNNNNNNN',
 ];
 
-/// El mostrador (64 × 31, el tablero en la fila 12): frente azul con la estrella y tablero de madera; encima, una
-/// pantalla de espaldas, un timbre y una planta pequeña.
+/// El mostrador (64 × 31, el tablero en la fila 12): frente azul con una franja amarilla y tablero de madera; encima,
+/// una pantalla de espaldas, un timbre y una planta pequeña.
 List<String> _dibujarMostrador() {
   const ancho = 64, alto = 31, tablero = 12;
   final l = LienzoPixel(ancho, alto)
@@ -142,15 +133,10 @@ List<String> _dibujarMostrador() {
     ..lineaV(ancho - 3, tablero + 3, alto - tablero - 5, 'D')
     ..lineaH(2, alto - 3, ancho - 4, 'D')
     ..lineaH(2, tablero + 3, ancho - 4, 'D');
-  // Una franja amarilla y la estrella en el centro del frente.
+  // Una franja amarilla en el frente (sin estrella: es de las películas de otros países).
   l
     ..lineaH(2, tablero + 7, ancho - 4, 'Y')
     ..lineaH(2, tablero + 8, ancho - 4, 'o')
-    ..pegar(
-      ['....N....', '...NYN...', 'NNNYYYNNN', 'NYYYyYYYN', '.NYYYYYN.', '.NYYNYYN.', 'NYYN.NYYN', 'NNN...NNN'],
-      27,
-      tablero + 5,
-    )
     // Pantalla de espaldas, timbre y planta.
     ..caja(6, 3, 16, 10, 'K')
     ..lineaH(7, 4, 14, 'G')

@@ -143,6 +143,36 @@ void main() {
     });
   });
 
+  group('empezar en una escena (el atajo de la demo)', () {
+    test('como si se hubiera llegado por el camino más corto, sin cartas', () {
+      final partida = Partida.enEscena(caso, 'E3');
+      expect(partida.escena.id, 'E3');
+      expect(partida.recorrido, ['E1', 'E2', 'E3']);
+      expect(partida.numeroEscena, 3);
+      expect(partida.totalEscenas, 4);
+      expect(partida.cartasGanadas, isEmpty);
+      expect(partida.eleccion, isNull);
+      expect(partida.empezada, isTrue);
+      final siguiente = partida.elegir(0).avanzar();
+      expect(siguiente.escena.id, 'E4');
+    });
+
+    test('una escena que no existe empieza por la primera; la primera, igual que una nueva', () {
+      expect(Partida.enEscena(caso, 'Z9').recorrido, ['E1']);
+      expect(Partida.enEscena(caso, 'E1').recorrido, ['E1']);
+      expect(Partida.enEscena(caso, 'E1').empezada, isFalse);
+    });
+
+    test('el caso oficial de Lucía, en S5 (la cámara de la Sala Gesell)', () {
+      final lucia = _caso(casoOficialDeEjemplo());
+      final partida = Partida.enEscena(lucia, 'S5');
+      expect(partida.escena.id, 'S5');
+      expect(partida.numeroEscena, 5);
+      expect(partida.totalEscenas, 11);
+      expect(partida.decision!.pregunta, '¿Para qué sirve la cámara?');
+    });
+  });
+
   test('no se puede elegir dos veces ni una opción que no existe', () {
     final p = Partida.nueva(caso);
     expect(identical(p.elegir(-1), p), isTrue);

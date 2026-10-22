@@ -1,0 +1,164 @@
+[
+  {
+    "id": "E-401",
+    "tipo": "eleccion",
+    "concepto": "C-entender",
+    "dificultad": 1,
+    "pregunta": "Si eres víctima, ¿cómo te tienen que hablar en la policía o en el juzgado?",
+    "opciones": [
+      "Con palabras claras, sencillas y adaptadas a tu edad",
+      "Con palabras técnicas, para que suene más oficial",
+      "Muy rápido, aunque no lo entiendas"
+    ],
+    "correcta": 0,
+    "explicacion": "Tienes derecho a entender y a que te entiendan. Todo lo que te digan, de palabra o por escrito, tiene que ser claro, sencillo y adaptado a ti.",
+    "fuente": "Ley 4/2015, art. 4",
+    "validado": true
+  },
+  {
+    "id": "E-402",
+    "tipo": "vf",
+    "concepto": "C-informacion",
+    "dificultad": 1,
+    "afirmacion": "Si eres víctima, te tienen que explicar tus derechos desde el primer momento, incluso antes de denunciar.",
+    "correcta": true,
+    "explicacion": "Desde el primer contacto con la policía o el juzgado, incluso antes de la denuncia, te tienen que informar. Por ejemplo, de cómo pedir protección.",
+    "fuente": "Ley 4/2015, art. 5.1",
+    "validado": true
+  },
+  {
+    "id": "E-403",
+    "tipo": "vf",
+    "concepto": "C-entender",
+    "dificultad": 1,
+    "afirmacion": "Si no entiendes una pregunta cuando declaras, tienes que contestarla igualmente.",
+    "correcta": false,
+    "explicacion": "Puedes pedir que te la repitan o que te la expliquen de otra forma. Tienes derecho a entender y a que te entiendan.",
+    "fuente": "Ley 4/2015, art. 4; LO 1/1996, art. 9.1",
+    "validado": true
+  },
+  {
+    "id": "E-404",
+    "tipo": "eleccion",
+    "concepto": "C-informacion",
+    "dificultad": 2,
+    "pregunta": "Sergio es víctima. ¿Qué decisiones os tienen que notificar a él o a su familia?",
+    "opciones": [
+      "La sentencia y la decisión de no seguir con el caso",
+      "Ninguna: solo se avisa a quien está acusado",
+      "Solo si hay que pagar una multa"
+    ],
+    "correcta": 0,
+    "explicacion": "A la víctima le tienen que notificar, entre otras, la decisión de no empezar el proceso y la sentencia. Si es menor, se notifica a quien la representa.",
+    "fuente": "Ley 4/2015, arts. 4 y 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-405",
+    "tipo": "emparejar",
+    "concepto": "C-informacion",
+    "dificultad": 2,
+    "pares": [
+      ["Antes de denunciar", "Ya te tienen que explicar tus derechos"],
+      ["Antes del juicio", "Te avisan de la fecha, la hora y el lugar"],
+      ["Al final", "Te notifican la sentencia"]
+    ],
+    "fuente": "Ley 4/2015, arts. 5.1 y 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-406",
+    "tipo": "dilo",
+    "concepto": "C-entender",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué significa el derecho a entender y a que te entiendan.",
+    "proposiciones": [
+      "Te tienen que hablar con palabras claras y sencillas",
+      "Lo que te expliquen tiene que estar adaptado a tu edad",
+      "Si no entiendes algo, puedes pedir que te lo repitan"
+    ],
+    "fuente": "Ley 4/2015, art. 4",
+    "validado": true
+  },
+  {
+    "id": "E-407",
+    "tipo": "eleccion",
+    "concepto": "C-proteccion",
+    "dificultad": 1,
+    "pregunta": "¿Qué tienen que evitar los juzgados y las fiscalías?",
+    "opciones": [
+      "Que la víctima o su familia se crucen con la persona acusada",
+      "Que la víctima hable con su familia",
+      "Que la víctima pregunte sus dudas"
+    ],
+    "correcta": 0,
+    "explicacion": "Los juzgados y las fiscalías tienen que organizarse para evitar el contacto directo entre la víctima y su familia y la persona acusada.",
+    "fuente": "Ley 4/2015, art. 20",
+    "validado": true
+  },
+  {
+    "id": "E-408",
+    "tipo": "vf",
+    "concepto": "C-intimidad-victima",
+    "dificultad": 1,
+    "afirmacion": "Si eres víctima y menor de edad, se puede publicar una foto tuya si no sale tu nombre.",
+    "correcta": false,
+    "explicacion": "Está prohibido publicar imágenes tuyas o de tu familia, y cualquier dato que permita reconocerte, aunque no salga tu nombre.",
+    "fuente": "LECrim, art. 681.3",
+    "validado": true
+  },
+  {
+    "id": "E-409",
+    "tipo": "eleccion",
+    "concepto": "C-testigo",
+    "dificultad": 2,
+    "pregunta": "Sergio tiene 13 años y tiene que declarar. ¿Qué tiene que pedir la Fiscalía de Menores?",
+    "opciones": [
+      "Que su declaración se grabe con las garantías de la prueba preconstituida",
+      "Que la repita varias veces, para estar seguros",
+      "Que declare delante de los chicos denunciados"
+    ],
+    "correcta": 0,
+    "explicacion": "La ley considera especialmente vulnerable a toda persona menor de 14 años. Por eso la Fiscalía tiene que pedir que su declaración se haga como prueba preconstituida.",
+    "fuente": "LO 5/2000, art. 23.4 b)",
+    "validado": true
+  },
+  {
+    "id": "E-410",
+    "tipo": "vf",
+    "concepto": "C-proteccion",
+    "dificultad": 2,
+    "afirmacion": "Si eres víctima, tu opinión cuenta para decidir cómo protegerte durante el proceso.",
+    "correcta": true,
+    "explicacion": "Si la víctima es menor de edad, para decidir cómo protegerla se tienen en cuenta sus opiniones y sus intereses.",
+    "fuente": "Ley 4/2015, art. 24.3",
+    "validado": true
+  },
+  {
+    "id": "E-411",
+    "tipo": "emparejar",
+    "concepto": "C-intimidad-victima",
+    "dificultad": 2,
+    "pares": [
+      ["Tu nombre y tus fotos", "No se pueden publicar"],
+      ["Jueces, fiscales y policías", "Tienen que proteger tu intimidad"],
+      ["Tu persona de confianza", "Puede acompañarte cuando declaras"]
+    ],
+    "fuente": "LECrim, arts. 433 y 681.3; Ley 4/2015, art. 22",
+    "validado": true
+  },
+  {
+    "id": "E-412",
+    "tipo": "dilo",
+    "concepto": "C-proteccion",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras cómo protege la ley a una víctima menor de edad durante el proceso.",
+    "proposiciones": [
+      "Se evita que se cruce con la persona acusada",
+      "Se protege su intimidad y no se puede publicar nada que la identifique",
+      "Tienen en cuenta su opinión para decidir cómo protegerla"
+    ],
+    "fuente": "Ley 4/2015, arts. 20, 22 y 24.3; LECrim, art. 681.3",
+    "validado": true
+  }
+]

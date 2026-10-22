@@ -134,6 +134,14 @@ void main() {
     });
   });
 
+  test('caminoHasta: las escenas del camino más corto desde la primera', () {
+    final caso = Caso.fromJson(jsonDecode(casoPrueba) as Map<String, dynamic>);
+    expect(caso.caminoHasta('E1'), ['E1']);
+    expect(caso.caminoHasta('E3'), ['E1', 'E2', 'E3']);
+    expect(caso.caminoHasta('E4'), ['E1', 'E2', 'E3', 'E4']);
+    expect(caso.caminoHasta('no-existe'), isNull);
+  });
+
   test('Lugar acepta tildes, espacios, guiones y alias', () {
     expect(Lugar.desde('sala_gesell'), Lugar.salaGesell);
     expect(Lugar.desde('Sala Gesell'), Lugar.salaGesell);
@@ -144,6 +152,10 @@ void main() {
     expect(Lugar.desde('Comisaría'), Lugar.comisaria);
     expect(Lugar.desde('Fiscalía'), Lugar.fiscalia);
     expect(Lugar.desde('después'), Lugar.despues);
+    expect(Lugar.desde('habitacion'), Lugar.habitacion);
+    expect(Lugar.desde('Habitación'), Lugar.habitacion);
+    expect(Lugar.desde('dormitorio'), Lugar.habitacion);
+    expect(Lugar.habitacion.nombre, 'En su habitación');
     expect(Lugar.desde('la luna'), Lugar.otro);
     expect(Lugar.desde(''), Lugar.otro);
   });

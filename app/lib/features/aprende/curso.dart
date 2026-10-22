@@ -163,18 +163,12 @@ int _ordenNatural(String a, String b) {
   return a.compareTo(b);
 }
 
-/// Racha que se enseña: la guardada si la última lección fue hoy o ayer; si no, se ha perdido.
-int rachaVisible(Progreso progreso, DateTime ahora) {
-  final ultimo = progreso.ultimoDiaConLeccion;
-  if (ultimo == null) return 0;
-  return diasEntre(ultimo, ahora) <= 1 ? progreso.racha : 0;
-}
+/// Racha que se enseña hoy, con la racha amable ([estadoRacha]): sigue viva si la última lección fue hoy o ayer, o
+/// anteayer si queda día de descanso. Si no, 0 (se empieza otra; nunca se habla de perderla).
+int rachaVisible(Progreso progreso, DateTime ahora) => estadoRacha(progreso, ahora).dias;
 
 /// La racha ya cuenta hoy (se ha hecho una lección).
-bool rachaDeHoy(Progreso progreso, DateTime ahora) {
-  final ultimo = progreso.ultimoDiaConLeccion;
-  return ultimo != null && diasEntre(ultimo, ahora) == 0;
-}
+bool rachaDeHoy(Progreso progreso, DateTime ahora) => estadoRacha(progreso, ahora).tipo == TipoRacha.hoyHecha;
 
 /// Unidades y ejercicios, cargados una vez y guardados en memoria.
 final cursoProvider = FutureProvider<Curso>((ref) => cargarCurso(ref.watch(contentProvider)));

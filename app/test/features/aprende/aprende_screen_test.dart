@@ -18,14 +18,14 @@ void main() {
     expect(find.text('Empezar: Que te escuchen'), findsOneWidget);
     expect(find.text('0 XP'), findsOneWidget);
     expect(find.text('0 días'), findsOneWidget);
-    expect(find.text('0/6 lecciones'), findsOneWidget);
+    expect(find.text('0/17 lecciones'), findsOneWidget);
     expect(find.text('¡Empieza aquí!'), findsOneWidget);
     expect(_nodo('Lección 1 de 3: Que te escuchen. Disponible, 6 ejercicios'), findsOneWidget);
     expect(_nodo('Lección 2 de 3: Fiscalía y Defensor del Pueblo. Bloqueada'), findsOneWidget);
 
     await tester.scrollUntilVisible(find.text('Si te toca declarar'), 300);
     await tester.pumpAndSettle();
-    expect(find.text('Se abre al terminar la unidad anterior.'), findsOneWidget);
+    expect(find.text('Se abre al terminar la unidad anterior.'), findsWidgets);
     expect(_nodo('Lección 1 de 3: La citación y qué puedes pedir. Bloqueada'), findsOneWidget);
     expect(find.text('Lo que dominas'), findsWidgets);
     expect(find.text('Por aprender'), findsWidgets);
@@ -47,7 +47,7 @@ void main() {
     expect(find.text('¡Sigue así!'), findsOneWidget);
     expect(find.text('120 XP'), findsOneWidget);
     expect(find.text('2 días'), findsOneWidget);
-    expect(find.text('2/6 lecciones'), findsOneWidget);
+    expect(find.text('2/17 lecciones'), findsOneWidget);
     expect(find.text('¡Hoy ya has sumado a tu racha!'), findsOneWidget);
     expect(find.text('Seguir: Abogado y canales seguros'), findsOneWidget);
     expect(_nodo('Lección 1 de 3: Que te escuchen. Completada'), findsOneWidget);
@@ -123,12 +123,32 @@ void main() {
   testWidgets('con todo hecho: «Repasar lo aprendido» practica la última unidad', (tester) async {
     await montar(
       tester,
-      preferencias: progresoGuardado(lecciones: ['U1-L1', 'U1-L2', 'U1-L3', 'U2-L1', 'U2-L2', 'U2-L3']),
+      preferencias: progresoGuardado(
+        lecciones: [
+          'U1-L1',
+          'U1-L2',
+          'U1-L3',
+          'U2-L1',
+          'U2-L2',
+          'U2-L3',
+          'U3-L1',
+          'U3-L2',
+          'U4-L1',
+          'U4-L2',
+          'U5-L1',
+          'U5-L2',
+          'U5-L3',
+          'U6-L1',
+          'U6-L2',
+          'U7-L1',
+          'U7-L2',
+        ],
+      ),
     );
     expect(find.text('¡Lo has completado todo!'), findsOneWidget);
-    expect(find.text('Repasar'), findsNWidgets(2));
+    expect(find.text('Repasar'), findsNWidgets(7));
     await pulsar(tester, find.text('Repasar lo aprendido'));
-    expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, '${prefijoPractica}U2');
+    expect(tester.widget<LeccionScreen>(find.byType(LeccionScreen)).leccionId, '${prefijoPractica}U7');
   });
 
   testWidgets('si pasó más de un día sin lecciones, la racha vuelve a cero', (tester) async {

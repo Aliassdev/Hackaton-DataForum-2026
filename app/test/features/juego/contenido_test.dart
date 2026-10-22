@@ -6,6 +6,7 @@ import 'package:tuturno/core/texto.dart';
 import 'package:tuturno/features/juego/modelos.dart';
 import 'package:tuturno/features/juego/motor.dart';
 import 'package:tuturno/features/juego/widgets/estilo.dart';
+import 'package:tuturno/pixel/escenarios/escenarios.dart';
 
 // Comprueba los casos de ejemplo que se ven en la demo (assets/mock/content/juego): que siguen el esquema 9.4 al
 // pie de la letra, que se pueden jugar de principio a fin y que respetan las reglas del contenido.
@@ -23,9 +24,9 @@ final _ficheros =
 Map<String, dynamic> _leer(File f) => jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
 
 void main() {
-  test('hay casos de ejemplo, empezando por el oficial (Lucía)', () {
+  test('están los tres casos oficiales: Lucía, Sergio y Sara', () {
     final ids = [for (final f in _ficheros) _leer(f)['id']];
-    expect(ids, containsAll(['caso-sala-gesell', 'caso-acoso-escolar']));
+    expect(ids, containsAll(['caso-sala-gesell', 'caso-acoso-escolar', 'caso-difusion-imagenes']));
   });
 
   for (final fichero in _ficheros) {
@@ -168,6 +169,19 @@ void main() {
       final promesa = escena.decision!.opciones.firstWhere((o) => normalizar(o.texto).contains('se lo promete'));
       expect(promesa.correcta, isFalse);
     });
+  });
+
+  test('caso de Sara: en su habitación (S1, S2, S3 y S8), con su fondo pixel', () {
+    final caso = Caso.fromJson(_leer(File('assets/mock/content/juego/caso-difusion-imagenes.json')));
+    final enLaHabitacion = [
+      for (final e in caso.escenas)
+        if (Lugar.desde(e.lugar) == Lugar.habitacion) e.id,
+    ];
+    expect(enLaHabitacion, ['S1', 'S2', 'S3', 'S8']);
+    expect(EscenariosPixel.tiene('habitacion'), isTrue);
+    for (final e in caso.escenas) {
+      expect(EscenariosPixel.tiene(e.lugar), isTrue, reason: '${e.id}: «${e.lugar}» tiene fondo pixel');
+    }
   });
 
   test('caso de Sergio: 13 años, Fiscalía de Menores y protección', () {

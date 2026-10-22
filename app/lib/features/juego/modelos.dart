@@ -101,7 +101,7 @@ class Escena {
 
   final String id;
 
-  /// casa, colegio, instituto, juzgado, sala_espera, sala_gesell, despues, comisaria, fiscalia…
+  /// casa, habitacion, colegio, instituto, juzgado, sala_espera, sala_gesell, despues, comisaria, fiscalia…
   final String lugar;
   final List<String> personajes;
   final String narracion;
@@ -227,6 +227,32 @@ class Caso {
     return pasos;
   }
 
+  /// Las escenas del camino más corto desde la primera hasta [hasta], las dos incluidas: [primera] sola si [hasta] es
+  /// la primera, y null si [hasta] no existe o no se puede llegar a ella.
+  List<String>? caminoHasta(String hasta) {
+    if (escena(hasta) == null) return null;
+    final anterior = <String, String?>{primera.id: null};
+    var frontera = [primera.id];
+    while (frontera.isNotEmpty && !anterior.containsKey(hasta)) {
+      final siguientes = <String>[];
+      for (final id in frontera) {
+        for (final s in escena(id)?.salidas ?? const <String>[]) {
+          if (_porId.containsKey(s) && !anterior.containsKey(s)) {
+            anterior[s] = id;
+            siguientes.add(s);
+          }
+        }
+      }
+      frontera = siguientes;
+    }
+    if (!anterior.containsKey(hasta)) return null;
+    final camino = <String>[];
+    for (String? id = hasta; id != null; id = anterior[id]) {
+      camino.add(id);
+    }
+    return camino.reversed.toList();
+  }
+
   static String _protagonistaDe(List<Escena> escenas) {
     for (final e in escenas) {
       if (e.personajes.isNotEmpty) return e.personajes.first;
@@ -251,6 +277,7 @@ class Caso {
 /// Dónde pasa una escena. Los valores del JSON se aceptan con o sin tildes y con espacios o guiones.
 enum Lugar {
   casa('En casa'),
+  habitacion('En su habitación'),
   colegio('En el colegio'),
   instituto('En el instituto'),
   juzgado('En el juzgado'),
@@ -269,6 +296,9 @@ enum Lugar {
   static const _alias = {
     'casa': casa,
     'hogar': casa,
+    'habitacion': habitacion,
+    'dormitorio': habitacion,
+    'cuarto': habitacion,
     'colegio': colegio,
     'instituto': instituto,
     'ies': instituto,

@@ -246,14 +246,10 @@ class TurnoDelDiaNotifier extends Notifier<TurnoDelDia> {
   }
 }
 
-/// La racha que sigue viva hoy: la del progreso si la última lección fue hoy o ayer; si no, 0. (El progreso guarda la
-/// última racha hasta la siguiente lección; aquí no se enseña una racha que ya no se puede alargar.)
-int rachaViva(Progreso progreso, DateTime hoy) {
-  final ultimo = progreso.ultimoDiaConLeccion;
-  if (ultimo == null) return 0;
-  final dias = indiceDia(hoy) - indiceDia(ultimo);
-  return dias <= 1 ? progreso.racha : 0;
-}
+/// La racha que sigue viva hoy, con la racha amable ([estadoRacha]): la del progreso si la última lección fue hoy o
+/// ayer, o anteayer si queda día de descanso; si no, 0. (El progreso guarda la última racha hasta la siguiente lección;
+/// aquí no se enseña una racha que ya no se puede alargar.)
+int rachaViva(Progreso progreso, DateTime hoy) => estadoRacha(progreso, hoy).dias;
 
 /// Si hoy ya hay una lección hecha.
 bool leccionHoy(Progreso progreso, DateTime hoy) => _mismoDia(progreso.ultimoDiaConLeccion, hoy);

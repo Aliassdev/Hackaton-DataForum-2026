@@ -273,10 +273,12 @@ class _CartaPixelState extends State<CartaPixel> with SingleTickerProviderStateM
               esquina: 1,
             ),
       interior: const EdgeInsets.fromLTRB(3, 2, 3, 2),
-      child: Text(
-        bloqueada ? '???' : widget.titulo,
+      child: Text.rich(
+        textoConCifras(
+          bloqueada ? '???' : widget.titulo,
+          estiloTextoPixel(context, TipoTextoPixel.etiqueta, color: ColoresUiPixel.noche),
+        ),
         textAlign: TextAlign.center,
-        style: estiloTextoPixel(context, TipoTextoPixel.etiqueta, color: ColoresUiPixel.noche),
       ),
     );
     final texto = CajaPixel(
@@ -290,9 +292,11 @@ class _CartaPixelState extends State<CartaPixel> with SingleTickerProviderStateM
           : const EstiloCajaPixel(relleno: ColoresUiPixel.papel, luz: ColoresUiPixel.blanco, esquina: 1, sombra: null),
       // Tres unidades desde el borde (una es el contorno): el texto no queda pegado.
       interior: const EdgeInsets.all(3),
-      child: Text(
-        bloqueada ? widget.pista : widget.texto,
-        style: estiloTextoPixel(context, TipoTextoPixel.pequeno, color: ColoresUiPixel.noche),
+      child: Text.rich(
+        textoConCifras(
+          bloqueada ? widget.pista : widget.texto,
+          estiloTextoPixel(context, TipoTextoPixel.pequeno, color: ColoresUiPixel.noche),
+        ),
       ),
     );
     // Tumbada, el dibujo ocupa algo más de un tercio del ancho (y nunca menos que su glifo).

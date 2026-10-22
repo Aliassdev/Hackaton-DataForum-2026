@@ -27,6 +27,8 @@ void main() {
       expect(a.vozActivada, isTrue);
       expect(a.velocidadVoz, 0.5);
       expect(a.apiUrlManual, isNull);
+      expect(a.lecturaFacil, isFalse);
+      expect(a.reducirMovimiento, isFalse);
       expect(storage.bienvenidaVista, isFalse);
     });
 
@@ -39,6 +41,8 @@ void main() {
           vozActivada: false,
           velocidadVoz: 0.8,
           apiUrlManual: 'https://abc.trycloudflare.com',
+          lecturaFacil: true,
+          reducirMovimiento: true,
         ),
       );
       final a = (await _reabrir()).leerAjustes();
@@ -47,6 +51,23 @@ void main() {
       expect(a.vozActivada, isFalse);
       expect(a.velocidadVoz, 0.8);
       expect(a.apiUrlManual, 'https://abc.trycloudflare.com');
+      expect(a.lecturaFacil, isTrue);
+      expect(a.reducirMovimiento, isTrue);
+    });
+
+    test('lectura fácil y reducir animaciones se guardan cada uno en su clave, y también apagados', () async {
+      final (storage, prefs) = await _storage();
+
+      await storage.guardarAjustes(const Ajustes(lecturaFacil: true));
+      expect(prefs.getBool('ajustes.lectura_facil'), isTrue);
+      expect(prefs.getBool('ajustes.reducir_movimiento'), isFalse);
+
+      await storage.guardarAjustes(const Ajustes(reducirMovimiento: true));
+      expect(prefs.getBool('ajustes.lectura_facil'), isFalse);
+      expect(prefs.getBool('ajustes.reducir_movimiento'), isTrue);
+
+      final a = (await _reabrir()).leerAjustes();
+      expect([a.lecturaFacil, a.reducirMovimiento], [false, true]);
     });
 
     test('la URL manual se guarda sin espacios alrededor', () async {
@@ -95,14 +116,16 @@ void main() {
         'ajustes.voz_activada': false,
         'ajustes.velocidad_voz': 0.3,
         'ajustes.api_url': 'http://localhost:8000',
+        'ajustes.lectura_facil': true,
+        'ajustes.reducir_movimiento': true,
       });
 
       final a = storage.leerAjustes();
 
       expect(storage.bienvenidaVista, isTrue);
       expect(
-        [a.tamanoTexto, a.vozActivada, a.velocidadVoz, a.apiUrlManual],
-        [1.15, false, 0.3, 'http://localhost:8000'],
+        [a.tamanoTexto, a.vozActivada, a.velocidadVoz, a.apiUrlManual, a.lecturaFacil, a.reducirMovimiento],
+        [1.15, false, 0.3, 'http://localhost:8000', true, true],
       );
     });
 
@@ -118,6 +141,8 @@ void main() {
         'ajustes.voz_activada',
         'ajustes.velocidad_voz',
         'ajustes.api_url',
+        'ajustes.lectura_facil',
+        'ajustes.reducir_movimiento',
       });
     });
   });
@@ -146,6 +171,15 @@ void main() {
       const a = Ajustes();
 
       expect([a.tamanoTexto, a.vozActivada, a.velocidadVoz, a.apiUrlManual], [1.0, true, 0.5, null]);
+      expect([a.lecturaFacil, a.reducirMovimiento], [false, false]);
+    });
+
+    test('lectura fácil y reducir animaciones se cambian sin tocar lo demás', () {
+      final c = base.copyWith(lecturaFacil: true, reducirMovimiento: true);
+
+      expect([c.lecturaFacil, c.reducirMovimiento], [true, true]);
+      expect([c.tamanoTexto, c.vozActivada, c.velocidadVoz, c.apiUrlManual], [1.15, false, 0.7, 'https://a.example']);
+      expect(c.copyWith().lecturaFacil, isTrue);
     });
   });
 }

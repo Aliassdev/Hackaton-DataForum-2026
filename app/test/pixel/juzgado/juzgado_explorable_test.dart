@@ -18,6 +18,9 @@ List<ElementoEscena> _elementos(WidgetTester tester) => tester.widget<EscenaPixe
 
 Finder _carta(String titulo) => find.descendant(of: find.byType(CartaRol), matching: find.text(titulo));
 
+/// El nombre corto de la ficha del Letrado o Letrada de la Administración de Justicia.
+final _letrada = datosSalaVistas.rol('letrada')!.corto;
+
 void main() {
   for (final modo in ModoJuzgado.values) {
     final datos = DatosJuzgado.de(modo);
@@ -33,7 +36,14 @@ void main() {
           expect(find.descendant(of: find.byType(CartaRol), matching: find.text('QUIÉN ES')), findsOneWidget);
           expect(find.text(rol.quienEs), findsOneWidget, reason: rol.id);
           expect(find.text(rol.queHace), findsOneWidget, reason: rol.id);
-          expect(find.textContaining(rol.fuentes.first.etiqueta), findsOneWidget, reason: rol.id);
+          final fuente = find.descendant(of: find.byType(CartaRol), matching: find.textContaining('Fuente:'));
+          if (rol.fuentes.isEmpty) {
+            // Una carta que solo presenta a la persona no cita ninguna ley.
+            expect(fuente, findsNothing, reason: rol.id);
+            expect(find.text('Qué dice la ley'), findsNothing, reason: rol.id);
+          } else {
+            expect(find.textContaining(rol.fuentes.first.etiqueta), findsOneWidget, reason: rol.id);
+          }
           // La persona tocada lleva el halo; nadie más.
           final resaltados = _elementos(tester).where((elemento) => elemento.resaltado).map((e) => e.id).toList();
           expect(resaltados, [rol.id]);
@@ -142,15 +152,15 @@ void main() {
     expect(find.text('¿Y Sergio?'), findsOneWidget);
     await tocarRol(tester, 'equipoTecnico', modo: ModoJuzgado.menores);
     expect(_carta('El equipo técnico'), findsOneWidget);
-    expect(find.textContaining('psicología, la educación y el trabajo social'), findsOneWidget);
+    expect(find.textContaining('ayudan al juez y al fiscal de menores'), findsOneWidget);
   });
 
   testWidgets('la ficha de quien aún no conoces lo ilumina en la sala; la de quien ya conoces abre su carta', (
     tester,
   ) async {
     await montarJuzgado(tester);
-    await tester.ensureVisible(find.text('Letrada'));
-    await tester.tap(find.text('Letrada'));
+    await tester.ensureVisible(find.text(_letrada));
+    await tester.tap(find.text(_letrada));
     await tester.pumpAndSettle();
     final resaltados = _elementos(tester).where((e) => e.resaltado).map((e) => e.id);
     expect(resaltados, ['letrada']);
@@ -162,10 +172,10 @@ void main() {
     await tester.tap(find.byTooltip('Cerrar'));
     await tester.pumpAndSettle();
     expect(find.byType(CartaRol), findsNothing);
-    await tester.ensureVisible(find.text('Letrada'));
-    await tester.tap(find.text('Letrada'));
+    await tester.ensureVisible(find.text(_letrada));
+    await tester.tap(find.text(_letrada));
     await tester.pumpAndSettle();
-    expect(_carta('La letrada de la Administración de Justicia'), findsOneWidget);
+    expect(_carta('Letrado o Letrada de la Administración de Justicia'), findsOneWidget);
   });
 
   testWidgets('con «reducir animaciones», abrir y cerrar «Qué dice la ley» no salta ningún assert', (tester) async {
@@ -175,12 +185,12 @@ void main() {
     await tester.tap(find.text('Qué dice la ley'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.textContaining('La justicia emana del pueblo'), findsOneWidget);
+    expect(find.textContaining('Toda víctima será informada de manera inmediata'), findsOneWidget);
     await tester.ensureVisible(find.text('Ocultar qué dice la ley'));
     await tester.tap(find.text('Ocultar qué dice la ley'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.textContaining('La justicia emana del pueblo'), findsNothing);
+    expect(find.textContaining('Toda víctima será informada de manera inmediata'), findsNothing);
   });
 
   testWidgets('el progreso guardado que llega tarde se suma, sin volver a celebrar', (tester) async {
@@ -218,11 +228,11 @@ void main() {
       ),
     );
     await montarJuzgado(tester);
-    await tester.ensureVisible(find.text('Letrada'));
-    await tester.tap(find.text('Letrada'));
+    await tester.ensureVisible(find.text(_letrada));
+    await tester.tap(find.text(_letrada));
     await tester.pumpAndSettle();
     expect(find.byType(CartaRol), findsNothing);
-    expect(anuncios, ['La letrada de la Administración de Justicia: en el estrado, a la derecha de la jueza.']);
+    expect(anuncios, ['Letrado o Letrada de la Administración de Justicia: al fondo, a la derecha de la jueza.']);
 
     tester.platformDispatcher.accessibilityFeaturesTestValue = const _NavegacionAccesible();
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
@@ -242,12 +252,12 @@ void main() {
   testWidgets('«Qué dice la ley» enseña las citas literales del BOE', (tester) async {
     await montarJuzgado(tester);
     await tocarRol(tester, 'jueza');
-    expect(find.textContaining('La justicia emana del pueblo'), findsNothing);
+    expect(find.textContaining('Toda víctima será informada de manera inmediata'), findsNothing);
     await tester.ensureVisible(find.text('Qué dice la ley'));
     await tester.tap(find.text('Qué dice la ley'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('La justicia emana del pueblo'), findsOneWidget);
-    expect(find.textContaining('BOE: BOE-A-1985-12666'), findsWidgets);
+    expect(find.textContaining('Toda víctima será informada de manera inmediata'), findsOneWidget);
+    expect(find.textContaining('BOE: BOE-A-2015-4606'), findsWidgets);
   });
 
   testWidgets('al abrir otra carta se lee desde arriba aunque la anterior se hubiera desplazado', (tester) async {

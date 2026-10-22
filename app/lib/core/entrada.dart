@@ -20,6 +20,11 @@ enum Procedimiento {
   penal('penal', 'Penal', 'Se investiga si alguien ha cometido un delito'),
   familia('familia', 'De familia', 'Por ejemplo, si tus padres se separan'),
   proteccion('proteccion', 'De protección', 'Servicios sociales cuidan de que estés bien'),
+
+  /// «Todavía no hay ningún proceso / solo quiero informarme» (por ejemplo, antes de contarlo o de denunciar). No es lo
+  /// mismo que «No lo sé»: el backend lo lee como «está buscando orientación» y da más peso a las leyes de protección.
+  /// La etiqueta es corta para que el chip no se corte con la letra a 1,3 (la larga no cabía en 360 px).
+  ninguno('ninguno', 'Aún no hay proceso', 'Solo quieres informarte: te explico cómo funciona'),
   noLoSe('no_lo_se', 'No lo sé', 'No pasa nada, te lo explico igual');
 
   const Procedimiento(this.valor, this.etiqueta, this.explicacion);
@@ -32,7 +37,11 @@ enum Procedimiento {
 enum RolEntrada {
   victima('victima', 'Víctima', 'Alguien te ha hecho daño'),
   testigo('testigo', 'Testigo', 'Viste u oíste algo'),
-  investigado('investigado', 'Investigado', 'Creen que hiciste algo (solo a partir de 14 años)'),
+  investigado(
+    'investigado',
+    'Investigado',
+    'La justicia revisa si hiciste algo que la ley no permite (desde los 14 años).',
+  ),
   escuchadoFamilia('escuchado_familia', 'Me van a escuchar', 'En un proceso de familia, por ejemplo una separación'),
   noLoSe('no_lo_se', 'No lo sé', 'No pasa nada, te lo explico igual');
 
@@ -77,9 +86,10 @@ class Entrada {
   };
 
   /// Variables de la sesión del agente con los valores que lee el backend de B (backend/app/agent/perfil.py):
-  /// edad en cifras; procedimiento penal | familia | proteccion; rol victima | testigo | investigado | escuchado;
-  /// fase antes | durante | despues. Van siempre las cuatro claves. Lo que no se ha respondido (o «No lo sé») va
-  /// vacío: el backend lo trata como «sin dato» y ElevenLabs acepta los valores vacíos (comprobado el 22-10).
+  /// edad en cifras; procedimiento penal | familia | proteccion | ninguno; rol victima | testigo | investigado |
+  /// escuchado; fase antes | durante | despues. Van siempre las cuatro claves. Lo que no se ha respondido (o «No lo
+  /// sé») va vacío: el backend lo trata como «sin dato» y ElevenLabs acepta los valores vacíos (comprobado el 22-10).
+  /// «Aún no hay proceso» va como `ninguno`, que no es lo mismo que «No lo sé».
   ///
   /// Con «Mi situación» ([situacion]), el papel sale de ahí si aquí no se ha elegido.
   Map<String, String> variablesAgente({RolProceso? situacion}) => {
@@ -88,6 +98,7 @@ class Entrada {
       Procedimiento.penal => 'penal',
       Procedimiento.familia => 'familia',
       Procedimiento.proteccion => 'proteccion',
+      Procedimiento.ninguno => 'ninguno',
       Procedimiento.noLoSe || null => '',
     },
     'rol': switch (rol) {
@@ -116,11 +127,12 @@ class Entrada {
 final entradaProvider = NotifierProvider<EntradaNotifier, Entrada>(EntradaNotifier.new);
 
 class EntradaNotifier extends Notifier<Entrada> {
-  static const _clave = 'entrada';
+  /// Clave en shared_preferences (también la borra «Borrar todo», lib/core/borrar_todo.dart).
+  static const clave = 'entrada';
 
   @override
   Entrada build() {
-    final guardado = ref.watch(sharedPreferencesProvider).getString(_clave);
+    final guardado = ref.watch(sharedPreferencesProvider).getString(clave);
     if (guardado == null) return const Entrada();
     try {
       final json = jsonDecode(guardado) as Map<String, dynamic>;
@@ -146,7 +158,7 @@ class EntradaNotifier extends Notifier<Entrada> {
     await ref
         .read(sharedPreferencesProvider)
         .setString(
-          _clave,
+          clave,
           jsonEncode({
             'edad': entrada.edad,
             'procedimiento': entrada.procedimiento?.valor,
@@ -159,6 +171,6 @@ class EntradaNotifier extends Notifier<Entrada> {
   /// «Borrar mis respuestas» en Ajustes.
   Future<void> borrar() async {
     state = const Entrada();
-    await ref.read(sharedPreferencesProvider).remove(_clave);
+    await ref.read(sharedPreferencesProvider).remove(clave);
   }
 }

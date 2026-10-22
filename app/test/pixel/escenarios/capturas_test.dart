@@ -13,12 +13,14 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/pixel/escenarios/escenarios.dart';
 import 'package:tuturno/pixel/juzgado/juzgado.dart' show RepartoJuzgado;
 import 'package:tuturno/pixel/motor/motor.dart';
 import 'package:tuturno/pixel/personajes/personajes.dart';
+
+import '../../fuentes_reales.dart';
+
 import 'package:tuturno/tema.dart' show temaTuTurno;
 
 final _destino = Platform.environment['CAPTURAS'];
@@ -26,31 +28,8 @@ final _destino = Platform.environment['CAPTURAS'];
 const _m = 16.0;
 const _s = 8.0;
 
-Future<void> _cargarFuentes() async {
-  Future<void> cargar(String familia, List<String> rutas) async {
-    final existentes = rutas.where((ruta) => File(ruta).existsSync()).toList();
-    if (existentes.isEmpty) return;
-    final cargador = FontLoader(familia);
-    for (final ruta in existentes) {
-      cargador.addFont(Future.value(ByteData.sublistView(File(ruta).readAsBytesSync())));
-    }
-    await cargador.load();
-  }
-
-  // Las del tema de ahora y las del rediseño (MaryKate para los títulos y Nunito para el texto).
-  await cargar('AtkinsonHyperlegible', [
-    'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
-    'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
-  ]);
-  await cargar('LondrinaSolid', ['assets/fonts/LondrinaSolid-Regular.ttf', 'assets/fonts/LondrinaSolid-Black.ttf']);
-  await cargar('Nunito', [
-    'assets/fonts/Nunito-Regular.ttf',
-    'assets/fonts/Nunito-SemiBold.ttf',
-    'assets/fonts/Nunito-Bold.ttf',
-    'assets/fonts/Nunito-ExtraBold.ttf',
-  ]);
-  await cargar('MaryKate', ['assets/fonts/MaryKate-Medium-ES.ttf']);
-}
+/// Las fuentes de la app (Nunito, MaryKate, Atkinson Hyperlegible, Pixelify Sans y los iconos de Material).
+Future<void> _cargarFuentes() => cargarFuentesReales();
 
 /// Pinta [fondo] a [escala] píxeles de imagen por píxel del dibujo, con [elementos] encima en ese orden, y lo guarda.
 Future<void> _guardar(String nombre, Sprite fondo, {int escala = 6, List<ElementoEscena> elementos = const []}) async {

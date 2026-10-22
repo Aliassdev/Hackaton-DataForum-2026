@@ -263,8 +263,19 @@ void main() {
 
     test('sin contenido real usa los ejemplos de assets/mock/content', () async {
       final curso = await cargarCurso(repoCon(ficherosDeEjemplo()));
-      expect([for (final u in curso.unidades) u.titulo], ['Tus derechos', 'Si te toca declarar']);
-      expect(curso.lecciones, hasLength(6));
+      expect(
+        [for (final u in curso.unidades) u.titulo],
+        [
+          'Tus derechos',
+          'Si te toca declarar',
+          'Quién es quién en el juzgado',
+          'Si eres víctima o testigo: tus derechos',
+          'Tu imagen es tuya',
+          'Si te investigan (14 a 17 años)',
+          'Cuando el juez te escucha en familia',
+        ],
+      );
+      expect(curso.lecciones, hasLength(17));
     });
 
     group('bloqueos', () {
@@ -294,26 +305,37 @@ void main() {
       test('con todo hecho no hay siguiente y la unidad actual es la última', () {
         final todas = {for (final l in curso.lecciones) l.id};
         expect(curso.siguiente(todas), isNull);
-        expect(curso.unidadActual(todas)!.id, 'U2');
+        expect(curso.unidadActual(todas)!.id, 'U7');
       });
 
       test('anterior y posterior siguen el camino', () {
         expect(curso.anterior('U1-L1'), isNull);
         expect(curso.anterior('U2-L1')!.id, 'U1-L3');
         expect(curso.posterior('U1-L3')!.id, 'U2-L1');
-        expect(curso.posterior('U2-L3'), isNull);
+        expect(curso.posterior('U2-L3')!.id, 'U3-L1');
+        expect(curso.posterior('U7-L2'), isNull);
       });
     });
   });
 
   group('racha', () {
-    test('se ve si la última lección fue hoy o ayer; si no, se ha perdido', () {
+    test('se ve si la última lección fue hoy, ayer o anteayer con día de descanso; si no, empieza otra', () {
       final p = Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2026, 10, 20));
       expect(rachaVisible(p, DateTime(2026, 10, 20, 23)), 4);
       expect(rachaDeHoy(p, DateTime(2026, 10, 20, 9)), isTrue);
       expect(rachaVisible(p, DateTime(2026, 10, 21, 8)), 4);
       expect(rachaDeHoy(p, DateTime(2026, 10, 21, 8)), isFalse);
-      expect(rachaVisible(p, DateTime(2026, 10, 22, 8)), 0);
+      // Un día sin lección: el día de descanso de la semana la mantiene (racha amable).
+      expect(rachaVisible(p, DateTime(2026, 10, 22, 8)), 4);
+      expect(rachaDeHoy(p, DateTime(2026, 10, 22, 8)), isFalse);
+      // Sin descanso disponible (gastado hace poco) o con más días, 0.
+      final sinDescanso = Progreso(
+        racha: 4,
+        ultimoDiaConLeccion: DateTime(2026, 10, 20),
+        descansoUsado: DateTime(2026, 10, 18),
+      );
+      expect(rachaVisible(sinDescanso, DateTime(2026, 10, 22, 8)), 0);
+      expect(rachaVisible(p, DateTime(2026, 10, 23, 8)), 0);
       expect(rachaVisible(const Progreso(), DateTime(2026, 10, 22)), 0);
     });
 
@@ -322,7 +344,13 @@ void main() {
       final p = Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2027, 3, 28));
       expect(rachaDeHoy(p, DateTime(2027, 3, 29, 9)), isFalse);
       expect(rachaVisible(p, DateTime(2027, 3, 29, 9)), 4);
-      expect(rachaVisible(Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2027, 3, 27)), DateTime(2027, 3, 29, 9)), 0);
+      // Del 27 al 29 son dos días (no uno): sin descanso disponible, ya no sigue.
+      final sinDescanso = Progreso(
+        racha: 4,
+        ultimoDiaConLeccion: DateTime(2027, 3, 27),
+        descansoUsado: DateTime(2027, 3, 25),
+      );
+      expect(rachaVisible(sinDescanso, DateTime(2027, 3, 29, 9)), 0);
       expect(diasEntre(DateTime(2027, 3, 27), DateTime(2027, 3, 29, 23, 59)), 2);
       expect(diasEntre(DateTime(2026, 10, 24), DateTime(2026, 10, 26)), 2, reason: 'y el de otoño, de 25 horas');
     });
@@ -340,13 +368,13 @@ void main() {
     ];
     final ejercicios = {for (final e in crudos) e['id'] as String: Ejercicio.fromJson(e)};
 
-    test('dos unidades × tres lecciones × seis ejercicios, todo validado', () {
-      expect([for (final u in unidades) u.id], ['U1', 'U2']);
+    test('siete unidades (U1 a U7) de dos o tres lecciones × seis ejercicios, todo validado', () {
+      expect([for (final u in unidades) u.id], ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7']);
       expect(unidades[0].titulo, 'Tus derechos');
       expect(unidades[1].titulo, 'Si te toca declarar');
       for (final u in unidades) {
         expect(u.validado, isTrue);
-        expect(u.lecciones, hasLength(3), reason: u.id);
+        expect(u.lecciones.length, inInclusiveRange(2, 3), reason: u.id);
         for (final l in u.lecciones) {
           expect(l.ejercicios, hasLength(6), reason: l.id);
         }

@@ -210,10 +210,11 @@ void main() {
       expect(find.descendant(of: hoja, matching: find.byType(CartaHolo)), findsOneWidget);
       final numero = find.descendant(of: hoja, matching: find.text('Nº 02/03'));
       expect(numero, findsOneWidget);
-      // El número va con la letra de los títulos, que no tiene «º»: sale de la del texto (si no, se vería un cuadrito).
+      // El número va en la letra de las cifras (estiloCifras: Nunito ExtraBold), que tiene la «º» y no confunde el 0
+      // con la O, como la de los títulos.
       final estilo = tester.widget<Text>(numero).style!;
-      expect(estilo.fontFamily, Fuentes.titulos);
-      expect(estilo.fontFamilyFallback, contains(Fuentes.texto));
+      expect(estilo.fontFamily, Fuentes.texto);
+      expect(estilo.fontWeight, FontWeight.w800);
       expect(find.descendant(of: hoja, matching: find.text('Citación')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

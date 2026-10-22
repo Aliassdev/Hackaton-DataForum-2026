@@ -81,7 +81,7 @@ class MarcoPixel extends StatelessWidget {
                 // Monta sobre el bisel, que ya la recorta.
                 conFilo: false,
                 interior: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-                child: Text(titulo, style: estilo, maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text.rich(textoConCifras(titulo, estilo), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             ),
           ),

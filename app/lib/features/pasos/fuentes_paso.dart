@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/texto.dart';
 import '../../tema.dart';
+import '../../widgets/iconos/iconos.dart';
 
 // Fuentes de un paso: etiquetas pequeñas que, al tocarlas, abren una hoja con la referencia.
 // Una fuente puede ser una cita de una ley («LECrim, art. 449 ter»), la información oficial de un organismo
@@ -229,7 +230,12 @@ class _HojaFuentePaso extends StatelessWidget {
                   width: Espacio.xxl,
                   height: Espacio.xxl,
                   decoration: BoxDecoration(shape: BoxShape.circle, color: esquema.primaryContainer),
-                  child: Icon(Icons.gavel_rounded, color: esquema.onPrimaryContainer),
+                  child: IconoTuTurno(
+                    TuIcono.ley,
+                    estilo: EstiloIcono.mono,
+                    color: esquema.onPrimaryContainer,
+                    decorativo: true,
+                  ),
                 ),
               ),
               const SizedBox(width: Espacio.m),

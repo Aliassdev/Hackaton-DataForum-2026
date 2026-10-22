@@ -1,0 +1,168 @@
+{
+  "id": "caso-difusion-imagenes",
+  "titulo": "Sara y el derecho a su imagen",
+  "rol": "victima",
+  "basado_en": [],
+  "escenas": [
+    {
+      "id": "S1",
+      "lugar": "habitacion",
+      "personajes": ["Sara"],
+      "narracion": "Sara tiene 15 años y cumple 16 dentro de poco. Un día, su amiga Nadia le escribe un mensaje: alguien está pasando imágenes íntimas de Sara, sin su permiso. Nadia no se las reenvía: solo la avisa. A Sara se le hace un nudo en el estómago.",
+      "siguiente": "S2"
+    },
+    {
+      "id": "S2",
+      "lugar": "habitacion",
+      "personajes": ["Sara"],
+      "narracion": "Lo primero que piensa Sara es: «¿Y si es culpa mía?». No lo es. La culpa es de quien difunde imágenes de otra persona sin su permiso. Ahora Sara tiene que decidir qué hace.",
+      "decision": {
+        "pregunta": "¿Qué hace Sara ahora?",
+        "opciones": [
+          {"texto": "No las pide, así que no las guarda ni las reenvía. Pregunta a Nadia dónde están", "correcta": true,
+           "siguiente": "S3",
+           "feedback": "Bien pensado. Cada vez que se reenvían, el daño crece. Quien pasa a otros imágenes sexuales de una persona menor de edad comete un delito muy serio. Y la culpa es de quien las difunde, nunca de Sara.",
+           "fuente": "Código Penal, art. 189.1.b)", "carta": "R-sin-culpa"},
+          {"texto": "Pide a Nadia que se las pase, para ver qué circula", "correcta": false,
+           "siguiente": "S3",
+           "feedback": "Es normal querer saber qué circula. Pero cada vez que se pasan, llegan a más gente. No hace falta verlas para contarlo y pedir ayuda.",
+           "fuente": "LOPIVI, art. 17.1"},
+          {"texto": "Borra sus redes y no se lo cuenta a nadie", "correcta": false,
+           "siguiente": "S3",
+           "feedback": "Es normal querer esconderse, pero no tiene que pasar por esto sola. Puede contarlo ella misma a su familia, a su instituto, a la policía o a la Fiscalía.",
+           "fuente": "LOPIVI, arts. 17.1 y 34.1"}
+        ]
+      }
+    },
+    {
+      "id": "S3",
+      "lugar": "habitacion",
+      "personajes": ["Sara", "Su madre"],
+      "narracion": "Sara se lo cuenta a su madre. Le cuesta empezar, pero su madre la escucha y la abraza: «No has hecho nada malo». Nadia les ha dicho dónde están las imágenes: en una red social y en un grupo de mensajes.",
+      "decision": {
+        "pregunta": "¿Dónde pueden pedir que quiten las imágenes de la red social?",
+        "opciones": [
+          {"texto": "En el Canal prioritario de la AEPD, por internet. Sara puede pedirlo ella misma", "correcta": true,
+           "siguiente": "S4",
+           "feedback": "Es un canal de la Agencia Española de Protección de Datos. Sirve para pedir que retiren enseguida imágenes sexuales o violentas publicadas en internet sin permiso. Si tienes entre 14 y 17 años, puedes pedirlo tú.",
+           "fuente": "AEPD, Canal prioritario; LOPIVI, art. 52.3", "carta": "R-canal-prioritario"},
+          {"texto": "En el Canal prioritario, y también las del grupo de mensajes", "correcta": false,
+           "siguiente": "S4",
+           "feedback": "El Canal prioritario no sirve para lo que se pasa por WhatsApp, Telegram o el correo. Para eso pueden ir a la policía o a la Fiscalía. Aun así, la AEPD puede sancionar a quien las difunda.",
+           "fuente": "AEPD, FAQ 15.03; LOPIVI, art. 17.1"},
+          {"texto": "En ningún sitio: lo que se sube a internet ya no se puede quitar", "correcta": false,
+           "siguiente": "S4",
+           "feedback": "Sí se puede pedir. La AEPD estudia la solicitud con prioridad y puede ordenar a la red social que lo retire. Si parece un delito, avisa a la Fiscalía.",
+           "fuente": "AEPD, FAQ 15.06"}
+        ]
+      }
+    },
+    {
+      "id": "S4",
+      "lugar": "comisaria",
+      "personajes": ["Sara", "Su madre", "El agente de policía"],
+      "narracion": "Al día siguiente, Sara va a la comisaría. Ha elegido que la acompañe su madre. Un agente de policía las recibe en una sala tranquila y, antes de nada, le explica sus derechos con palabras claras.",
+      "decision": {
+        "pregunta": "¿Puede Sara presentar la denuncia ella misma?",
+        "opciones": [
+          {"texto": "Sí: puede denunciar ella misma, y estar con la persona de confianza que elija", "correcta": true,
+           "siguiente": "S5",
+           "feedback": "Las personas menores de edad pueden denunciar por sí mismas, sin que las acompañe un adulto. Y pueden estar con una persona de su confianza elegida por ellas.",
+           "fuente": "LOPIVI, art. 50.2", "carta": "R-denunciar-sola"},
+          {"texto": "No: la denuncia la tienen que poner sus padres", "correcta": false,
+           "siguiente": "S5",
+           "feedback": "No hace falta. Si Sara lo pide, puede denunciar ella misma, sin un adulto.",
+           "fuente": "LOPIVI, art. 50.2"},
+          {"texto": "Sí, pero delante de las personas a las que denuncia", "correcta": false,
+           "siguiente": "S5",
+           "feedback": "No. En la comisaría, la policía tiene que impedir cualquier contacto entre Sara y las personas investigadas.",
+           "fuente": "LOPIVI, art. 50.2"}
+        ]
+      }
+    },
+    {
+      "id": "S5",
+      "lugar": "comisaria",
+      "personajes": ["Sara", "El agente de policía"],
+      "narracion": "El agente le explica qué pasa ahora. Las personas denunciadas son unos compañeros de su instituto, de 15 y 16 años. Por eso, la denuncia irá a la Fiscalía de Menores. Además, Sara puede tener una abogada o un abogado de oficio, que le asignarán con urgencia.",
+      "siguiente": "S6"
+    },
+    {
+      "id": "S6",
+      "lugar": "instituto",
+      "personajes": ["Sara", "Laura, coordinadora de bienestar", "Su amiga Nadia"],
+      "narracion": "En el instituto, Sara habla con Laura, la coordinadora de bienestar y protección. Laura pone en marcha el protocolo: tiene pasos concretos para cuando se difunde algo íntimo de alguien por el móvil o por internet. El centro tiene que proteger a Sara. Nadia está a su lado: avisó sin reenviar nada.",
+      "siguiente": "S7"
+    },
+    {
+      "id": "S7",
+      "lugar": "fiscalia",
+      "personajes": ["Sara", "Su abogada", "El fiscal de menores"],
+      "narracion": "Unas semanas después, Sara va a la Fiscalía de Menores con su madre y con su abogada. El fiscal le explica con calma cómo sigue el caso. Sara quiere saber qué puede hacer la Fiscalía.",
+      "decision": {
+        "pregunta": "¿Qué puede hacer la Fiscalía de Menores?",
+        "opciones": [
+          {"texto": "Dirigir la investigación y pedir al juez medidas para proteger a Sara", "correcta": true,
+           "siguiente": "S8",
+           "feedback": "La Fiscalía de Menores dirige la investigación. Si se difunden imágenes de una menor en redes y eso daña sus derechos, tiene que intervenir. Puede pedir al juez, en cualquier momento, que no se acerquen a Sara ni le escriban.",
+           "fuente": "LO 5/2000, arts. 6 y 28.1; LOPDGDD, art. 84.2", "carta": "R-fiscalia-actua"},
+          {"texto": "Nada, porque las personas denunciadas también son menores", "correcta": false,
+           "siguiente": "S8",
+           "feedback": "De 14 a 17 años se aplica la ley penal de menores. Si el juez de menores decide que cometieron un delito, les pondrá medidas, no penas como a los adultos.",
+           "fuente": "LO 5/2000, arts. 1.1 y 7.1"},
+          {"texto": "Pedir que Sara lo cuente todo delante de su clase", "correcta": false,
+           "siguiente": "S8",
+           "feedback": "No. Quienes llevan el caso tienen que proteger la intimidad de Sara y evitar que se difunda cualquier dato que permita identificarla.",
+           "fuente": "Ley 4/2015, art. 22"}
+        ]
+      }
+    },
+    {
+      "id": "S8",
+      "lugar": "habitacion",
+      "personajes": ["Sara", "Su amiga Nadia"],
+      "narracion": "De vuelta en casa, Sara y Nadia miran la red social. Hay publicaciones de otras personas en las que sale el nombre de Sara. Sara quiere que desaparezcan.",
+      "decision": {
+        "pregunta": "Sara pide a la red social que borre esas publicaciones. ¿Qué tiene que hacer la red social?",
+        "opciones": [
+          {"texto": "Borrarlas sin retrasos, porque Sara es menor de edad", "correcta": true,
+           "siguiente": "S9",
+           "feedback": "Si eres menor de edad y una red social tiene fotos o datos tuyos, basta con que pidas que los borre. Da igual quién los subiera. Tiene que hacerlo sin retrasos.",
+           "fuente": "LOPDGDD, art. 94.3; RGPD, art. 17.1", "carta": "R-borrar"},
+          {"texto": "Nada, porque las subió otra persona", "correcta": false,
+           "siguiente": "S9",
+           "feedback": "Da igual quién las subiera. Como Sara es menor de edad, basta con que ella lo pida.",
+           "fuente": "LOPDGDD, art. 94.3"},
+          {"texto": "Esperar a que Sara cumpla 18 años", "correcta": false,
+           "siguiente": "S9",
+           "feedback": "No hace falta esperar. La red social tiene que borrarlas sin retrasos en cuanto ella lo pida.",
+           "fuente": "LOPDGDD, art. 94.3"}
+        ]
+      }
+    },
+    {
+      "id": "S9",
+      "lugar": "despues",
+      "personajes": ["Sara", "Su amiga Nadia"],
+      "narracion": "Sara sale a dar un paseo con Nadia. Todavía no sabe cómo acabará todo, pero ya no se siente sola. Sabe que la culpa no es suya y que su imagen es suya. Si necesita ayuda, puede llamar al 017, de 8:00 a 23:00, o al Canal Joven de la AEPD, el 900 293 183. Y a cualquier hora, a ANAR: 900 20 20 10."
+    }
+  ],
+  "cartas": [
+    {"id": "R-sin-culpa", "titulo": "La culpa es de quien difunde",
+     "texto": "Si pasan imágenes íntimas tuyas sin tu permiso, tú no tienes la culpa. Pasar a otros imágenes sexuales de una persona menor de edad es un delito muy serio.",
+     "fuente": "Código Penal, arts. 189.1 y 197.7"},
+    {"id": "R-canal-prioritario", "titulo": "Puedes pedir que lo quiten",
+     "texto": "En el Canal prioritario de la AEPD puedes pedir que retiren imágenes sexuales o violentas publicadas en internet sin permiso. Desde los 14 años, sin un adulto.",
+     "fuente": "AEPD, Canal prioritario; LOPIVI, art. 52.3"},
+    {"id": "R-denunciar-sola", "titulo": "Puedes denunciar sin un adulto",
+     "texto": "Puedes denunciar tú, sin que te acompañe un adulto. Y puede estar contigo una persona de confianza que elijas.",
+     "fuente": "LOPIVI, art. 50.2"},
+    {"id": "R-fiscalia-actua", "titulo": "La Fiscalía te protege",
+     "texto": "Si difunden imágenes tuyas en redes y eso daña tus derechos, la Fiscalía tiene que intervenir y puede pedir medidas para protegerte.",
+     "fuente": "LOPDGDD, art. 84.2; LO 5/2000, art. 28.1"},
+    {"id": "R-borrar", "titulo": "Puedes pedir que lo borren",
+     "texto": "Si una red social tiene fotos o datos tuyos subidos antes de los 18 años, basta con pedirlo para que los borre sin retrasos.",
+     "fuente": "LOPDGDD, art. 94.3"}
+  ],
+  "validado": true
+}

@@ -43,7 +43,19 @@ enum TuIcono {
   mision('Misión del día'),
   buscar('Buscar'),
   info('Información'),
-  idea('Pista');
+  idea('Pista'),
+  balanza('Balanza de la justicia'),
+  toga('Toga'),
+  estrado('Estrado'),
+  campanilla('Campanilla'),
+  selloConseguido('Sello conseguido'),
+  expediente('Expediente'),
+  citacion('Citación'),
+  puertaSala('Puerta de la sala'),
+  turnoPalabra('Tu turno de palabra'),
+  ley('Ley'),
+  manoAlzada('Pedir la palabra'),
+  panelTurnos('Panel de turnos');
 
   const TuIcono(this.etiqueta);
 

@@ -1,266 +1,173 @@
 import 'package:flutter/material.dart';
 
-import '../../../tema.dart';
+import '../../../pixel/escenarios/escenarios.dart';
+import '../../../pixel/escenas/escenas.dart';
+import '../../../pixel/motor/motor.dart';
+import '../../../pixel/personajes/personajes.dart';
+import '../../../pixel/ui/ui.dart';
 import '../modelos.dart';
 import 'estilo.dart';
 
-// Hueco de la ilustración de cada escena.
+// La ilustración de cada escena, en pixel art: el lugar (lib/pixel/escenarios) con las personas que salen
+// (lib/pixel/personajes), enmarcado como la pantalla de un juego (EscenaCasoPixel, de lib/pixel/escenas). Debajo, las
+// fichas de quién sale, con su retrato: sirven a quien no distingue los dibujos y al lector de pantalla.
 //
-// Es un marcador de posición sencillo a propósito: el lugar y quién sale, como fichas. El equipo de pixel art está
-// dibujando las escenas en lib/pixel/ y las pondrá aquí. [CabeceraEscena] es el ÚNICO widget que hay que cambiar:
-// lo usan el reproductor del caso (arriba de cada escena) y la portada de cada caso en la lista (versión compacta).
-// Recibe la escena entera (id, lugar y personajes) por si cada escena tiene su propio dibujo.
+// [CabeceraEscena] es la misma pieza en el reproductor del caso (arriba de cada escena) y en la portada de cada caso
+// en la lista (versión compacta, sin fichas).
 
-/// Cabecera visual de una escena: dónde pasa y quién sale.
+/// Posesivos con los que el contenido nombra a la familia y a quien acompaña («Su madre», «Sus padres», «Su
+/// abogada»). Dicho así, el nombre no dice de quién es; el caso, sí: en el de Sara, «Su madre» es la madre de Sara.
+final _posesivo = RegExp(r'^(su|sus)\s', caseSensitive: false);
+
+/// [nombre] (uno de `escena.personajes`) tal como lo busca el pixel art: con el posesivo aclarado por [protagonista]
+/// («Su madre» en el caso de Sara → «Su madre de Sara»). Así [PersonajesPixel.buscar] encuentra a la madre de Sara y no
+/// a la de Sergio. Solo cambia lo que se busca; en pantalla y para el lector de pantalla se ve el nombre del contenido.
+String nombreParaPixel(String nombre, String protagonista) {
+  final limpio = nombre.trim();
+  if (protagonista.isEmpty || !_posesivo.hasMatch(limpio)) return limpio;
+  return '$limpio de $protagonista';
+}
+
+/// La tabla de los nombres del contenido a los personajes pixel: los ids de [PersonajesPixel] de [nombre] en [lugar]
+/// (dos para «Sus padres»; en la Fiscalía, el fiscal y la abogada sin toga), con el posesivo aclarado por
+/// [protagonista]. Vacía si no hay dibujo: esa persona no sale en la escena, pero sí en las fichas.
+List<String> idsPersonaje(String nombre, {required String lugar, String protagonista = ''}) =>
+    PersonajesPixel.buscarTodos(nombreParaPixel(nombre, protagonista), lugar: lugar);
+
+/// Ilustración de una escena: el lugar y quién sale, en pixel art.
 ///
-/// Con [compacta], la portada del caso en la lista: más baja, sin fichas y sin semántica propia (la tarjeta del caso
-/// ya lo dice todo).
+/// Con [compacta], la portada del caso en la lista: la escena llena el sitio que le den (por defecto, [altoCompacta]
+/// de alto), quieta, sin fichas y sin semántica propia (la tarjeta del caso ya lo dice todo).
 class CabeceraEscena extends StatelessWidget {
-  const CabeceraEscena({super.key, required this.escena, this.protagonista = '', this.compacta = false});
+  const CabeceraEscena({
+    super.key,
+    required this.escena,
+    this.protagonista = '',
+    this.compacta = false,
+    this.animar = true,
+    this.conFichas = true,
+  });
 
   final Escena escena;
 
-  /// Su ficha va destacada.
+  /// Su ficha va destacada, y aclara de quién es la familia («Su madre»).
   final String protagonista;
   final bool compacta;
+
+  /// Las animaciones en reposo de los personajes (respirar, parpadear). Respetan siempre «reducir animaciones».
+  final bool animar;
+
+  /// Con las fichas de quién sale debajo. Sin ellas, la escena sola (el reproductor la deja fija arriba y pone las
+  /// fichas, con [FichasPersonajes], en lo que se desplaza).
+  final bool conFichas;
 
   /// Alto de la portada del caso.
   static const altoCompacta = 148.0;
 
-  /// Alto mínimo en el reproductor. Crece si las fichas necesitan más sitio (letra grande, muchos personajes).
+  /// Alto aproximado de la escena en el reproductor en un móvil (lo justo para su escala entera: unos 180 puntos con
+  /// 390 de ancho).
   static const altoMinimo = 176.0;
 
   @override
   Widget build(BuildContext context) {
-    final lugar = Lugar.desde(escena.lugar);
-    final colores = degradadoLugar(context, lugar);
-    final tinta = tintaSobre(context, colores);
-    final forma = BorderRadius.circular(Radios.l);
-    final fondo = Positioned.fill(
-      child: _Decorado(icono: iconoLugar(lugar), tinta: tinta, compacta: compacta),
-    );
-    final panel = DecoratedBox(
-      decoration: BoxDecoration(gradient: degradadoDiagonal(colores), borderRadius: compacta ? null : forma),
-      child: compacta
-          ? Stack(children: [fondo])
-          : ClipRRect(
-              borderRadius: forma,
-              child: Stack(
-                children: [
-                  fondo,
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: altoMinimo, minWidth: double.infinity),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Espacio.m),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _PildoraLugar(lugar: lugar),
-                          if (escena.personajes.isNotEmpty) ...[
-                            const SizedBox(height: Espacio.l),
-                            _Aparece(
-                              child: Wrap(
-                                spacing: Espacio.s,
-                                runSpacing: Espacio.s,
-                                children: [
-                                  for (final p in escena.personajes)
-                                    _FichaPersonaje(nombre: p, protagonista: p == protagonista),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-    );
+    final nombres = [for (final p in escena.personajes) nombreParaPixel(p, protagonista)];
     if (compacta) {
-      return ExcludeSemantics(
-        child: SizedBox(height: altoCompacta, child: panel),
+      return SizedBox(
+        height: altoCompacta,
+        child: EscenaCasoPixel(lugar: escena.lugar, personajes: nombres, compacta: true),
       );
     }
-    final quien = listaNatural(escena.personajes);
-    return Semantics(
+    final lugar = Lugar.desde(escena.lugar);
+    final escenario = EscenariosPixel.de(escena.lugar);
+    final u = unidadPixel(context);
+    final imagen = Semantics(
       container: true,
-      label: quien.isEmpty ? lugar.nombre : '${lugar.nombre}. En esta escena: $quien',
+      image: true,
+      label: '${lugar.nombre}. ${escenario.descripcion}',
       excludeSemantics: true,
-      child: DecoratedBox(
-        decoration: BoxDecoration(borderRadius: forma, boxShadow: sombrasPapel(context)),
-        child: panel,
-      ),
+      child: EscenaCasoPixel(lugar: escena.lugar, personajes: nombres, animar: animar),
+    );
+    if (!conFichas || escena.personajes.isEmpty) return imagen;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        imagen,
+        SizedBox(height: 3 * u),
+        FichasPersonajes(nombres: escena.personajes, lugar: escena.lugar, protagonista: protagonista),
+      ],
     );
   }
 }
 
-/// El fondo del marcador: el icono del lugar en grande, translúcido, y dos círculos suaves. Entra una vez, con calma.
-class _Decorado extends StatelessWidget {
-  const _Decorado({required this.icono, required this.tinta, required this.compacta});
+/// Las fichas de quién sale en una escena: el retrato pixel de cada persona (si tiene dibujo) y su nombre, tal como lo
+/// dice el contenido. La protagonista va en amarillo. El lector de pantalla las lee juntas: «En esta escena: Lucía y
+/// Ana, la psicóloga».
+class FichasPersonajes extends StatelessWidget {
+  const FichasPersonajes({super.key, required this.nombres, required this.lugar, this.protagonista = ''});
 
-  final IconData icono;
-  final Color tinta;
-  final bool compacta;
+  final List<String> nombres;
+  final String lugar;
+  final String protagonista;
 
   @override
   Widget build(BuildContext context) {
-    final tamano = compacta ? 112.0 : 148.0;
-    return ExcludeSemantics(
-      child: Stack(
-        clipBehavior: Clip.hardEdge,
+    final u = unidadPixel(context);
+    return Semantics(
+      container: true,
+      label: 'En esta escena: ${listaNatural(nombres)}',
+      excludeSemantics: true,
+      child: Wrap(
+        spacing: 2 * u,
+        runSpacing: 2 * u,
         children: [
-          Positioned(
-            left: -Espacio.xxl,
-            bottom: -Espacio.xxl - Espacio.l,
-            child: _Circulo(diametro: 168, color: tinta.withValues(alpha: 0.07)),
-          ),
-          Positioned(
-            right: -Espacio.l,
-            top: -Espacio.xl,
-            child: _Circulo(diametro: tamano + Espacio.xxl, color: tinta.withValues(alpha: 0.08)),
-          ),
-          Positioned(
-            right: compacta ? Espacio.l : Espacio.m,
-            top: compacta ? Espacio.m : Espacio.s,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: duracion(context, Duracion.larga),
-              curve: Curves.easeOutBack,
-              builder: (context, valor, child) => Opacity(
-                opacity: valor.clamp(0.0, 1.0),
-                child: Transform.scale(scale: 0.8 + 0.2 * valor, child: child),
-              ),
-              child: Icon(icono, size: tamano, color: tinta.withValues(alpha: 0.2)),
+          for (final nombre in nombres)
+            _Ficha(
+              nombre: nombre,
+              ids: idsPersonaje(nombre, lugar: lugar, protagonista: protagonista),
+              protagonista: nombre == protagonista,
             ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _Circulo extends StatelessWidget {
-  const _Circulo({required this.diametro, required this.color});
-
-  final double diametro;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: diametro,
-      height: diametro,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-    );
-  }
-}
-
-/// Las fichas suben un poco al entrar en la escena (una vez).
-class _Aparece extends StatelessWidget {
-  const _Aparece({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: duracion(context, Duracion.larga),
-      curve: Curves.easeOutCubic,
-      builder: (context, valor, child) => Opacity(
-        opacity: valor,
-        child: Transform.translate(offset: Offset(0, (1 - valor) * Espacio.m), child: child),
-      ),
-      child: child,
-    );
-  }
-}
-
-/// «En el colegio», en una pastilla de papel sobre el fondo.
-class _PildoraLugar extends StatelessWidget {
-  const _PildoraLugar({required this.lugar});
-
-  final Lugar lugar;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final esquema = tema.colorScheme;
-    return DecoratedBox(
-      decoration: ShapeDecoration(color: esquema.surface, shape: const StadiumBorder()),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(Espacio.s + Espacio.xs, Espacio.xs + 2, Espacio.m, Espacio.xs + 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(iconoLugar(lugar), size: Espacio.m + Espacio.xs, color: esquema.primary),
-            const SizedBox(width: Espacio.s - 2),
-            Flexible(
-              child: Text(
-                lugar.nombre,
-                style: tema.textTheme.labelLarge?.copyWith(color: esquema.onSurface, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Ficha de un personaje. La protagonista va en la pegatina amarilla de la marca.
-class _FichaPersonaje extends StatelessWidget {
-  const _FichaPersonaje({required this.nombre, required this.protagonista});
+class _Ficha extends StatelessWidget {
+  const _Ficha({required this.nombre, required this.ids, required this.protagonista});
 
   final String nombre;
+  final List<String> ids;
   final bool protagonista;
 
   @override
   Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final esquema = tema.colorScheme;
-    final juego = context.colores.juego;
-    final acento = acentoCalido(context);
-    final fondo = protagonista ? acento : esquema.surface;
-    final tinta = protagonista ? tintaSobre(context, [acento]) : esquema.onSurface;
-    return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: fondo,
-        // La protagonista lleva un borde de su tinta: así se distingue también sobre los fondos amarillos.
-        shape: StadiumBorder(
-          side: BorderSide(color: protagonista ? tinta.withValues(alpha: 0.28) : esquema.outlineVariant),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(Espacio.xs, Espacio.xs, Espacio.s + Espacio.xs, Espacio.xs),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: protagonista ? degradadoDiagonal(juego) : null,
-                color: protagonista ? null : esquema.surfaceContainerHighest,
-              ),
-              child: Icon(
-                iconoPersonaje(nombre, protagonista: protagonista),
-                size: Espacio.m + 2,
-                color: protagonista ? tintaSobre(context, juego) : esquema.onSurfaceVariant,
-              ),
+    final u = unidadPixel(context);
+    final retratos = [for (final id in ids) ?PersonajesPixel.retrato(id)];
+    return CajaPixel(
+      estilo: protagonista
+          ? const EstiloCajaPixel(
+              relleno: ColoresUiPixel.amarillo,
+              luz: ColoresUiPixel.amarilloLuz,
+              sombraInterior: ColoresUiPixel.ocre,
+              esquina: 1,
+            )
+          : const EstiloCajaPixel(
+              relleno: ColoresUiPixel.papel,
+              luz: ColoresUiPixel.blanco,
+              sombraInterior: ColoresUiPixel.crema,
+              esquina: 1,
             ),
-            const SizedBox(width: Espacio.s - 2),
-            Flexible(
-              child: Text(
-                nombre,
-                style: tema.textTheme.labelLarge?.copyWith(color: tinta, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
+      interior: EdgeInsets.fromLTRB(retratos.isEmpty ? 3 : 1, 1, 3, 1),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final retrato in retratos) SpritePixel(sprite: retrato, alto: 10 * u, ancho: 12 * u, animar: false),
+          if (retratos.isNotEmpty) SizedBox(width: u),
+          Flexible(
+            child: TextoPixel(nombre, tipo: TipoTextoPixel.etiqueta, color: ColoresUiPixel.noche),
+          ),
+        ],
       ),
     );
   }

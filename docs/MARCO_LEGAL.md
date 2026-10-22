@@ -1,6 +1,7 @@
 # Marco legal comprobado
 
 Citas literales comprobadas el 21/10/2026 contra los textos consolidados del BOE (la CDN, con el texto oficial de UNICEF; la AEPD y el INCIBE, con sus webs oficiales).
+Las de la LO 5/2000 (arts. 7.1 y 7.3, 17.1 y 17.2, y 22.1) y la de la CE (art. 24.2) se añadieron el 22/10/2026, comprobadas igual con el texto consolidado del BOE (también el fragmento del art. 7.3 sobre los informes de los equipos técnicos). La de la LOPJ (art. 453.1), el mismo día, con la versión vigente de los datos abiertos del BOE.
 Sirven para las tarjetas de conocimiento (`content/kb/`), el glosario, el juego y las respuestas del agente. Cada tarjeta debe citar el artículo exacto.
 En las citas, «(...)» o «[...]» marcan texto omitido. La explicación está escrita para alguien de 11 años y es orientativa: validadla antes de publicarla.
 
@@ -22,10 +23,45 @@ Fuente: [BOE-A-1882-6036](https://www.boe.es/buscar/act.php?id=BOE-A-1882-6036)
 
 Fuente: [BOE-A-2000-641](https://www.boe.es/buscar/act.php?id=BOE-A-2000-641)
 
+### LO 5/2000, art. 17.1 (segundo inciso) y 17.2 · Detención de los menores
+> 1. (...) También deberán notificar inmediatamente el hecho de la detención y el lugar de la custodia a los representantes legales del menor y al Ministerio Fiscal. (...) 2. Toda declaración del detenido, se llevará a cabo en presencia de su letrado y de aquéllos que ejerzan la patria potestad, tutela o guarda del menor (...), salvo que, en este último caso, las circunstancias aconsejen lo contrario. (...) El menor detenido tendrá derecho a la entrevista reservada con su abogado con anterioridad y al término de la práctica de la diligencia de toma de declaración.
+
+**Para explicarlo:** Si te detienen y tienes de 14 a 17 años, la policía tiene que avisar enseguida a tus padres o tutores, y a la Fiscalía, de que te han detenido y de dónde estás. Cuando declares, tiene que estar tu abogado o abogada, y también tus padres o tutores, salvo que haya motivos para que no estén. Puedes hablar a solas con tu abogado antes y después de declarar.
+
+Fuente: [BOE-A-2000-641](https://www.boe.es/buscar/act.php?id=BOE-A-2000-641)
+
+### LO 5/2000, art. 22.1 a), b), d) y e) · De la incoación del expediente
+> 1. Desde el mismo momento de la incoación del expediente, el menor tendrá derecho a: a) Ser informado por el Juez, el Ministerio Fiscal, o agente de policía de los derechos que le asisten. b) Designar abogado que le defienda, o a que le sea designado de oficio y a entrevistarse reservadamente con él, incluso antes de prestar declaración. (...) d) Ser oído por el Juez o Tribunal antes de adoptar cualquier resolución que le concierna personalmente. e) La asistencia afectiva y psicológica en cualquier estado y grado del procedimiento, con la presencia de los padres o de otra persona que indique el menor, si el Juez de Menores autoriza su presencia.
+
+**Para explicarlo:** Desde que la Fiscalía de Menores abre un expediente sobre ti, tienes derecho a que te expliquen tus derechos y a tener un abogado o una abogada: lo puedes elegir o te asignan uno de oficio. Puedes hablar a solas con él antes de declarar. El juez tiene que escucharte antes de decidir algo que te afecte, y pueden acompañarte tus padres u otra persona que elijas, si el juez lo permite.
+
+Fuente: [BOE-A-2000-641](https://www.boe.es/buscar/act.php?id=BOE-A-2000-641)
+
+### LOPJ, art. 453.1
+> 1. Corresponde a los Letrados de la Administración de Justicia, con exclusividad y plenitud, el ejercicio de la fe pública judicial. En el ejercicio de esta función, dejarán constancia fehaciente de la realización de actos procesales en el Tribunal o ante éste y de la producción de hechos con trascendencia procesal mediante las oportunas actas y diligencias. Cuando se utilicen medios técnicos de grabación o reproducción, las vistas se podrán desarrollar sin la intervención del Letrado de la Administración de Justicia, en los términos previstos en la ley. En todo caso, el Letrado de la Administración de Justicia garantizará la autenticidad e integridad de lo grabado o reproducido.
+
+**Para explicarlo:** El Letrado o la Letrada de la Administración de Justicia da fe de lo que pasa en el juicio: deja constancia oficial de lo que se hace, por escrito o en una grabación, y garantiza que lo grabado no se cambia.
+
+Fuente: [BOE-A-1985-12666](https://www.boe.es/buscar/act.php?id=BOE-A-1985-12666)
+
+### CE (Constitución Española), art. 24.2 (párr. 1) · Derecho a la defensa y presunción de inocencia
+> 2. Asimismo, todos tienen derecho al Juez ordinario predeterminado por la ley, a la defensa y a la asistencia de letrado, a ser informados de la acusación formulada contra ellos, a un proceso público sin dilaciones indebidas y con todas las garantías, a utilizar los medios de prueba pertinentes para su defensa, a no declarar contra sí mismos, a no confesarse culpables y a la presunción de inocencia.
+
+**Para explicarlo:** Si te acusan de algo, tienes derecho a defenderte con un abogado o una abogada, a saber de qué se te acusa, a no declarar contra ti y a no tener que decir que eres culpable. Además, se presume que eres inocente mientras no se demuestre lo contrario: que te investiguen no quiere decir que ya se haya decidido nada.
+
+Fuente: [BOE-A-1978-31229](https://www.boe.es/buscar/act.php?id=BOE-A-1978-31229)
+
 ### LO 5/2000, art. 1.1 · Declaración general
 > 1. Esta Ley se aplicará para exigir la responsabilidad de las personas mayores de catorce años y menores de dieciocho por la comisión de hechos tipificados como delitos o faltas en el Código Penal o las leyes penales especiales.
 
 **Para explicarlo:** La ley penal de menores solo se aplica a chicos y chicas de 14 a 17 años que cometen un delito.
+
+Fuente: [BOE-A-2000-641](https://www.boe.es/buscar/act.php?id=BOE-A-2000-641)
+
+### LO 5/2000, art. 7.1 a), b), c) y d) y 7.3 · Definición de las medidas susceptibles de ser impuestas a los menores y reglas generales de determinación de las mismas
+> 1. Las medidas que pueden imponer los Jueces de Menores, ordenadas según la restricción de derechos que suponen, son las siguientes: a) Internamiento en régimen cerrado. Las personas sometidas a esta medida residirán en el centro y desarrollarán en el mismo las actividades formativas, educativas, laborales y de ocio. b) Internamiento en régimen semiabierto. Las personas sometidas a esta medida residirán en el centro, pero podrán realizar fuera del mismo alguna o algunas de las actividades formativas, educativas, laborales y de ocio establecidas en el programa individualizado de ejecución de la medida. (...) c) Internamiento en régimen abierto. Las personas sometidas a esta medida llevarán a cabo todas las actividades del proyecto educativo en los servicios normalizados del entorno, residiendo en el centro como domicilio habitual (...) d) Internamiento terapéutico en régimen cerrado, semiabierto o abierto. En los centros de esta naturaleza se realizará una atención educativa especializada o tratamiento específico dirigido a personas que padezcan anomalías o alteraciones psíquicas, un estado de dependencia de bebidas alcohólicas, drogas tóxicas o sustancias psicotrópicas (...) 3. Para la elección de la medida o medidas adecuadas se deberá atender de modo flexible, no sólo a la prueba y valoración jurídica de los hechos, sino especialmente a la edad, las circunstancias familiares y sociales, la personalidad y el interés del menor, puestos de manifiesto los dos últimos en los informes de los equipos técnicos (...). El Juez deberá motivar en la sentencia las razones por las que aplica una determinada medida, así como el plazo de duración de la misma (...)
+
+**Para explicarlo:** El juez de menores puede poner distintas medidas, y la ley las ordena de la que más limita a la que menos. Las que más limitan son las de internamiento: vivir durante un tiempo en un centro de menores. En régimen cerrado, las clases, el trabajo y el ocio se hacen dentro del centro; en el semiabierto, algunas actividades se pueden hacer fuera, y en el abierto se hacen todas fuera, aunque se vive en el centro. El internamiento terapéutico da además una atención o un tratamiento especial, por ejemplo si hay una adicción. Para elegir la medida, el juez tiene en cuenta sobre todo tu edad, tu familia, tu situación y lo que es mejor para ti (cómo eres y qué te conviene lo cuentan los informes del equipo técnico), y en la sentencia tiene que explicar por qué la elige y cuánto dura.
 
 Fuente: [BOE-A-2000-641](https://www.boe.es/buscar/act.php?id=BOE-A-2000-641)
 

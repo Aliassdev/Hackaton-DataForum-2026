@@ -67,7 +67,8 @@ class PanelFlip extends StatelessWidget {
   final String texto;
   final String? desde;
 
-  /// Estilo de los caracteres. Por defecto, el titular del tema (la letra de títulos), en negrita.
+  /// Tamaño de los caracteres: por defecto, el del titular mediano del tema. La letra siempre es la de las cifras
+  /// ([estiloCifras]).
   final TextStyle? estilo;
 
   /// Color de las paletas. Por defecto, azul noche (azul en el tema oscuro).
@@ -85,12 +86,9 @@ class PanelFlip extends StatelessWidget {
         this.fondo ?? (tema.brightness == Brightness.dark ? PaletaMovimiento.azul : PaletaMovimiento.azulNoche);
     final color = this.color ?? PaletaMovimiento.tintaSobre(fondo, preferida: PaletaMovimiento.amarillo);
     final base = this.estilo ?? tema.textTheme.headlineMedium ?? const TextStyle(fontSize: 28);
-    final estilo = base.copyWith(
-      color: color,
-      fontWeight: FontWeight.w700,
-      height: 1,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
+    // Las cifras, en la letra de las cifras (estiloCifras: Nunito ExtraBold o, con lectura fácil, Atkinson en negrita,
+    // con cifras tabulares): en la de los títulos, el 0 se confunde con la O y el punto de los miles casi no se ve.
+    final estilo = estiloCifras(base)!.copyWith(color: color, height: 1);
     final caracteres = texto.characters.toList();
     final previos = desde?.characters.toList();
     final celda = _medirCelda(estilo, MediaQuery.textScalerOf(context), {...caracteres, ...?previos});

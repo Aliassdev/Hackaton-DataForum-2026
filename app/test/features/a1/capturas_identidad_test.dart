@@ -97,6 +97,9 @@ void main() {
       tester.platformDispatcher.platformBrightnessTestValue = brillo;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
       final router = await _arrancar(tester);
+      // Con los carteles de sala, las tarjetas del inicio son más altas: «Mi situación» puede quedar debajo.
+      await tester.ensureVisible(find.text('Mi situación'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Mi situación'));
       await tester.pumpAndSettle();
       await capturar(tester, 'situacion-01-selector$sufijo');

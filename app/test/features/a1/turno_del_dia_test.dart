@@ -178,12 +178,22 @@ void main() {
   });
 
   group('Racha', () {
-    test('se enseña si la última lección fue hoy o ayer; si no, empieza de cero', () {
+    test('se enseña si la última lección fue hoy, ayer o anteayer con día de descanso; si no, empieza de cero', () {
       final hoy = DateTime(2026, 10, 22);
       Progreso con(DateTime? ultimo) => Progreso(racha: 4, ultimoDiaConLeccion: ultimo);
       expect(rachaViva(con(DateTime(2026, 10, 22)), hoy), 4);
       expect(rachaViva(con(DateTime(2026, 10, 21)), hoy), 4);
-      expect(rachaViva(con(DateTime(2026, 10, 20)), hoy), 0);
+      // Un día sin lección, con el día de descanso de la semana (racha amable): sigue.
+      expect(rachaViva(con(DateTime(2026, 10, 20)), hoy), 4);
+      expect(
+        rachaViva(
+          Progreso(racha: 4, ultimoDiaConLeccion: DateTime(2026, 10, 20), descansoUsado: DateTime(2026, 10, 18)),
+          hoy,
+        ),
+        0,
+        reason: 'el descanso de esta semana ya se gastó',
+      );
+      expect(rachaViva(con(DateTime(2026, 10, 19)), hoy), 0);
       expect(rachaViva(con(null), hoy), 0);
       expect(leccionHoy(con(DateTime(2026, 10, 22, 9)), hoy), isTrue);
       expect(leccionHoy(con(DateTime(2026, 10, 21)), hoy), isFalse);

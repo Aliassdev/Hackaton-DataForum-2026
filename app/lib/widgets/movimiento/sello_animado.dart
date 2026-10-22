@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../tema.dart';
+import '../iconos/paleta_iconos.dart';
+import '../iconos/pieza.dart';
+import '../iconos/tu_icono.dart';
 import 'hapticos.dart';
 
 /// Un sello oficial que cae sobre el papel: baja desde arriba, golpea (vibración fuerte), se aplasta un poco y la tinta
@@ -217,12 +220,17 @@ class Sello extends StatelessWidget {
     this.color,
     this.tamano = 120,
     this.semanticLabel,
+    this.tuIcono,
   });
 
   /// Palabra del centro (corta: «OÍDO», «HECHO»…).
   final String texto;
   final IconData? icono;
   final String textoCircular;
+
+  /// Icono propio de TuTurno para el centro, a una tinta del color del sello (como si estuviera grabado en el sello).
+  /// Si se indica, se pinta en lugar de [icono], y la palabra de debajo se encoge si no cabe en el círculo.
+  final TuIcono? tuIcono;
 
   /// Color de la tinta. Por defecto, el de los sellos del tema (con contraste sobre la superficie).
   final Color? color;
@@ -241,6 +249,8 @@ class Sello extends StatelessWidget {
           painter: _PintorSello(
             texto: texto.toUpperCase(),
             icono: icono,
+            tuIcono: tuIcono,
+            paleta: tuIcono == null ? null : PaletaIconos.de(context),
             textoCircular: textoCircular.toUpperCase(),
             color: color ?? context.colores.sello,
             estiloCentro: tema.textTheme.headlineSmall ?? const TextStyle(),
@@ -262,10 +272,30 @@ class _PintorSello extends CustomPainter {
     required this.estiloCentro,
     required this.estiloCircular,
     required this.escalaTexto,
+    this.tuIcono,
+    this.paleta,
   });
+
+  /// Lado del icono propio del centro, en radios del sello.
+  static const _ladoTuIcono = 0.5;
+
+  /// Hueco entre el icono propio y la palabra, en radios del sello.
+  static const _huecoTuIcono = 0.03;
+
+  /// Radio del círculo libre para la palabra que va debajo del icono propio (el aro interior está a 0,68 y tiene su
+  /// grosor), en radios del sello.
+  static const _radioLibre = 0.63;
+
+  /// Lo que puede encogerse como mucho la palabra que va debajo del icono propio, antes de cortarla con puntos
+  /// suspensivos.
+  static const _encogimientoMinimo = 0.5;
 
   final String texto;
   final IconData? icono;
+  final TuIcono? tuIcono;
+
+  /// Paleta de los iconos (solo hace falta con [tuIcono]).
+  final PaletaIconos? paleta;
   final String textoCircular;
   final Color color;
   final TextStyle estiloCentro;
@@ -322,9 +352,14 @@ class _PintorSello extends CustomPainter {
 
     // Centro: icono y palabra.
     final icono = this.icono;
+    final tuIcono = this.tuIcono;
+    final paleta = this.paleta;
+    final conTuIcono = tuIcono != null && paleta != null;
     var alturaIcono = 0.0;
     TextPainter? pintorIcono;
-    if (icono != null) {
+    if (conTuIcono) {
+      alturaIcono = r * (_ladoTuIcono + _huecoTuIcono);
+    } else if (icono != null) {
       pintorIcono = TextPainter(
         text: TextSpan(
           text: String.fromCharCode(icono.codePoint),
@@ -340,24 +375,56 @@ class _PintorSello extends CustomPainter {
       )..layout();
       alturaIcono = pintorIcono.height;
     }
+    var anchoPalabra = r * 1.2;
+    var tamanoPalabra = r * 0.26 * escalaTexto;
+    if (conTuIcono) {
+      // Debajo del icono, la palabra queda en la parte baja del círculo interior, que allí es más estrecho: el ancho
+      // libre se mide a la altura de su borde de abajo. Si no cabe (una palabra larga, la letra de «lectura fácil» o la
+      // letra grande), se encoge lo justo; solo si ni así cabe, se corta.
+      final bajo = (alturaIcono + tamanoPalabra) / 2;
+      final libre = r * _radioLibre;
+      anchoPalabra = math.min(anchoPalabra, 2 * math.sqrt(math.max(0.0, libre * libre - bajo * bajo)));
+      final medida = TextPainter(
+        text: TextSpan(
+          text: texto,
+          style: estiloCentro.copyWith(fontSize: tamanoPalabra, height: 1, fontWeight: FontWeight.w900),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      if (medida.width > anchoPalabra) {
+        // Con un 2 % de margen: el ancho no crece exactamente en proporción a la letra.
+        tamanoPalabra *= math.max(_encogimientoMinimo, 0.98 * anchoPalabra / medida.width);
+      }
+      medida.dispose();
+    }
     final pintorTexto = TextPainter(
       text: TextSpan(
         text: texto,
-        style: estiloCentro.copyWith(
-          color: color,
-          fontSize: r * 0.26 * escalaTexto,
-          height: 1,
-          fontWeight: FontWeight.w900,
-        ),
+        style: estiloCentro.copyWith(color: color, fontSize: tamanoPalabra, height: 1, fontWeight: FontWeight.w900),
       ),
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
       maxLines: 1,
       ellipsis: '…',
-    )..layout(maxWidth: r * 1.2);
+    )..layout(maxWidth: anchoPalabra);
     final altoTotal = alturaIcono + pintorTexto.height;
     var y = centro.dy - altoTotal / 2;
-    if (pintorIcono != null) {
+    if (conTuIcono) {
+      // El icono, a una tinta del color del sello: los detalles quedan calados, como en un sello de goma.
+      final lado = r * _ladoTuIcono;
+      canvas
+        ..save()
+        ..translate(centro.dx - lado / 2, y);
+      PintorIcono(
+        piezas: tuIcono.piezas,
+        paleta: paleta,
+        estilo: EstiloIcono.mono,
+        colorMono: color,
+      ).paint(canvas, Size.square(lado));
+      canvas.restore();
+      y += alturaIcono;
+    } else if (pintorIcono != null) {
       pintorIcono.paint(canvas, Offset(centro.dx - pintorIcono.width / 2, y));
       y += alturaIcono;
       pintorIcono.dispose();
@@ -387,6 +454,8 @@ class _PintorSello extends CustomPainter {
   bool shouldRepaint(_PintorSello anterior) =>
       anterior.texto != texto ||
       anterior.icono != icono ||
+      anterior.tuIcono != tuIcono ||
+      anterior.paleta != paleta ||
       anterior.textoCircular != textoCircular ||
       anterior.color != color ||
       anterior.estiloCentro != estiloCentro ||

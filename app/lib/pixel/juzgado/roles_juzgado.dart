@@ -1,45 +1,50 @@
 // Textos de «¿Quién es quién en el juzgado?»: quién es y qué hace cada persona de la sala, para chicos y chicas desde
-// los 11 años, con la norma y el artículo de donde sale cada frase.
+// los 11 años.
 //
-// Las citas son literales («(...)» marca lo que se omite) y se comprobaron el 22/10/2026 contra los textos
-// consolidados del BOE (boe.es). Las de LOPIVI, art. 14, LECrim, art. 520.2 bis y LO 5/2000, art. 4, son también las de
-// docs/MARCO_LEGAL.md. Si un detalle no se podía comprobar, no está.
+// Regla (CLAUDE.md): toda afirmación jurídica sale de docs/MARCO_LEGAL.md, con su artículo y la cita literal de allí
+// (una prueba lo comprueba). Lo demás solo presenta a cada persona y dice qué hace en la sala, sin afirmar derechos,
+// deberes, plazos ni excepciones. Si algo no está en MARCO_LEGAL, no está aquí: las citas del BOE que había antes
+// (LOPJ, Estatuto del Ministerio Fiscal, más artículos de la LECrim y de la LO 5/2000…) están en el historial de git
+// para cuando se añadan a MARCO_LEGAL.
 //
-// Los textos son orientativos y están pendientes de que los revise alguien con formación jurídica ([DatosJuzgado.validado]
-// es false): hasta entonces, la actividad lleva la franja «Borrador» y el juego solo debería enseñarla en modo DEMO.
-import 'package:flutter/material.dart' show IconData, Icons;
+// Los textos están pendientes de que los revise alguien con formación jurídica ([DatosJuzgado.validado] es false):
+// hasta entonces, la actividad lleva la franja «Borrador» y el juego solo la abre con el interruptor de borradores del
+// modo DEMO (la regla del contenido con «validado»).
 import 'package:flutter/foundation.dart';
 
+import '../../widgets/iconos/tu_icono.dart';
 import 'sala_juzgado.dart' show ModoJuzgado;
 
-/// Un artículo de una ley en el BOE, con la [cita] literal en la que se apoya un texto.
+/// Un artículo de una ley en el BOE, con la [cita] literal (la de docs/MARCO_LEGAL.md) en la que se apoya un texto.
 @immutable
 class FuenteJuzgado {
   const FuenteJuzgado({required this.norma, required this.articulo, required this.cita, required this.boe});
 
-  /// Nombre corto de la norma: «Constitución», «LECrim», «LO 5/2000»…
+  /// Nombre corto de la norma: «LECrim», «LO 5/2000», «Ley 4/2015»…
   final String norma;
 
-  /// El artículo (y el apartado, si lo hay): «117.1», «22.1 b)».
+  /// El artículo (y el apartado o los párrafos, si los hay): «22», «19.2 y 19.6», «4, párrs. 4 y 5».
   final String articulo;
 
-  /// El texto literal del BOE. «(...)» marca lo que se omite.
+  /// El texto literal. «(...)» marca lo que se omite.
   final String cita;
 
-  /// Identificador de la norma en el BOE: «BOE-A-1978-31229».
+  /// Identificador de la norma en el BOE: «BOE-A-1882-6036».
   final String boe;
 
-  /// «art. 117.1», «arts. 656 y 708» (con varios artículos) o, si es una disposición, «disposición adicional primera».
-  /// Varios apartados del mismo artículo («118.2 y 118.4», «22.1 a), b) y d)») siguen siendo un solo artículo.
+  /// «art. 22», «arts. 656 y 708» (con varios artículos) o, si es una disposición, «disposición adicional primera».
+  /// Varios apartados del mismo artículo («118.2 y 118.4», «22.1 a), b) y d)») siguen siendo un solo artículo, y los
+  /// párrafos («, párrs. 4 y 5») no cuentan como artículos.
   String get referencia {
     if (articulo.startsWith('disposición')) return articulo;
+    final soloArticulos = articulo.split(RegExp(r',\s*párrs?\.')).first;
     final numeros = {
-      for (final m in RegExp(r'(?:^|,\s*|\sy\s)(\d+(?:\s(?:bis|ter))?)').allMatches(articulo)) m.group(1),
+      for (final m in RegExp(r'(?:^|,\s*|\sy\s)(\d+(?:\s(?:bis|ter))?)').allMatches(soloArticulos)) m.group(1),
     };
     return '${numeros.length > 1 ? 'arts.' : 'art.'} $articulo';
   }
 
-  /// «Constitución, art. 117.1».
+  /// «Ley 4/2015, art. 22».
   String get etiqueta => '$norma, $referencia';
 
   /// El nombre largo de la norma, para quien no sabe qué es «LECrim».
@@ -52,14 +57,12 @@ class FuenteJuzgado {
 /// Nombres largos de las normas que se citan.
 const nombresNormas = {
   'Constitución': 'Constitución Española',
-  'LOPJ': 'Ley Orgánica 6/1985, del Poder Judicial',
   'LECrim': 'Ley de Enjuiciamiento Criminal',
-  'EOMF': 'Ley 50/1981, del Estatuto Orgánico del Ministerio Fiscal',
-  'Código Penal': 'Ley Orgánica 10/1995, del Código Penal',
-  'LOPIVI': 'Ley Orgánica 8/2021, de protección de la infancia y la adolescencia frente a la violencia',
+  'Ley 4/2015': 'Ley 4/2015, del Estatuto de la víctima del delito',
+  'LO 1/1996': 'Ley Orgánica 1/1996, de Protección Jurídica del Menor',
   'LO 5/2000': 'Ley Orgánica 5/2000, reguladora de la responsabilidad penal de los menores',
-  'RD 1774/2004': 'Real Decreto 1774/2004, Reglamento de la Ley Orgánica 5/2000',
-  'LO 7/2015': 'Ley Orgánica 7/2015, que modifica la Ley Orgánica del Poder Judicial',
+  'LOPIVI': 'Ley Orgánica 8/2021, de protección de la infancia y la adolescencia frente a la violencia',
+  'LOPJ': 'Ley Orgánica 6/1985, del Poder Judicial',
 };
 
 /// Una persona de la sala: quién es, qué hace y de dónde sale.
@@ -74,7 +77,7 @@ class RolJuzgado {
     required this.queHace,
     this.sabiasQue,
     required this.icono,
-    required this.fuentes,
+    this.fuentes = const [],
     this.sitio,
   });
 
@@ -84,10 +87,10 @@ class RolJuzgado {
   /// «La jueza».
   final String titulo;
 
-  /// Nombre corto, para las fichas de la sala: «Jueza», «Letrada».
+  /// Nombre corto, para las fichas de la sala: «Jueza», «Policía».
   final String corto;
 
-  /// Otro nombre que le da la ley («Acusación particular»), si lo tiene.
+  /// Otro nombre con el que se le conoce («Letrada del menor»), si lo tiene.
   final String? subtitulo;
 
   final String quienEs;
@@ -96,9 +99,12 @@ class RolJuzgado {
   /// Un dato más, para quien quiera saber más.
   final String? sabiasQue;
 
-  final IconData icono;
+  /// El icono de su carta y de su ficha, de la iconografía de TuTurno (nunca un mazo, una balanza de juicio ni una
+  /// placa de policía).
+  final TuIcono icono;
 
-  /// Las normas de las que salen [quienEs], [queHace] y [sabiasQue].
+  /// Los artículos de MARCO_LEGAL de los que salen las afirmaciones jurídicas de [quienEs], [queHace] y [sabiasQue].
+  /// Vacía si la carta solo presenta a la persona.
   final List<FuenteJuzgado> fuentes;
 
   /// Dónde está en la sala, para decírselo a quien usa un lector de pantalla («en el estrado, arriba en el centro»).
@@ -112,7 +118,7 @@ class NotaJuzgado {
 
   final String titulo;
   final String texto;
-  final IconData icono;
+  final TuIcono icono;
   final List<FuenteJuzgado> fuentes;
 }
 
@@ -149,8 +155,8 @@ class DatosJuzgado {
   final List<NotaJuzgado> notas;
 
   /// Si alguien con formación jurídica ha revisado los textos (como el «validado» del contenido, CLAUDE.md). Mientras
-  /// sea false, [JuzgadoExplorable] enseña la franja «Borrador: pendiente de revisión jurídica» y el juego solo debería
-  /// abrir la actividad en modo DEMO, con el interruptor de borradores.
+  /// sea false, [JuzgadoExplorable] enseña la franja «Borrador: textos pendientes de revisión jurídica» y el juego solo
+  /// abre la actividad en modo DEMO, con el interruptor de borradores.
   final bool validado;
 
   /// El rol [id], o null si no está.
@@ -158,26 +164,312 @@ class DatosJuzgado {
 }
 
 // ----------------------------------------------------------------------------------------------------------- fuentes
+// Las citas son las de docs/MARCO_LEGAL.md, tal cual («[...]» allí es «(...)» aquí).
 
 const _ce = 'BOE-A-1978-31229';
-const _lopj = 'BOE-A-1985-12666';
 const _lecrim = 'BOE-A-1882-6036';
-const _eomf = 'BOE-A-1982-837';
-const _cp = 'BOE-A-1995-25444';
-const _lopivi = 'BOE-A-2021-9347';
+const _estatuto = 'BOE-A-2015-4606';
+const _lopjm = 'BOE-A-1996-1069';
 const _lorpm = 'BOE-A-2000-641';
-const _rlorpm = 'BOE-A-2004-15601';
-const _lo72015 = 'BOE-A-2015-8167';
+const _lopivi = 'BOE-A-2021-9347';
+const _lopj = 'BOE-A-1985-12666';
+
+const _lopj453 = FuenteJuzgado(
+  norma: 'LOPJ',
+  articulo: '453.1',
+  boe: _lopj,
+  cita:
+      '1. Corresponde a los Letrados de la Administración de Justicia, con exclusividad y plenitud, el ejercicio de la fe '
+      'pública judicial. En el ejercicio de esta función, dejarán constancia fehaciente de la realización de actos '
+      'procesales en el Tribunal o ante éste (...) mediante las oportunas actas y diligencias. (...) En todo caso, el '
+      'Letrado de la Administración de Justicia garantizará la autenticidad e integridad de lo grabado o reproducido.',
+);
 
 const _ce24 = FuenteJuzgado(
   norma: 'Constitución',
   articulo: '24.2',
   boe: _ce,
   cita:
-      'Asimismo, todos tienen derecho al Juez ordinario predeterminado por la ley, a la defensa y a la asistencia de '
-      'letrado, a ser informados de la acusación formulada contra ellos, a un proceso público sin dilaciones indebidas '
-      'y con todas las garantías, a utilizar los medios de prueba pertinentes para su defensa, a no declarar contra sí '
+      '2. Asimismo, todos tienen derecho al Juez ordinario predeterminado por la ley, a la defensa y a la asistencia de '
+      'letrado, a ser informados de la acusación formulada contra ellos, a un proceso público sin dilaciones indebidas y '
+      'con todas las garantías, a utilizar los medios de prueba pertinentes para su defensa, a no declarar contra sí '
       'mismos, a no confesarse culpables y a la presunción de inocencia.',
+);
+
+const _lecrim449bis = FuenteJuzgado(
+  norma: 'LECrim',
+  articulo: '449 bis, párrs. 2 y 3',
+  boe: _lecrim,
+  cita:
+      'La autoridad judicial garantizará el principio de contradicción en la práctica de la declaración. (...) su '
+      'defensa letrada, en todo caso, deberá estar presente. (...) La autoridad judicial asegurará la documentación de '
+      'la declaración en soporte apto para la grabación del sonido y la imagen (...)',
+);
+
+const _lecrim449ter = FuenteJuzgado(
+  norma: 'LECrim',
+  articulo: '449 ter, párr. 1',
+  boe: _lecrim,
+  cita:
+      'Cuando una persona menor de catorce años (...) deba intervenir en condición de testigo en un procedimiento '
+      'judicial que tenga por objeto la instrucción de un delito de homicidio, lesiones, contra la libertad, contra la '
+      'integridad moral (...), la autoridad judicial acordará, en todo caso, practicar la audiencia del menor como prueba '
+      'preconstituida',
+);
+
+const _lecrim520 = FuenteJuzgado(
+  norma: 'LECrim',
+  articulo: '520.2 bis',
+  boe: _lecrim,
+  cita:
+      '2 bis. La información a que se refiere el apartado anterior se facilitará en un lenguaje comprensible y que '
+      'resulte accesible al destinatario. A estos efectos se adaptará la información a su edad, grado de madurez, '
+      'discapacidad y cualquier otra circunstancia personal (...)',
+);
+
+const _lecrim681 = FuenteJuzgado(
+  norma: 'LECrim',
+  articulo: '681.3',
+  boe: _lecrim,
+  cita:
+      '3. Queda prohibida, en todo caso, la divulgación o publicación de información relativa a la identidad de víctimas '
+      'menores de edad, (...) así como de datos que puedan facilitar su identificación de forma directa o indirecta, '
+      '(...) así como la obtención, divulgación o publicación de imágenes suyas o de sus familiares.',
+);
+
+const _lecrim703bis = FuenteJuzgado(
+  norma: 'LECrim',
+  articulo: '703 bis, párrs. 1 y 2',
+  boe: _lecrim,
+  cita:
+      'se procederá, a instancia de la parte interesada, a la reproducción en la vista de la grabación audiovisual (...) '
+      'sin que sea necesaria la presencia del testigo en la vista. En los supuestos previstos en el artículo 449 ter, la '
+      'autoridad judicial solo podrá acordar la intervención del testigo en el acto del juicio, con carácter '
+      'excepcional (...)',
+);
+
+const _estatuto7 = FuenteJuzgado(
+  norma: 'Ley 4/2015',
+  articulo: '7.1 a) y b)',
+  boe: _estatuto,
+  cita:
+      '1. Toda víctima será informada de manera inmediata de la fecha, hora y lugar del juicio, así como del contenido '
+      'de la acusación dirigida contra el infractor, y se le notificarán las siguientes resoluciones: a) La resolución '
+      'por la que se acuerde no iniciar el procedimiento penal. b) La sentencia que ponga fin al procedimiento.',
+);
+
+const _estatuto19 = FuenteJuzgado(
+  norma: 'Ley 4/2015',
+  articulo: '19, párrs. 1 y 2',
+  boe: _estatuto,
+  cita:
+      'Las autoridades y funcionarios encargados de la investigación, persecución y enjuiciamiento de los delitos '
+      'adoptarán las medidas necesarias (...) para evitar el riesgo de su victimización secundaria o reiterada. En el '
+      'caso de las víctimas menores de edad, la Fiscalía velará especialmente por el cumplimiento de este derecho de '
+      'protección (...)',
+);
+
+const _estatuto20 = FuenteJuzgado(
+  norma: 'Ley 4/2015',
+  articulo: '20',
+  boe: _estatuto,
+  cita:
+      'Las dependencias en las que se desarrollen los actos del procedimiento penal, incluida la fase de investigación, '
+      'estarán dispuestas de modo que se evite el contacto directo entre las víctimas y sus familiares, de una parte, y '
+      'el sospechoso de la infracción o acusado, de otra (...)',
+);
+
+const _estatuto22 = FuenteJuzgado(
+  norma: 'Ley 4/2015',
+  articulo: '22',
+  boe: _estatuto,
+  cita:
+      'Los Jueces, Tribunales, Fiscales (...) adoptarán, de acuerdo con lo dispuesto en la Ley, las medidas necesarias '
+      'para proteger la intimidad de todas las víctimas y de sus familiares y, en particular, para impedir la difusión '
+      'de cualquier información que pueda facilitar la identificación de las víctimas menores de edad (...)',
+);
+
+const _lopjm4 = FuenteJuzgado(
+  norma: 'LO 1/1996',
+  articulo: '4.1 y 4.5',
+  boe: _lopjm,
+  cita:
+      '1. Los menores tienen derecho al honor, a la intimidad personal y familiar y a la propia imagen. (...) 5. Los '
+      'padres o tutores y los poderes públicos respetarán estos derechos y los protegerán frente a posibles ataques de '
+      'terceros.',
+);
+
+const _lopjm9 = FuenteJuzgado(
+  norma: 'LO 1/1996',
+  articulo: '9.1 y 9.2',
+  boe: _lopjm,
+  cita:
+      'El menor tiene derecho a ser oído y escuchado sin discriminación alguna por edad (...) el menor deberá recibir '
+      'la información que le permita el ejercicio de este derecho en un lenguaje comprensible, en formatos accesibles y '
+      'adaptados a sus circunstancias. (...) Se considera, en todo caso, que tiene suficiente madurez cuando tenga doce '
+      'años cumplidos.',
+);
+
+const _lopjm10 = FuenteJuzgado(
+  norma: 'LO 1/1996',
+  articulo: '10.2.b) y 10.2.c)',
+  boe: _lopjm,
+  cita:
+      'Para la defensa y garantía de sus derechos el menor puede: (...) b) Poner en conocimiento del Ministerio Fiscal '
+      'las situaciones que considere que atentan contra sus derechos con el fin de que éste promueva las acciones '
+      'oportunas. c) Plantear sus quejas ante el Defensor del Pueblo o ante las instituciones autonómicas homólogas.',
+);
+
+const _lopivi14 = FuenteJuzgado(
+  norma: 'LOPIVI',
+  articulo: '14.1 y 14.3',
+  boe: _lopivi,
+  cita:
+      'Las personas menores de edad víctimas de violencia tienen derecho a la defensa y representación gratuitas por '
+      'abogado y procurador de conformidad con lo dispuesto en la Ley 1/1996, de 10 de enero, de asistencia jurídica '
+      'gratuita. (...) los Colegios de Abogados adoptarán las medidas necesarias para la designación urgente de letrado '
+      'o letrada de oficio',
+);
+
+const _lopivi50d = FuenteJuzgado(
+  norma: 'LOPIVI',
+  articulo: '50.2.d)',
+  boe: _lopivi,
+  cita:
+      'd) Se impedirá cualquier tipo de contacto directo o indirecto en dependencias policiales entre la persona '
+      'investigada y el niño, niña o adolescente.',
+);
+
+const _lopivi50eh = FuenteJuzgado(
+  norma: 'LOPIVI',
+  articulo: '50.2.e) y 50.2.h)',
+  boe: _lopivi,
+  cita:
+      'e) Se permitirá a las personas menores de edad, que así lo soliciten, formular denuncia por sí mismas y sin '
+      'necesidad de estar acompañadas de una persona adulta. (...) h) Se procurará que el niño, niña o adolescente se '
+      'encuentre en todo momento en compañía de una persona de su confianza designada libremente por él o ella misma en '
+      'un entorno seguro',
+);
+
+const _lorpm1 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '1.1',
+  boe: _lorpm,
+  cita:
+      '1. Esta Ley se aplicará para exigir la responsabilidad de las personas mayores de catorce años y menores de '
+      'dieciocho por la comisión de hechos tipificados como delitos o faltas en el Código Penal o las leyes penales '
+      'especiales.',
+);
+
+const _lorpm4Victimas = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '4, párrs. 1 y 3',
+  boe: _lorpm,
+  cita:
+      'El Ministerio Fiscal y el Juez de Menores velarán en todo momento por la protección de los derechos de las '
+      'víctimas y de las personas perjudicadas por las infracciones cometidas por las personas menores de edad. (...) '
+      'Las víctimas y las personas perjudicadas tendrán derecho a personarse y ser parte en el expediente que se incoe al '
+      'efecto (...)',
+);
+
+const _lorpm4Distancia = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '4, párrs. 4 y 5',
+  boe: _lorpm,
+  cita:
+      'Se garantizará especialmente que las declaraciones o interrogatorios (...) se realicen de forma telemática en los '
+      'siguientes supuestos, salvo que el Juez, Tribunal o Ministerio Fiscal, mediante resolución motivada, (...) estime '
+      'necesaria su presencia física: (...) cuando sean víctimas menores de edad o con discapacidad.',
+);
+
+const _lorpm6 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '6',
+  boe: _lorpm,
+  cita:
+      'Corresponde al Ministerio Fiscal la defensa de los derechos que a los menores reconocen las leyes, así como la '
+      'vigilancia de las actuaciones que deban efectuarse en su interés y la observancia de las garantías del '
+      'procedimiento, para lo cual dirigirá personalmente la investigación de los hechos (...)',
+);
+
+const _lorpm7i = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '7.1 i)',
+  boe: _lorpm,
+  cita:
+      'i) La prohibición de aproximarse o comunicarse con la víctima (...). Esta medida impedirá al menor acercarse a '
+      'ellos, en cualquier lugar donde se encuentren, así como a su domicilio, a su centro docente (...) impedirá al '
+      'menor establecer con ellas, por cualquier medio de comunicación o medio informático o telemático, contacto '
+      'escrito, verbal o visual.',
+);
+
+const _lorpm73 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '7.3',
+  boe: _lorpm,
+  cita:
+      '3. Para la elección de la medida o medidas adecuadas se deberá atender de modo flexible, no sólo a la prueba y '
+      'valoración jurídica de los hechos, sino especialmente a la edad, las circunstancias familiares y sociales, la '
+      'personalidad y el interés del menor, puestos de manifiesto los dos últimos en los informes de los equipos '
+      'técnicos (...). El Juez deberá motivar en la sentencia las razones por las que aplica una determinada medida, así '
+      'como el plazo de duración de la misma (...)',
+);
+
+const _lorpm17 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '17.1 (segundo inciso) y 17.2',
+  boe: _lorpm,
+  cita:
+      '1. (...) También deberán notificar inmediatamente el hecho de la detención y el lugar de la custodia a los '
+      'representantes legales del menor y al Ministerio Fiscal. (...) 2. Toda declaración del detenido, se llevará a '
+      'cabo en presencia de su letrado y de aquéllos que ejerzan la patria potestad, tutela o guarda del menor (...), '
+      'salvo que, en este último caso, las circunstancias aconsejen lo contrario. (...) El menor detenido tendrá derecho '
+      'a la entrevista reservada con su abogado con anterioridad y al término de la práctica de la diligencia de toma de '
+      'declaración.',
+);
+
+const _lorpm19 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '19.2 y 19.6',
+  boe: _lorpm,
+  cita:
+      'se entenderá producida la conciliación cuando el menor reconozca el daño causado y se disculpe ante la víctima, y '
+      'ésta acepte sus disculpas (...) 6. En los casos en los que la víctima del delito o falta fuere menor de edad '
+      '(...), el compromiso (...) habrá de ser asumido por el representante legal de la misma, con la aprobación del '
+      'Juez de Menores.',
+);
+
+const _lorpm22 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '22.1 a), b), d) y e)',
+  boe: _lorpm,
+  cita:
+      '1. Desde el mismo momento de la incoación del expediente, el menor tendrá derecho a: a) Ser informado por el '
+      'Juez, el Ministerio Fiscal, o agente de policía de los derechos que le asisten. b) Designar abogado que le '
+      'defienda, o a que le sea designado de oficio y a entrevistarse reservadamente con él, incluso antes de prestar '
+      'declaración. (...) d) Ser oído por el Juez o Tribunal antes de adoptar cualquier resolución que le concierna '
+      'personalmente. e) La asistencia afectiva y psicológica en cualquier estado y grado del procedimiento, con la '
+      'presencia de los padres o de otra persona que indique el menor, si el Juez de Menores autoriza su presencia.',
+);
+
+const _lorpm23 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '23.4 b)',
+  boe: _lorpm,
+  cita:
+      '4. El Ministerio Fiscal (...) instará al Juzgado de menores, la práctica de la declaración de la víctima o de un '
+      'cualquier otro testigo, con las garantías de la prueba preconstituida (...) b) Cuando se trate de una persona '
+      'especialmente vulnerable. En todo caso, tendrá esa consideración toda persona menor de catorce años (...)',
+);
+
+const _lorpm28 = FuenteJuzgado(
+  norma: 'LO 5/2000',
+  articulo: '28.1',
+  boe: _lorpm,
+  cita:
+      '1. El Ministerio Fiscal (...) podrá solicitar del Juez de Menores, en cualquier momento, la adopción de medidas '
+      'cautelares (...) para la debida protección de la víctima. Dichas medidas podrán consistir en (...) prohibición de '
+      'aproximarse o comunicarse con la víctima (...)',
 );
 
 // ------------------------------------------------------------------------------------------------- la sala de vistas
@@ -187,61 +479,25 @@ const datosSalaVistas = DatosJuzgado(
   titulo: '¿Quién es quién en el juzgado?',
   subtitulo: 'La sala de vistas, durante un juicio. Toca a cada persona para saber quién es y qué hace.',
   descripcion:
-      'La sala de vistas de un juzgado durante un juicio. Al fondo, en el estrado, la jueza y la letrada. A la '
-      'izquierda, el fiscal y la abogada de la víctima; a la derecha, la persona investigada y su abogado. En el centro, '
-      'el testigo, en el sitio de quien declara. De pie, a la derecha, un agente de policía, y delante, el público.',
+      'La sala de vistas de un juzgado durante un juicio. Al fondo, en su mesa, la jueza y la Letrada de la '
+      'Administración de Justicia. A la izquierda, el fiscal y la abogada de la víctima; a la derecha, la persona '
+      'investigada y su abogado. Todas las mesas están a la misma altura. En el centro, el testigo, en el sitio de quien '
+      'declara. De pie, a la derecha, un agente de policía, y delante, el público.',
   roles: [
     RolJuzgado(
       id: 'jueza',
-      sitio: 'en el estrado, arriba en el centro',
+      sitio: 'al fondo, en el centro, en su mesa',
       titulo: 'La jueza',
       corto: 'Jueza',
       quienEs:
-          'Es quien dirige el juicio y, al final, decide. Es independiente: nadie puede darle instrucciones sobre cómo '
-          'decidir, y solo obedece a la Constitución y a las leyes.',
+          'Es quien dirige el juicio y, al final, decide. Su decisión se llama sentencia, y a la víctima o a su familia '
+          'se la tienen que comunicar.',
       queHace:
-          'Mantiene el orden en la sala, escucha a todas las partes y mira las pruebas. Después dicta la sentencia, en '
-          'la que tiene que explicar sus razones.',
-      sabiasQue: 'Los juicios penales son sobre todo orales: casi todo se dice en voz alta, en la sala.',
-      icono: Icons.balance_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LOPJ',
-          articulo: '1, 12.3 y 13',
-          boe: _lopj,
-          cita:
-              'La justicia emana del pueblo y se administra en nombre del Rey por Jueces y Magistrados integrantes del '
-              'Poder Judicial, independientes, inamovibles, responsables y sometidos únicamente a la Constitución y al '
-              'imperio de la ley. / Tampoco podrán los Jueces y Tribunales, órganos de gobierno de los mismos o el '
-              'Consejo General del Poder Judicial dictar instrucciones (...) sobre la aplicación o interpretación del '
-              'ordenamiento jurídico que lleven a cabo en el ejercicio de su función jurisdiccional. / Todos están '
-              'obligados a respetar la independencia de los Jueces y Magistrados.',
-        ),
-        FuenteJuzgado(
-          norma: 'LOPJ',
-          articulo: '190.1',
-          boe: _lopj,
-          cita:
-              'Corresponde al Presidente del Tribunal o al juez mantener el orden en la Sala, a cuyo efecto acordará lo '
-              'que proceda.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '741',
-          boe: _lecrim,
-          cita:
-              'El Tribunal, apreciando según su conciencia las pruebas practicadas en el juicio, las razones expuestas '
-              'por la acusación y la defensa y lo manifestado por los mismos procesados, dictará sentencia (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'Constitución',
-          articulo: '120.2 y 120.3',
-          boe: _ce,
-          cita:
-              '2. El procedimiento será predominantemente oral, sobre todo en materia criminal. 3. Las sentencias serán '
-              'siempre motivadas y se pronunciarán en audiencia pública.',
-        ),
-      ],
+          'Escucha a todas las partes y mira las pruebas. También tiene que proteger la intimidad de las víctimas. Si '
+          'son menores, debe impedir que se difunda cualquier dato que permita saber quiénes son.',
+      sabiasQue: 'Si un juicio afecta a la vida de un chico o de una chica, tiene derecho a que le escuchen. Da igual su edad.',
+      icono: TuIcono.toga,
+      fuentes: [_estatuto7, _estatuto22, _lopjm9],
     ),
     RolJuzgado(
       id: 'fiscal',
@@ -249,105 +505,27 @@ const datosSalaVistas = DatosJuzgado(
       titulo: 'El fiscal',
       corto: 'Fiscal',
       quienEs:
-          'Trabaja en el Ministerio Fiscal (la Fiscalía). Su misión es defender la ley, los derechos de las personas y '
-          'el interés de toda la sociedad.',
+          'Trabaja en la Fiscalía. En un juicio penal, es quien acusa a la persona que cree que ha cometido un delito.',
       queHace:
-          'En un juicio penal, acusa a quien cree que ha cometido un delito. Tiene que actuar con objetividad, sin '
-          'favorecer a nadie, y cuidar de que las víctimas y los testigos estén protegidos.',
-      sabiasQue:
-          'Además de acusar, el fiscal pide que se repare el daño a la víctima, salvo que ella diga que no lo quiere.',
-      icono: Icons.policy_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'Constitución',
-          articulo: '124.1',
-          boe: _ce,
-          cita:
-              'El Ministerio Fiscal, sin perjuicio de las funciones encomendadas a otros órganos, tiene por misión '
-              'promover la acción de la justicia en defensa de la legalidad, de los derechos de los ciudadanos y del '
-              'interés público tutelado por la ley (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'EOMF',
-          articulo: '3.4 y 3.10',
-          boe: _eomf,
-          cita:
-              '4. Ejercitar las acciones penales y civiles dimanantes de delitos (...) 10. Velar por la protección '
-              'procesal de las víctimas y por la protección de testigos y peritos (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'EOMF',
-          articulo: '7',
-          boe: _eomf,
-          cita:
-              'Por el principio de imparcialidad el Ministerio Fiscal actuará con plena objetividad e independencia en '
-              'defensa de los intereses que le estén encomendados.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '108',
-          boe: _lecrim,
-          cita:
-              'La acción civil ha de entablarse juntamente con la penal por el Ministerio Fiscal, haya o no en el '
-              'proceso acusador particular; pero si el ofendido renunciare expresamente su derecho de restitución, '
-              'reparación o indemnización, el Ministerio Fiscal se limitará a pedir el castigo de los culpables.',
-        ),
-      ],
+          'Tiene que procurar que el proceso no haga más daño a las víctimas. Si la víctima es menor de edad, la '
+          'Fiscalía lo vigila de forma especial.',
+      sabiasQue: 'Cualquier chico o chica puede contar a la Fiscalía que no se respetan sus derechos, para que actúe.',
+      icono: TuIcono.ley,
+      fuentes: [_estatuto19, _lopjm10],
     ),
     RolJuzgado(
       id: 'abogadaVictima',
       sitio: 'a la izquierda, en la mesa, junto al fiscal',
       titulo: 'La abogada de la víctima',
       corto: 'Abogada de la víctima',
-      subtitulo: 'Acusación particular',
-      quienEs:
-          'Es la abogada que defiende a la víctima. Cuando la víctima decide participar en el juicio para acusar, se '
-          'dice que es la «acusación particular».',
+      quienEs: 'Es la abogada que defiende a la víctima. Conoce bien las leyes y la acompaña durante el proceso.',
       queHace:
-          'Habla en nombre de la víctima: acusa, propone pruebas, hace preguntas a los testigos y pide que se repare '
-          'el daño causado.',
+          'En el juicio habla en nombre de la víctima: hace preguntas y explica a la jueza lo que la víctima pide.',
       sabiasQue:
           'Si la víctima es menor y ha sufrido violencia, puede tener abogado gratis en los casos que marca la ley. Y se '
           'le asigna con urgencia.',
-      icono: Icons.volunteer_activism_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '109 bis.1',
-          boe: _lecrim,
-          cita:
-              'Las víctimas del delito que no hubieran renunciado a su derecho podrán ejercer la acción penal en '
-              'cualquier momento antes del trámite de calificación del delito (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '110',
-          boe: _lecrim,
-          cita:
-              'Las personas perjudicadas por un delito que no hubieren renunciado a su derecho podrán mostrarse parte '
-              'en la causa (...) y ejercitar las acciones civiles que procedan (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '656 y 708',
-          boe: _lecrim,
-          cita:
-              'El Ministerio Fiscal y las partes manifestarán en sus respectivos escritos de calificación las pruebas '
-              'de que intenten valerse (...) / (...) la parte que le haya presentado podrá hacerle las preguntas que '
-              'tenga por conveniente. Las demás partes podrán dirigirle también las preguntas que consideren oportunas '
-              '(...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LOPIVI',
-          articulo: '14.1 y 14.3',
-          boe: _lopivi,
-          cita:
-              'Las personas menores de edad víctimas de violencia tienen derecho a la defensa y representación '
-              'gratuitas por abogado y procurador de conformidad con lo dispuesto en la Ley 1/1996, de 10 de enero, de '
-              'asistencia jurídica gratuita. (...) los Colegios de Abogados adoptarán las medidas necesarias para la '
-              'designación urgente de letrado o letrada de oficio (...)',
-        ),
-      ],
+      icono: TuIcono.manoAlzada,
+      fuentes: [_lopivi14],
     ),
     RolJuzgado(
       id: 'abogadoDefensa',
@@ -355,90 +533,26 @@ const datosSalaVistas = DatosJuzgado(
       titulo: 'El abogado de la defensa',
       corto: 'Abogado de la defensa',
       quienEs:
-          'Es el abogado de la persona investigada. Todo el mundo tiene derecho a defenderse con un abogado. Si no elige '
-          'uno, le nombran uno sin que tenga que buscarlo: es el abogado «de oficio».',
-      queHace:
-          'Habla con ella en privado y la defiende en el juicio: propone pruebas, hace preguntas a los testigos y da '
-          'sus razones a la jueza.',
+          'Es el abogado de la persona investigada. Todo el mundo tiene derecho a defenderse con la ayuda de un abogado '
+          'o de una abogada.',
+      queHace: 'Habla con ella y la defiende en el juicio: hace preguntas y da sus razones a la jueza.',
       sabiasQue:
-          'Por regla general, lo que la persona investigada habla con su abogado es confidencial: la ley lo protege.',
-      icono: Icons.shield_rounded,
-      fuentes: [
-        _ce24,
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '118.2 y 118.4',
-          boe: _lecrim,
-          cita:
-              'El derecho de defensa comprende la asistencia letrada de un abogado de libre designación o, en su '
-              'defecto, de un abogado de oficio, con el que podrá comunicarse y entrevistarse reservadamente (...) / '
-              'Todas las comunicaciones entre el investigado o encausado y su abogado tendrán carácter confidencial.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '741',
-          boe: _lecrim,
-          cita:
-              'El Tribunal, apreciando según su conciencia las pruebas practicadas en el juicio, las razones expuestas '
-              'por la acusación y la defensa (...) dictará sentencia (...)',
-        ),
-      ],
+          'Si la declaración de un testigo se graba antes del juicio, el abogado de la defensa tiene que estar presente. '
+          'Así es justa para todos.',
+      icono: TuIcono.manoAlzada,
+      fuentes: [_ce24, _lecrim449bis],
     ),
     RolJuzgado(
       id: 'letrada',
-      sitio: 'en el estrado, a la derecha de la jueza',
-      titulo: 'La letrada de la Administración de Justicia',
-      corto: 'Letrada',
-      quienEs:
-          'Es una funcionaria experta en derecho que dirige la oficina del juzgado. Antes, este puesto se llamaba '
-          '«secretario judicial».',
+      sitio: 'al fondo, a la derecha de la jueza',
+      titulo: 'Letrado o Letrada de la Administración de Justicia',
+      corto: 'Letrada de la Administración de Justicia',
+      quienEs: 'Es una persona experta en derecho que trabaja en el juzgado. Se sienta junto a la jueza.',
       queHace:
-          'Da fe pública: garantiza que lo que pasa en el juicio queda registrado, en una grabación o en un acta. '
-          'También garantiza que la grabación es auténtica y está completa.',
-      sabiasQue:
-          'Si el juicio se graba, no siempre tiene que estar en la sala: con su firma electrónica garantiza que la '
-          'grabación es la de verdad.',
-      icono: Icons.verified_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LOPJ',
-          articulo: '440',
-          boe: _lopj,
-          cita:
-              'Los Letrados de la Administración de Justicia son funcionarios públicos que constituyen un Cuerpo '
-              'Superior Jurídico (...) ostentando la dirección de la Oficina judicial.',
-        ),
-        FuenteJuzgado(
-          norma: 'LOPJ',
-          articulo: '453.1',
-          boe: _lopj,
-          cita:
-              'Corresponde a los Letrados de la Administración de Justicia, con exclusividad y plenitud, el ejercicio de '
-              'la fe pública judicial. En el ejercicio de esta función, dejarán constancia fehaciente de la realización '
-              'de actos procesales (...) mediante las oportunas actas y diligencias. (...) En todo caso, el Letrado de '
-              'la Administración de Justicia garantizará la autenticidad e integridad de lo grabado o reproducido.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '743.2',
-          boe: _lecrim,
-          cita:
-              'Siempre que se cuente con los medios tecnológicos necesarios, estos garantizarán la autenticidad e '
-              'integridad de lo grabado o reproducido. A tal efecto, el letrado o letrada de la Administración de '
-              'Justicia hará uso de la firma electrónica (...). En este caso, la celebración del acto no requerirá la '
-              'presencia en la sala del letrado o letrada de la Administración de Justicia salvo que lo hubieran '
-              'solicitado las partes (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 7/2015',
-          articulo: 'disposición adicional primera',
-          boe: _lo72015,
-          cita:
-              '(...) todas las referencias que se contengan en la Ley Orgánica 6/1985, de 1 de julio, del Poder '
-              'Judicial, así como en otras normas jurídicas, a Secretarios judiciales (...) deberán entenderse hechas '
-              '(...) a Letrados de la Administración de Justicia (...)',
-        ),
-      ],
+          'Da fe de lo que pasa en el juicio: deja constancia oficial de lo que se hace, por escrito o en una grabación. '
+          'Y garantiza que lo grabado no se cambia.',
+      icono: TuIcono.expediente,
+      fuentes: [_lopj453],
     ),
     RolJuzgado(
       id: 'testigo',
@@ -449,77 +563,13 @@ const datosSalaVistas = DatosJuzgado(
           'Es una persona que vio u oyó algo relacionado con el caso. No está acusado de nada: viene a contar lo que '
           'sabe.',
       queHace:
-          'Responde a las preguntas de las partes y de la jueza. Tiene que decir la verdad: si no sabe algo o no se '
-          'acuerda, puede decirlo, porque equivocarse no es mentir. Mentir a propósito sí es un delito, el falso '
-          'testimonio.',
+          'Responde a las preguntas que le hacen en el juicio. Si es la víctima, el juzgado se organiza para que no se '
+          'cruce con la persona acusada.',
       sabiasQue:
-          'Si quien declara es menor de 18 años, se puede evitar que vea a la persona acusada: por ejemplo, declarando '
-          'por videoconferencia desde otra sala. Y si tiene menos de 14 años y es un caso de violencia, su entrevista se '
-          'graba antes: normalmente no viene al juicio.',
-      icono: Icons.record_voice_over_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '410',
-          boe: _lecrim,
-          cita:
-              'Todos los que residan en territorio español, nacionales o extranjeros, que no estén impedidos, tendrán '
-              'obligación de concurrir al llamamiento judicial para declarar cuanto supieren sobre lo que les fuere '
-              'preguntado (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '708',
-          boe: _lecrim,
-          cita:
-              '(...) la parte que le haya presentado podrá hacerle las preguntas que tenga por conveniente. Las demás '
-              'partes podrán dirigirle también las preguntas que consideren oportunas (...) El Presidente (...) podrá '
-              'dirigir a los testigos las preguntas que estime conducentes (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'Código Penal',
-          articulo: '458.1',
-          boe: _cp,
-          cita: 'El testigo que faltare a la verdad en su testimonio en causa judicial (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'Código Penal',
-          articulo: '12',
-          boe: _cp,
-          cita: 'Las acciones u omisiones imprudentes sólo se castigarán cuando expresamente lo disponga la Ley.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '707',
-          boe: _lecrim,
-          cita:
-              '(...) cuando una persona menor de dieciocho años (...) deba intervenir en el acto del juicio, su '
-              'declaración se llevará a cabo, cuando resulte necesario para impedir o reducir los perjuicios que para '
-              'ella puedan derivar del desarrollo del proceso (...), evitando la confrontación visual con la persona '
-              'inculpada. (...) incluyéndose la posibilidad de que los testigos puedan ser oídos sin estar presentes en '
-              'la sala mediante la utilización de tecnologías de la comunicación accesible.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '449 ter',
-          boe: _lecrim,
-          cita:
-              'Cuando una persona menor de catorce años (...) deba intervenir en condición de testigo en un procedimiento '
-              'judicial que tenga por objeto la instrucción de un delito de homicidio, lesiones, contra la libertad, '
-              'contra la integridad moral (...), la autoridad judicial acordará, en todo caso, practicar la audiencia del '
-              'menor como prueba preconstituida (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '703 bis',
-          boe: _lecrim,
-          cita:
-              '(...) se procederá, a instancia de la parte interesada, a la reproducción en la vista de la grabación '
-              'audiovisual (...) sin que sea necesaria la presencia del testigo en la vista. En los supuestos previstos '
-              'en el artículo 449 ter, la autoridad judicial solo podrá acordar la intervención del testigo en el acto '
-              'del juicio, con carácter excepcional (...)',
-        ),
-      ],
+          'Si un testigo tiene menos de 14 años y es un caso de violencia, su entrevista se graba antes. En el juicio se '
+          'pone la grabación, y normalmente no tiene que venir.',
+      icono: TuIcono.turnoPalabra,
+      fuentes: [_estatuto20, _lecrim449ter, _lecrim703bis],
     ),
     RolJuzgado(
       id: 'investigada',
@@ -530,86 +580,26 @@ const datosSalaVistas = DatosJuzgado(
           'Es la persona a la que se investiga por un delito. En el juicio se la llama «acusada». Para la ley es '
           'inocente mientras no se demuestre lo contrario.',
       queHace:
-          'Escucha el juicio junto a su abogado. Tiene derechos: puede declarar o quedarse en silencio, y no está '
+          'Escucha el juicio junto a su abogado. Tiene derecho a defenderse y a saber de qué se la acusa. No está '
           'obligada a declarar contra sí misma ni a confesarse culpable.',
-      sabiasQue:
-          'Al final del juicio, la jueza le pregunta si quiere decir algo más: es su derecho a la «última palabra».',
-      icono: Icons.person_rounded,
-      fuentes: [
-        _ce24,
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '118.1 g) y h)',
-          boe: _lecrim,
-          cita:
-              'g) Derecho a guardar silencio y a no prestar declaración si no desea hacerlo, y a no contestar a alguna o '
-              'algunas de las preguntas que se le formulen. h) Derecho a no declarar contra sí mismo y a no confesarse '
-              'culpable.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '701 y 739',
-          boe: _lecrim,
-          cita:
-              '(...) si a propuesta de su defensa el acusado solicitara declarar en último lugar, el Presidente así lo '
-              'acordará expresamente. (...) / Terminadas la acusación y la defensa, el Presidente preguntará a los '
-              'procesados si tienen algo que manifestar al Tribunal. Al que contestare afirmativamente le será concedida '
-              'la palabra. (...)',
-        ),
-      ],
+      sabiasQue: 'Si la detienen, la policía tiene que explicarle sus derechos con palabras que pueda entender.',
+      icono: TuIcono.info,
+      fuentes: [_ce24, _lecrim520],
     ),
     RolJuzgado(
       id: 'policia',
       sitio: 'de pie, abajo a la derecha',
       titulo: 'El agente de policía',
       corto: 'Policía',
-      quienEs:
-          'Es un agente de policía. Cuando ayuda a jueces y fiscales a investigar un delito, hace de Policía Judicial.',
+      quienEs: 'Es un agente de policía. Ayuda a investigar los delitos.',
       queHace:
-          'Busca pruebas y lo apunta todo en un informe que se llama atestado. En el juicio puede declarar para contar '
-          'lo que averiguó.',
+          'Escucha a quien va a contar algo. Cualquier chico o chica puede denunciar sin ir con una persona adulta, y '
+          'tener a su lado a alguien de su confianza.',
       sabiasQue:
-          'Si la policía detiene a alguien, tiene que explicarle sus derechos con palabras que pueda entender según su '
-          'edad.',
-      icono: Icons.local_police_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LOPJ',
-          articulo: '547',
-          boe: _lopj,
-          cita:
-              'La función de la Policía Judicial comprende el auxilio a los juzgados y tribunales y al Ministerio '
-              'Fiscal en la averiguación de los delitos y en el descubrimiento y aseguramiento de los delincuentes. '
-              '(...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '292',
-          boe: _lecrim,
-          cita:
-              'Los funcionarios de Policía judicial extenderán (...) un atestado de las diligencias que practiquen, en '
-              'el cual especificarán con la mayor exactitud los hechos por ellos averiguados, insertando las '
-              'declaraciones e informes recibidos y anotando todas las circunstancias que hubiesen observado y pudiesen '
-              'ser prueba o indicio del delito. (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '717',
-          boe: _lecrim,
-          cita:
-              'Las declaraciones de las Autoridades y funcionarios de Policía judicial tendrán el valor de '
-              'declaraciones testificales, apreciables como éstas según las reglas del criterio racional.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '520.2 bis',
-          boe: _lecrim,
-          cita:
-              'La información a que se refiere el apartado anterior se facilitará en un lenguaje comprensible y que '
-              'resulte accesible al destinatario. A estos efectos se adaptará la información a su edad, grado de '
-              'madurez, discapacidad y cualquier otra circunstancia personal (...)',
-        ),
-      ],
+          'En la comisaría, la policía tiene que evitar que un chico o una chica víctima se encuentre con la persona '
+          'investigada.',
+      icono: TuIcono.escudo,
+      fuentes: [_lopivi50eh, _lopivi50d],
     ),
     RolJuzgado(
       id: 'publico',
@@ -620,74 +610,15 @@ const datosSalaVistas = DatosJuzgado(
       quienEs:
           'Son personas que vienen a ver el juicio: familiares, amistades, estudiantes, periodistas… Por regla general, '
           'los juicios son públicos.',
-      queHace:
-          'Mira y escucha sin intervenir. La jueza puede hacer salir a quien altere el orden. También puede celebrar el '
-          'juicio a puerta cerrada, por ejemplo, para proteger la intimidad de la víctima.',
+      queHace: 'Miran y escuchan en silencio, sin intervenir en el juicio.',
       sabiasQue: 'Está prohibido publicar el nombre, los datos o las fotos de una víctima menor de edad.',
-      icono: Icons.groups_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'Constitución',
-          articulo: '120.1',
-          boe: _ce,
-          cita:
-              'Las actuaciones judiciales serán públicas, con las excepciones que prevean las leyes de procedimiento.',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '680 y 681.1',
-          boe: _lecrim,
-          cita:
-              'Los debates del juicio oral serán públicos, bajo pena de nulidad, sin perjuicio de lo dispuesto en el '
-              'artículo siguiente. / El Juez o Tribunal podrá acordar (...) que todos o alguno de los actos o las '
-              'sesiones del juicio se celebren a puerta cerrada, cuando así lo exijan (...) la adecuada protección de '
-              'los derechos fundamentales de los intervinientes, en particular, el derecho a la intimidad de la víctima '
-              '(...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '684',
-          boe: _lecrim,
-          cita:
-              'El Presidente llamará al orden a todas las personas que lo alteren, y podrá hacerlas salir del local si '
-              'lo considerare oportuno (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LECrim',
-          articulo: '681.3',
-          boe: _lecrim,
-          cita:
-              'Queda prohibida, en todo caso, la divulgación o publicación de información relativa a la identidad de '
-              'víctimas menores de edad (...) así como de datos que puedan facilitar su identificación de forma directa '
-              'o indirecta (...) así como la obtención, divulgación o publicación de imágenes suyas o de sus familiares.',
-        ),
-      ],
+      icono: TuIcono.personaConfianza,
+      fuentes: [_ce24, _lecrim681],
     ),
   ],
 );
 
 // ------------------------------------------------------------------------------------------- el Juzgado de Menores
-
-const _lorpm1 = FuenteJuzgado(
-  norma: 'LO 5/2000',
-  articulo: '1.1',
-  boe: _lorpm,
-  cita:
-      'Esta Ley se aplicará para exigir la responsabilidad de las personas mayores de catorce años y menores de '
-      'dieciocho por la comisión de hechos tipificados como delitos o faltas en el Código Penal o las leyes penales '
-      'especiales.',
-);
-
-const _lorpm372 = FuenteJuzgado(
-  norma: 'LO 5/2000',
-  articulo: '37.2',
-  boe: _lorpm,
-  cita:
-      '(...) oyéndose, asimismo, al equipo técnico sobre las circunstancias del menor. A continuación, el Juez oirá al '
-      'Ministerio Fiscal, a quien haya ejercitado en su caso la acción penal, al letrado del menor (...) sobre la '
-      'valoración de la prueba, su calificación jurídica y la procedencia de las medidas propuestas (...). Por último, '
-      'el Juez oirá al menor, dejando el expediente visto para sentencia.',
-);
 
 /// La audiencia del caso de Sergio en el Juzgado de Menores.
 const datosMenores = DatosJuzgado(
@@ -704,48 +635,16 @@ const datosMenores = DatosJuzgado(
       titulo: 'El juez de menores',
       corto: 'Juez de menores',
       quienEs:
-          'Es el juez que se encarga de los casos de chicos y chicas de 14 a 17 años acusados de un delito. Desde 2025, '
-          'la ley llama a estos juzgados «Sección de Menores» del Tribunal de Instancia.',
+          'Es el juez que se encarga de los casos de chicos y chicas de 14 a 17 años acusados de un delito. Junto al '
+          'fiscal, protege los derechos de las víctimas.',
       queHace:
-          'Dirige la audiencia (así se llama aquí el juicio) y escucha a todos; al chico, el último. Si se demuestra que '
-          'lo hizo, le pone una medida, como hacer tareas educativas. Para elegirla, piensa en su edad, su familia, su '
-          'forma de ser y lo que más le conviene.',
+          'Dirige la audiencia, que es el juicio de menores. Si se demuestra que el chico lo hizo, puede ponerle una '
+          'medida: por ejemplo, prohibirle acercarse a la víctima.',
       sabiasQue:
-          'Una de las medidas son las prestaciones en beneficio de la comunidad: actividades sin cobrar que ayudan a '
-          'otras personas. Solo se pueden poner si el chico está de acuerdo.',
-      icono: Icons.balance_rounded,
-      fuentes: [
-        _lorpm1,
-        FuenteJuzgado(
-          norma: 'LOPJ',
-          articulo: '84.2 f)',
-          boe: _lopj,
-          cita:
-              'Además de las anteriores, los Tribunales de Instancia podrán estar integrados por alguna o varias de las '
-              'siguientes Secciones: (...) f) De Menores.',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '2.1',
-          boe: _lorpm,
-          cita:
-              'Los Jueces de Menores serán competentes para conocer de los hechos cometidos por las personas mencionadas '
-              'en el artículo 1 de esta Ley, así como para hacer ejecutar las sentencias (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '7.1 k) y l) y 7.3',
-          boe: _lorpm,
-          cita:
-              'k) Prestaciones en beneficio de la comunidad. La persona sometida a esta medida, que no podrá imponerse '
-              'sin su consentimiento, ha de realizar las actividades no retribuidas que se le indiquen, de interés '
-              'social o en beneficio de personas en situación de precariedad. l) Realización de tareas socio-educativas. '
-              '(...) 3. Para la elección de la medida o medidas adecuadas se deberá atender de modo flexible, no sólo a '
-              'la prueba y valoración jurídica de los hechos, sino especialmente a la edad, las circunstancias '
-              'familiares y sociales, la personalidad y el interés del menor (...)',
-        ),
-        _lorpm372,
-      ],
+          'Para elegir la medida, piensa sobre todo en la edad del chico, su familia y lo que es mejor para él. Y en la '
+          'sentencia tiene que explicar por qué la elige.',
+      icono: TuIcono.toga,
+      fuentes: [_lorpm1, _lorpm4Victimas, _lorpm7i, _lorpm73],
     ),
     RolJuzgado(
       id: 'fiscalMenores',
@@ -753,65 +652,16 @@ const datosMenores = DatosJuzgado(
       titulo: 'El fiscal de menores',
       corto: 'Fiscal de menores',
       quienEs:
-          'Es un fiscal especialista en menores. Defiende los derechos de los chicos y chicas y, junto al juez, protege '
-          'los derechos de las víctimas, como Sergio.',
+          'Trabaja en la Fiscalía de Menores. Defiende los derechos de los chicos y chicas y vigila que el proceso sea '
+          'justo.',
       queHace:
-          'Dirige la investigación y, si hay pruebas, acusa y propone una medida. Tiene que buscar lo mejor para el chico '
-          'investigado (el «interés superior del menor») sin dejar de proteger a Sergio.',
+          'Dirige la investigación de lo que pasó. En cualquier momento puede pedir al juez medidas para proteger a '
+          'Sergio, como que el chico no se le acerque.',
       sabiasQue:
           'Si el chico reconoce el daño y pide perdón, Sergio decide si acepta sus disculpas: nadie le puede obligar. Si '
-          'las acepta, hay conciliación; como Sergio es menor, el acuerdo lo asumen sus padres y lo aprueba el juez. En '
-          'los casos menos graves, la Fiscalía puede entonces cerrar el caso.',
-      icono: Icons.policy_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: 'disposición final cuarta, apartado 2',
-          boe: _lorpm,
-          cita:
-              'En todas las Fiscalías existirá una Sección de Menores compuesta por miembros de la Carrera Fiscal, '
-              'especialistas (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '4 y 6',
-          boe: _lorpm,
-          cita:
-              'El Ministerio Fiscal y el Juez de Menores velarán en todo momento por la protección de los derechos de '
-              'las víctimas (...) / Corresponde al Ministerio Fiscal la defensa de los derechos que a los menores '
-              'reconocen las leyes (...) para lo cual dirigirá personalmente la investigación de los hechos (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '30.1',
-          boe: _lorpm,
-          cita:
-              'Acabada la instrucción, el Ministerio Fiscal (...) remitirá al Juzgado de Menores el expediente (...) con '
-              'un escrito de alegaciones en el que constará la descripción de los hechos, la valoración jurídica de los '
-              'mismos (...) la proposición de alguna medida de las previstas en esta Ley (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'EOMF',
-          articulo: '3.13',
-          boe: _eomf,
-          cita:
-              'Ejercer en materia de responsabilidad penal de menores las funciones que le encomiende la legislación '
-              'específica, debiendo orientar su actuación a la satisfacción del interés superior del menor.',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '19.1, 19.2 y 19.6',
-          boe: _lorpm,
-          cita:
-              'También podrá el Ministerio Fiscal desistir de la continuación del expediente (...) a la circunstancia de '
-              'que además el menor se haya conciliado con la víctima (...) El desistimiento en la continuación del '
-              'expediente sólo será posible cuando el hecho imputado al menor constituya delito menos grave o falta. '
-              '2. (...) se entenderá producida la conciliación cuando el menor reconozca el daño causado y se disculpe '
-              'ante la víctima, y ésta acepte sus disculpas (...) 6. En los casos en los que la víctima del delito o falta '
-              'fuere menor de edad o incapaz, el compromiso al que se refiere el presente artículo habrá de ser asumido '
-              'por el representante legal de la misma, con la aprobación del Juez de Menores.',
-        ),
-      ],
+          'las acepta, hay conciliación. Como Sergio es menor, el acuerdo lo asumen sus padres y lo aprueba el juez.',
+      icono: TuIcono.ley,
+      fuentes: [_lorpm6, _lorpm28, _lorpm19],
     ),
     RolJuzgado(
       id: 'letradaMenor',
@@ -819,36 +669,13 @@ const datosMenores = DatosJuzgado(
       titulo: 'La abogada del chico',
       corto: 'Abogada del chico',
       subtitulo: 'Letrada del menor',
-      quienEs:
-          'Es la abogada que defiende al chico investigado. Él tiene derecho a tener abogado desde el principio y a '
-          'hablar con su abogada en privado. Aquí, «letrada» quiere decir abogada.',
-      queHace: 'Le defiende en la audiencia: propone pruebas, opina sobre las medidas que se piden y da sus razones al juez.',
-      sabiasQue:
-          'Si el chico y su familia no eligen abogado, el Colegio de Abogados le nombra uno «de oficio», especialista en '
-          'menores.',
-      icono: Icons.shield_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '22.1 b) y 22.2',
-          boe: _lorpm,
-          cita:
-              'Desde el mismo momento de la incoación del expediente, el menor tendrá derecho a: (...) b) Designar '
-              'abogado que le defienda, o a que le sea designado de oficio y a entrevistarse reservadamente con él, '
-              'incluso antes de prestar declaración. (...) 2. (...) de no hacerlo, se le nombrará de oficio de entre los '
-              'integrantes del turno de especialistas del correspondiente Colegio de Abogados.',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '31',
-          boe: _lorpm,
-          cita:
-              '(...) el secretario judicial dará traslado de todo lo actuado al letrado del menor (...) para que en un '
-              'plazo de cinco días hábiles formule a su vez escrito de alegaciones y proponga la prueba que considere '
-              'pertinente.',
-        ),
-        _lorpm372,
-      ],
+      quienEs: 'Es la abogada que defiende al chico investigado. Aquí, «letrada» quiere decir abogada.',
+      queHace:
+          'Le defiende en la audiencia y da sus razones al juez. El chico puede elegirla o le asignan una «de oficio», y '
+          'puede hablar con ella a solas.',
+      sabiasQue: 'Si detienen a alguien de 14 a 17 años, su abogado o abogada tiene que estar presente cuando declare.',
+      icono: TuIcono.manoAlzada,
+      fuentes: [_lorpm22, _lorpm17],
     ),
     RolJuzgado(
       id: 'equipoTecnico',
@@ -856,57 +683,12 @@ const datosMenores = DatosJuzgado(
       titulo: 'El equipo técnico',
       corto: 'Equipo técnico',
       quienEs:
-          'Son profesionales de la psicología, la educación y el trabajo social que ayudan al juez y al fiscal de '
-          'menores.',
+          'Es una psicóloga del equipo técnico: un grupo de profesionales que ayudan al juez y al fiscal de menores.',
       queHace:
-          'Estudian cómo está el chico: su situación psicológica, sus estudios, su familia y su entorno. Lo explican en '
-          'un informe y en la audiencia, para ayudar a elegir la medida que más le conviene.',
-      sabiasQue:
-          'Si lo ven bueno para el chico, pueden proponer que repare el daño o que se concilie con la víctima. Si hay '
-          'mediación, la llevan ellos, solo si la víctima y su familia quieren, y sin verse si la víctima lo pide.',
-      icono: Icons.psychology_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'RD 1774/2004',
-          articulo: '4.1',
-          boe: _rlorpm,
-          cita:
-              'Los equipos técnicos estarán formados por psicólogos, educadores y trabajadores sociales cuya función es '
-              'asistir técnicamente en las materias propias de sus disciplinas profesionales a los jueces de menores y '
-              'al Ministerio Fiscal, elaborando los informes, efectuando las propuestas (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '27.1 y 27.3',
-          boe: _lorpm,
-          cita:
-              '(...) la elaboración de un informe (...) sobre la situación psicológica, educativa y familiar del menor, '
-              'así como sobre su entorno social (...) 3. De igual modo, el equipo técnico informará, si lo considera '
-              'conveniente y en interés del menor, sobre la posibilidad de que éste efectúe una actividad reparadora o '
-              'de conciliación con la víctima (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '19.3',
-          boe: _lorpm,
-          cita:
-              'El correspondiente equipo técnico realizará las funciones de mediación entre el menor y la víctima o '
-              'perjudicado (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'RD 1774/2004',
-          articulo: '5.1 d) y e)',
-          boe: _rlorpm,
-          cita:
-              'd) El equipo técnico se pondrá en contacto con la víctima para que manifieste su conformidad o '
-              'disconformidad a participar en un procedimiento de mediación (...) Si la víctima fuese menor de edad o '
-              'incapaz, este consentimiento deberá ser confirmado por sus representantes legales y ser puesto en '
-              'conocimiento del juez de menores competente. e) (...) la conciliación y la reparación también podrán '
-              'llevarse a cabo sin encuentro, a petición de la víctima, por cualquier otro medio que permita dejar '
-              'constancia de los acuerdos.',
-        ),
-        _lorpm372,
-      ],
+          'En sus informes cuentan cómo es el chico investigado y qué es lo mejor para él. El juez los tiene en cuenta '
+          'para elegir la medida.',
+      icono: TuIcono.buscar,
+      fuentes: [_lorpm73],
     ),
     RolJuzgado(
       id: 'menor',
@@ -917,37 +699,11 @@ const datosMenores = DatosJuzgado(
           'Es uno de los chicos denunciados en el caso de Sergio. La ley de menores se aplica a chicos y chicas de 14 a '
           '17 años. Para la ley es inocente mientras no se demuestre lo contrario.',
       queHace:
-          'Está en la audiencia con su abogada y puede estar acompañado de su familia. Tiene derecho a que le expliquen '
-          'sus derechos y de qué se le acusa, a defenderse y a ser oído: el juez le escucha el último.',
-      sabiasQue: 'Los medios de comunicación nunca pueden sacar imágenes suyas ni datos que permitan saber quién es.',
-      icono: Icons.person_rounded,
-      fuentes: [
-        _lorpm1,
-        _ce24,
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '22.1 a), b) y d)',
-          boe: _lorpm,
-          cita:
-              'Desde el mismo momento de la incoación del expediente, el menor tendrá derecho a: a) Ser informado por el '
-              'Juez, el Ministerio Fiscal, o agente de policía de los derechos que le asisten. b) Designar abogado que '
-              'le defienda (...) d) Ser oído por el Juez o Tribunal antes de adoptar cualquier resolución que le '
-              'concierna personalmente.',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '35 y 36.1',
-          boe: _lorpm,
-          cita:
-              '1. La audiencia se celebrará con asistencia (...) del propio menor, el cual podrá estar acompañado de sus '
-              'representantes legales, salvo que el Juez (...) acuerde lo contrario. (...) 2. (...) en ningún caso se '
-              'permitirá que los medios de comunicación social obtengan o difundan imágenes del menor ni datos que '
-              'permitan su identificación. / El secretario judicial informará al menor expedientado, en un lenguaje '
-              'comprensible y adaptado a su edad, de las medidas (...) solicitadas (...) así como de los hechos y de la '
-              'causa en que se funden.',
-        ),
-        _lorpm372,
-      ],
+          'Está en la audiencia con su abogada. Tiene derecho a que le expliquen sus derechos y a defenderse. Y el juez '
+          'tiene que escucharle antes de decidir algo sobre él.',
+      sabiasQue: 'Como todos los menores, tiene derecho a su intimidad y a su propia imagen.',
+      icono: TuIcono.info,
+      fuentes: [_lorpm1, _ce24, _lorpm22, _lopjm4],
     ),
     RolJuzgado(
       id: 'familia',
@@ -955,91 +711,32 @@ const datosMenores = DatosJuzgado(
       titulo: 'La madre del chico',
       corto: 'Madre del chico',
       subtitulo: 'Su familia',
-      quienEs:
-          'Es la madre del chico investigado. Él tiene derecho a que sus padres, u otra persona que elija, le apoyen '
-          'durante el proceso, si el juez lo autoriza.',
+      quienEs: 'Es la madre del chico investigado. Ha venido a la audiencia para estar con su hijo.',
       queHace:
-          'Puede acompañarle durante la audiencia, salvo que el juez decida lo contrario. Y si hay daños que pagar, sus '
-          'padres pueden tener que pagarlos junto a él.',
-      icono: Icons.family_restroom_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '22.1 e)',
-          boe: _lorpm,
-          cita:
-              'e) La asistencia afectiva y psicológica en cualquier estado y grado del procedimiento, con la presencia '
-              'de los padres o de otra persona que indique el menor, si el Juez de Menores autoriza su presencia.',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '35.1',
-          boe: _lorpm,
-          cita:
-              'La audiencia se celebrará con asistencia (...) del propio menor, el cual podrá estar acompañado de sus '
-              'representantes legales, salvo que el Juez, oídos los citados Ministerio Fiscal, letrado del menor y '
-              'representante del equipo técnico, acuerde lo contrario. (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '61.3',
-          boe: _lorpm,
-          cita:
-              'Cuando el responsable de los hechos cometidos sea un menor de dieciocho años, responderán solidariamente '
-              'con él de los daños y perjuicios causados sus padres, tutores, acogedores y guardadores legales o de '
-              'hecho, por este orden. (...)',
-        ),
-      ],
+          'Le acompaña y le apoya. El chico tiene derecho a que estén con él sus padres u otra persona que elija, si el '
+          'juez lo autoriza.',
+      sabiasQue: 'Los padres tienen que respetar y proteger la intimidad y la imagen de sus hijos.',
+      icono: TuIcono.personaConfianza,
+      fuentes: [_lorpm22, _lopjm4],
     ),
   ],
   notas: [
     NotaJuzgado(
       titulo: 'Hoy no hay público',
       texto:
-          'El juez de menores puede decidir que la audiencia no sea pública, para proteger al chico o a la víctima. Y los '
-          'medios de comunicación nunca pueden difundir imágenes ni datos que permitan saber quién es el menor.',
-      icono: Icons.lock_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '35.2',
-          boe: _lorpm,
-          cita:
-              'El Juez podrá acordar, en interés de la persona imputada o de la víctima, que las sesiones no sean '
-              'públicas y en ningún caso se permitirá que los medios de comunicación social obtengan o difundan imágenes '
-              'del menor ni datos que permitan su identificación.',
-        ),
-      ],
+          'En esta audiencia no hay público. Jueces y fiscales tienen que proteger la intimidad de las víctimas. Y está '
+          'prohibido publicar datos o fotos que permitan saber quién es una víctima menor de edad.',
+      icono: TuIcono.candado,
+      fuentes: [_estatuto22, _lecrim681],
     ),
     NotaJuzgado(
       titulo: '¿Y Sergio?',
       texto:
-          'Lo normal es que no esté en la sala. Como tiene menos de 14 años, su declaración se grabó antes, con '
-          'garantías, para que no tenga que repetirla. Y si tuviera que declarar, lo normal es hacerlo a distancia, por '
+          'Lo normal es que no esté en la sala. Como tiene menos de 14 años, la Fiscalía tiene que pedir que su '
+          'declaración se grabe antes, con garantías. Y si tuviera que declarar, lo normal es hacerlo a distancia, por '
           'videoconferencia.',
-      icono: Icons.videocam_rounded,
-      fuentes: [
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '23.4 b)',
-          boe: _lorpm,
-          cita:
-              'El Ministerio Fiscal, de oficio o a petición de cualquiera de las partes personadas, instará al Juzgado de '
-              'menores, la práctica de la declaración de la víctima o de un cualquier otro testigo, con las garantías de '
-              'la prueba preconstituida (...) b) Cuando se trate de una persona especialmente vulnerable. En todo caso, '
-              'tendrá esa consideración toda persona menor de catorce años (...)',
-        ),
-        FuenteJuzgado(
-          norma: 'LO 5/2000',
-          articulo: '4',
-          boe: _lorpm,
-          cita:
-              'Se garantizará especialmente que las declaraciones o interrogatorios de las partes acusadoras, testigos o '
-              'peritos se realicen de forma telemática en los siguientes supuestos, salvo que el Juez, Tribunal o '
-              'Ministerio Fiscal, mediante resolución motivada, en atención a las circunstancias del caso concreto, '
-              'estime necesaria su presencia física: Cuando sean (...) víctimas menores de edad (...)',
-        ),
-      ],
+      icono: TuIcono.grabacion,
+      fuentes: [_lorpm23, _lorpm4Distancia],
     ),
   ],
 );

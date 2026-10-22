@@ -6,11 +6,11 @@ import 'teselas.dart';
 /// sientan detrás de un mueble (el estrado, las mesas, el sitio de quien declara) tienen los pies escondidos: con
 /// [EscenarioPixel.componer], el mueble se pinta encima y se les ve de la cintura para arriba.
 enum PuestoVista {
-  /// En el centro del estrado, delante del escudo.
-  jueza('jueza', 'La jueza', 80, 50),
+  /// Al fondo, en el centro, en su mesa, debajo de la balanza.
+  jueza('jueza', 'La jueza', 80, 56),
 
-  /// En el estrado, a la derecha de la jueza (vista desde el público): la letrada de la Administración de Justicia.
-  letrada('letrada', 'La letrada', 109, 51),
+  /// Al fondo, a la derecha de la jueza (vista desde el público): la letrada de la Administración de Justicia.
+  letrada('letrada', 'La letrada', 109, 57),
 
   /// En la mesa de la izquierda, la más cercana a la pared.
   fiscal('fiscal', 'El fiscal', 18, 72),
@@ -48,15 +48,18 @@ enum PuestoVista {
   PuntoPixel get punto => (x: x, y: y);
 }
 
-/// La sala de vistas, al estilo de las de España: al fondo, el estrado (una tarima con la mesa de la jueza y la de la
-/// letrada) y el escudo encima; a la izquierda, la mesa de la acusación (el fiscal y la abogada de la víctima); a la
-/// derecha, la de la defensa (el abogado y la persona investigada); en el centro, el sitio de quien declara, y delante,
-/// los bancos del público. Los sitios de cada uno están en [PuestoVista].
+/// La sala de vistas, al estilo de las de España: al fondo, el estrado (la mesa de la jueza y la de la letrada) y, encima,
+/// una balanza en un medallón (nunca un escudo oficial: tema-justicia, §9); a la izquierda, la mesa de la acusación (el
+/// fiscal y la abogada de la víctima); a la derecha, la de la defensa (el abogado y la persona investigada); en el
+/// centro, el sitio de quien declara, y delante, los bancos del público. Sin tarima: todas las mesas, a la misma altura
+/// (LOPJ, art. 187.2, como guía de dibujo: en estrados, todos se sientan a la misma altura). Los sitios de cada uno
+/// están en [PuestoVista].
 final escenarioSalaVistas = EscenarioPixel(
   lugar: 'sala_vistas',
   descripcion:
-      'La sala de vistas: al fondo, el estrado con la mesa de la jueza y el escudo; a los lados, las mesas de la '
-      'acusación y de la defensa; en el centro, el sitio de quien declara, y delante, los bancos del público.',
+      'La sala de vistas: al fondo, la mesa de la jueza, debajo de una balanza; a los lados, las mesas de la acusación '
+      'y de la defensa, todas a la misma altura; en el centro, el sitio de quien declara, y delante, los bancos del '
+      'público.',
   fondo: Sprite('sala_vistas', _salaVistas.fondo),
   delante: [for (final mueble in _salaVistas.muebles) piezaEn(Sprite(mueble.nombre, mueble.filas), mueble.x, mueble.y)],
   puestos: {
@@ -85,35 +88,27 @@ final _salaVistas = _pintarSalaVistas();
     ..ventana(6, 9, 22, 22, hojas: 2, paisaje: PaisajePixel.arboles, alfeizar: false, semilla: 3)
     ..ventana(132, 9, 22, 22, hojas: 2, paisaje: PaisajePixel.arboles, alfeizar: false, semilla: 12);
 
-  // El fondo de madera del estrado, con el escudo.
+  // El fondo de madera del estrado, con la balanza en un medallón encima de la jueza.
   l
     ..caja(36, 4, 88, 48, 't', 'T')
     ..lineaH(37, 5, 86, 'm');
   for (var x = 41; x < 122; x += 6) {
     l.lineaV(x, 6, 45, 'T');
   }
-  l.pegar(_escudo, 76, -2);
+  l.pegar(_balanza, 74, 1);
 
-  // La tarima.
-  l
-    ..caja(26, 49, 108, 9, 'm')
-    ..lineaH(27, 50, 106, 'u')
-    ..lineaH(27, 52, 106, 't')
-    ..lineaH(26, 57, 108, 'N');
-  for (var x = 34; x < 130; x += 12) {
-    l.lineaV(x, 53, 4, 't');
-  }
+  // Sin tarima: el estrado está en el suelo, como las demás mesas (en estrados, todos a la misma altura).
 
   // Las sillas, detrás de los muebles.
-  _sillaAlta(l, 72, 18, 16, 'D');
-  _sillaAlta(l, 102, 27, 13, 'A');
+  _sillaAlta(l, 72, 28, 16, 'D');
+  _sillaAlta(l, 102, 33, 13, 'A');
   for (final x in [18, 43, 117, 142]) {
     _sillaAlta(l, x - 6, 50, 12, 'A');
   }
   _sillaAlta(l, 74, 64, 12, 'A');
 
   final muebles = <_Mueble>[
-    (nombre: 'sala_vistas: estrado', x: 36, y: 28, filas: _estrado()),
+    (nombre: 'sala_vistas: estrado', x: 36, y: _suelo - 24, filas: _estrado()),
     (nombre: 'sala_vistas: mesa de la acusación', x: 4, y: 56, filas: _mesaLateral(izquierda: true)),
     (nombre: 'sala_vistas: mesa de la defensa', x: 102, y: 56, filas: _mesaLateral(izquierda: false)),
     (nombre: 'sala_vistas: sitio de quien declara', x: 67, y: 69, filas: _mesaDeclarante()),
@@ -148,12 +143,12 @@ void _sillaAlta(LienzoPixel l, int x, int y, int ancho, String color) {
     ..lineaV(x + 1, y + 3, 9, luz);
 }
 
-/// El estrado (88 × 24): la mesa de la jueza en medio, más alta (tablero en la fila 6), y a los lados las de la
-/// letrada y del otro sitio (tablero en la fila 10), todas de madera con cuarterones. Encima, micrófonos y papeles.
+/// El estrado (88 × 24), en el suelo: la mesa de la jueza en medio y a los lados las de la letrada y del otro sitio,
+/// todas a la misma altura (tablero en la fila 10) y de madera con cuarterones. Encima, micrófonos y papeles.
 List<String> _estrado() {
   const alto = 24;
   final l = LienzoPixel(88, alto);
-  for (final (x, ancho, arriba) in [(0, 26, 10), (62, 26, 10), (24, 40, 6)]) {
+  for (final (x, ancho, arriba) in [(0, 26, 10), (62, 26, 10), (24, 40, 10)]) {
     l
       ..caja(x, arriba, ancho, 3, 'm')
       ..lineaH(x + 1, arriba + 1, ancho - 2, 'u')
@@ -165,18 +160,14 @@ List<String> _estrado() {
         ..lineaH(px + 1, alto - 4, 7, 'u');
     }
   }
-  // Una moldura dorada en la mesa de la jueza.
-  l
-    ..lineaH(25, 9, 38, 'o')
-    ..lineaH(26, 10, 36, 'Y');
   // Micrófonos: la jueza, la letrada y el otro sitio.
   l
-    ..pegar(_microfono, 43, 0)
+    ..pegar(_microfono, 43, 4)
     ..pegar(_microfono, 70, 4)
     ..pegar(_microfono, 12, 4);
   // Papeles y una carpeta.
   l
-    ..pegar(['WWWWWW', 'WGGGGh'], 30, 4)
+    ..pegar(['WWWWWW', 'WGGGGh'], 30, 8)
     ..caja(5, 8, 9, 3, 'A')
     ..lineaH(6, 9, 7, 'a')
     ..pegar(['WWWWW', 'WGGGh'], 76, 8);
@@ -246,23 +237,18 @@ List<String> _bancoPublico() {
   return l.filas;
 }
 
-/// El escudo de España sencillo (9 × 15): corona, cuarteles (Castilla, León, Aragón y Navarra), Granada en la punta y
-/// el óvalo azul en el centro. Sin las columnas de los lados: a este tamaño parecían dos velas encendidas. Se pega dos
-/// filas por encima del borde (el orbe de la corona queda fuera), así no toca la cabeza de la jueza ni al respirar.
-const _escudo = [
-  '....Y....',
-  '...YoY...',
-  '.N.NYN.N.',
-  'NYNYYYNYN',
-  'NYYYYYYYN',
-  'NRYvYvYRN',
-  'NNNNNNNNN',
-  'NRRRNWWWN',
-  'NRYRNWLWN',
-  'NRRRNWWWN',
-  'NNNNANNNN',
-  'NYRYNRYRN',
-  'NYRYNRRRN',
-  '.NWvrvWN.',
-  '..NNNNN..',
+/// La balanza de la justicia en un medallón azul (13 × 11), la misma que hay sobre el estrado de la sala de menores. En
+/// su sitio iba un escudo de España: un escudo oficial no va en la app (sería suplantar una institución).
+const _balanza = [
+  '....NNNNN....',
+  '..NNDDDDDNN..',
+  '.NDDDDYDDDDN.',
+  '.NDYYYYYYYDN.',
+  'NDDYDDYDDYDDN',
+  'NDYYYDYDYYYDN',
+  'NDDDDDYDDDDDN',
+  '.NDDDYYYDDDN.',
+  '.NDDDDDDDDDN.',
+  '..NNDDDDDNN..',
+  '....NNNNN....',
 ];

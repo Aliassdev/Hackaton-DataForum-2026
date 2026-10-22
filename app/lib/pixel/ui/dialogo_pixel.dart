@@ -320,12 +320,10 @@ class _DialogoPixelState extends State<DialogoPixel> with SingleTickerProviderSt
         child: Text.rich(
           TextSpan(
             children: [
-              TextSpan(text: visible),
-              // Lo que falta ocupa ya su sitio (transparente): el texto no se recoloca mientras se escribe.
-              TextSpan(
-                text: oculto,
-                style: const TextStyle(color: Color(0x00000000)),
-              ),
+              textoConCifras(visible, estiloTexto),
+              // Lo que falta ocupa ya su sitio (transparente): el texto no se recoloca mientras se escribe. Con las
+              // cifras en su letra también lo que falta, para que midan lo mismo antes y después de salir.
+              textoConCifras(oculto, estiloTexto.copyWith(color: const Color(0x00000000))),
             ],
           ),
           style: estiloTexto,
@@ -345,7 +343,7 @@ class _DialogoPixelState extends State<DialogoPixel> with SingleTickerProviderSt
             // Monta sobre el borde de la ventana: su contorno ya se ve contra el anillo de papel.
             conFilo: false,
             interior: const EdgeInsets.fromLTRB(3, 2, 3, 2),
-            child: Text(hablante, style: estiloPlaca, maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text.rich(textoConCifras(hablante, estiloPlaca), maxLines: 1, overflow: TextOverflow.ellipsis),
           );
 
     final placaContinuar = !continuar

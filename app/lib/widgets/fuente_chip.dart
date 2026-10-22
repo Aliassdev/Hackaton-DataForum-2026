@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../core/api/models.dart';
 import '../tema.dart';
 import 'iconos/iconos.dart';
+import 'movimiento/hapticos.dart';
 
-/// Etiqueta de una fuente legal (sección 4.4). Al tocarla se ve la norma y el artículo.
+/// Etiqueta de una fuente legal (sección 4.4), con el libro de la ley ([TuIcono.ley]: «De dónde sale»). Al tocarla se
+/// ve la norma y el artículo.
 class FuenteChip extends StatelessWidget {
   const FuenteChip({super.key, required this.fuente, this.numero});
 
@@ -20,7 +21,7 @@ class FuenteChip extends StatelessWidget {
     final esquema = tema.colorScheme;
     return ActionChip(
       avatar: numero == null
-          ? const IconoTuTurno(TuIcono.fuente, size: 18, decorativo: true)
+          ? const IconoTuTurno(TuIcono.ley, size: 18, decorativo: true)
           : NumeroFuente(numero: numero!),
       label: Text(etiquetaFuente(fuente), maxLines: 1, overflow: TextOverflow.ellipsis),
       labelStyle: tema.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: esquema.onSurface),
@@ -28,7 +29,7 @@ class FuenteChip extends StatelessWidget {
       backgroundColor: esquema.surface,
       side: BorderSide(color: esquema.outlineVariant),
       onPressed: () {
-        HapticFeedback.selectionClick();
+        Hapticos.seleccion();
         mostrarFuente(context, fuente);
       },
     );
@@ -74,7 +75,8 @@ String etiquetaFuente(Fuente fuente) {
   return articulo.isEmpty ? norma : '$norma · art. $articulo';
 }
 
-/// Nombre fácil de las normas que más salen, para quien no sabe qué es «LO 5/2000».
+/// Nombre fácil de las normas que más salen, para quien no sabe qué es «LO 5/2000». Los mismos que `nombresNormas`
+/// de lib/features/aprende/textos.dart.
 const _nombresNormas = {
   'lo 5/2000': 'Ley de responsabilidad penal de los menores',
   'lo 1/1996': 'Ley de protección jurídica del menor',
@@ -82,6 +84,11 @@ const _nombresNormas = {
   'lo 10/1995': 'Código Penal',
   'ley 4/2015': 'Estatuto de la víctima del delito',
   'lecrim': 'Ley de Enjuiciamiento Criminal',
+  'lec': 'Ley de Enjuiciamiento Civil',
+  'ley 1/1996': 'Ley de asistencia jurídica gratuita',
+  'lo 1/1982': 'Ley del derecho al honor, a la intimidad y a la propia imagen',
+  'lopdgdd': 'Ley de protección de datos personales',
+  'rgpd': 'Reglamento General de Protección de Datos',
   'ce': 'Constitución Española',
   'cp': 'Código Penal',
   'cc': 'Código Civil',
@@ -116,10 +123,10 @@ class _HojaFuente extends StatelessWidget {
         children: [
           Row(
             children: [
-              // El documento de la iconografía de TuTurno, como una pegatina un poco torcida.
+              // El libro de la ley de la iconografía de TuTurno, como una pegatina un poco torcida.
               Transform.rotate(
                 angle: -0.06,
-                child: const IconoTuTurno(TuIcono.fuente, size: Espacio.xxl, decorativo: true),
+                child: const IconoTuTurno(TuIcono.ley, size: Espacio.xxl, decorativo: true),
               ),
               const SizedBox(width: Espacio.m),
               Expanded(

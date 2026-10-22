@@ -22,4 +22,22 @@ void main() {
     expect(find.byTooltip('Glosario'), findsOneWidget);
     expect(find.text('Ayuda'), findsOneWidget);
   });
+
+  testWidgets('la app arranca con «lectura fácil» y «reducir animaciones» guardados', (tester) async {
+    SharedPreferences.setMockInitialValues({'ajustes.lectura_facil': true, 'ajustes.reducir_movimiento': true});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          configProvider.overrideWithValue(const AppConfig(apiUrl: '', useMock: true, demo: false)),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const TuTurnoApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Glosario'), findsOneWidget);
+    expect(find.text('Ayuda'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

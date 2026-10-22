@@ -173,7 +173,7 @@ class PaseProgreso extends ConsumerWidget {
                 clave: racha,
                 animar: false,
                 inclinacion: 0,
-                child: Text('$racha', style: textos.headlineSmall?.copyWith(color: tinta, height: 1)),
+                child: Text('$racha', style: estiloCifras(textos.headlineSmall)?.copyWith(color: tinta, height: 1)),
               ),
               Text(dias, style: textos.labelMedium?.copyWith(color: tinta)),
             ],

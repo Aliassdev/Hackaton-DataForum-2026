@@ -15,8 +15,17 @@ Se suman a las del CLAUDE.md de la raíz. El detalle completo está en docs/ARQU
 - core/storage.dart (shared_preferences) y core/content_repo.dart (JSON de assets/content).
 - features/: inicio, juego (escenas y cartas de derecho), aprende (mapa, reproductor, ejercicios y bkt.dart), pregunta, situacion, ayuda y glosario.
 - widgets/: botón de Ayuda, etiquetas de fuente y texto con términos del glosario.
-- Rutas: / · /juego · /juego/:casoId · /aprende · /aprende/leccion/:leccionId · /pregunta · /situacion/:rol · /ayuda · /glosario
+- Rutas: / · /juego · /juego/juzgado (con ?modo=menores; /juzgado redirige ahí) · /juego/:casoId · /aprende · /aprende/leccion/:leccionId · /pregunta · /situacion/:rol · /mis-preguntas · /mis-preguntas/ensenar · /salida · /ayuda · /glosario · /ajustes
+  - /juego/juzgado va antes que /juego/:casoId (rutaHijaJuzgado y rutaRedireccionJuzgado, de features/juego/juego_screen.dart). Las dos entran con la transición a bloques del kit pixel (paginaPixel).
+  - /salida es la pantalla neutra de «Salir rápido» (core/salida_rapida.dart), sin transición. En la web, el router va con routerNeglect: toda la app ocupa una sola entrada del historial, y location.replace la quita.
 - Providers: contentProvider, progresoProvider, dominioProvider (BKT), chatProvider (solo en memoria) y ajustesProvider.
+- Letra y tema (tema.dart): temaTuTurno(brillo, lecturaFacil:).
+  - Fuentes.texto es Nunito (cuerpo, etiquetas, botones y barras). MaryKate (Fuentes.titulos) solo en display y headline.
+  - Con «Lectura fácil» (Ajustes.lecturaFacil), todo pasa a Atkinson Hyperlegible (Fuentes.lecturaFacil), también el kit pixel (TemaPixel).
+  - Las cifras de contadores, tickets y números de carta van con estiloCifras(): Nunito ExtraBold con cifras tabulares (en MaryKate el 0 parece una O).
+  - El título de las barras es TituloBarra (widgets/tuturno_scaffold.dart): 20 si cabe y, si no, más pequeño o en dos líneas; nunca «…» en los títulos de la app.
+- «Reducir animaciones» (Ajustes.reducirMovimiento) se suma a la opción del sistema: todo lo que mira MediaQuery.disableAnimationsOf se queda quieto.
+- Racha amable (core/progreso.dart): para enseñarla, estadoRacha(); hay un día de descanso cada 7 días y nunca se habla de perderla.
 
 ## Reglas
 - Ayuda y Glosario, arriba a la derecha en todas las pantallas. Los teléfonos de Ayuda (900 20 20 10, 116 111, 112, 017, 016) llaman directamente con url_launcher.
@@ -37,3 +46,4 @@ Se suman a las del CLAUDE.md de la raíz. El detalle completo está en docs/ARQU
 - Con backend: flutter run -d chrome --dart-define=API_URL=http://localhost:8000
 - Build web: flutter build web --release (con --base-href /tuturno/ si se publica en GitHub Pages)
 - Antes de un PR: flutter analyze. Una tarea está terminada cuando funciona en la build web y en un Android, con la voz activada y desactivada.
+- Capturas para revisar a ojo: CAPTURAS=build/capturas flutter test <prueba de capturas>. Cargan las fuentes de verdad con test/fuentes_reales.dart.

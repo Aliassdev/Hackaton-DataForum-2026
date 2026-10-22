@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../bkt.dart';
 import '../textos.dart';
@@ -375,7 +376,14 @@ class ChipFuente extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.gavel_rounded, size: Espacio.m + 2, color: esquema.primary),
+                  // La ley, nunca un mazo (en España no se usan).
+                  IconoTuTurno(
+                    TuIcono.ley,
+                    estilo: EstiloIcono.mono,
+                    size: Espacio.m + 2,
+                    color: esquema.primary,
+                    decorativo: true,
+                  ),
                   const SizedBox(width: Espacio.s),
                   Flexible(
                     child: Text(
@@ -427,7 +435,12 @@ class _HojaFuente extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(colors: colores),
                   ),
-                  child: Icon(Icons.gavel_rounded, color: sobreColor(colores.first)),
+                  child: IconoTuTurno(
+                    TuIcono.ley,
+                    estilo: EstiloIcono.mono,
+                    color: sobreColor(colores.first),
+                    decorativo: true,
+                  ),
                 ),
               ),
               const SizedBox(width: Espacio.m),

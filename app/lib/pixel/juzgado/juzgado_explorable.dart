@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../tema.dart' show duracion;
+import '../../widgets/iconos/iconos.dart';
 import '../motor/motor.dart';
 import '../ui/ui.dart' show ColoresUiPixel, MarcoPixel, unidadPixel;
 import 'carta_rol.dart';
@@ -24,7 +25,7 @@ import 'sala_juzgado.dart';
 /// el marco de la pantalla de juego (`MarcoPixel`), como las escenas del caso, y a la mayor escala entera que cabe.
 ///
 /// Los textos están pendientes de revisión jurídica (`DatosJuzgado.validado`): mientras tanto, la actividad lo dice en
-/// una franja y el juego solo debería abrirla en modo DEMO.
+/// una franja y el juego solo la abre en modo DEMO, con el interruptor de borradores (lib/features/juego/juzgado_screen).
 class JuzgadoExplorable extends StatefulWidget {
   const JuzgadoExplorable({
     super.key,
@@ -458,7 +459,12 @@ class ProgresoJuzgado extends StatelessWidget {
               ),
             ),
             if (completo)
-              ExcludeSemantics(child: Icon(Icons.check_circle_rounded, color: oscuro ? amarillo : esquema.primary)),
+              IconoTuTurno(
+                TuIcono.check,
+                estilo: EstiloIcono.mono,
+                color: oscuro ? amarillo : esquema.primary,
+                decorativo: true,
+              ),
           ],
         ),
         const SizedBox(height: 8),

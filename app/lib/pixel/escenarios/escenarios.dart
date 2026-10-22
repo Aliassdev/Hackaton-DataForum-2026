@@ -20,7 +20,8 @@
 ///
 /// Para las escenas del juego, `EscenaCasoPixel` (lib/pixel/escenas) monta todo esto a partir de `escena.lugar` y
 /// `escena.personajes`. En la sala de vistas, los sitios de cada uno están en [PuestoVista] (también en `puestos`, por
-/// su clave). [camaraPared] es la cámara que graba, la misma en la Sala Gesell y en la sala de menores.
+/// su clave). [camaraPared] es la cámara que graba la entrevista en la Sala Gesell (en la audiencia de menores no hay
+/// cámaras: tema-justicia, §2).
 library;
 
 import '../motor/motor.dart';

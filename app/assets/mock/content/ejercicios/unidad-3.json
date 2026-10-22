@@ -1,0 +1,168 @@
+[
+  {
+    "id": "E-301",
+    "tipo": "emparejar",
+    "concepto": "C-personas",
+    "dificultad": 1,
+    "pares": [
+      ["Fiscal de menores", "Dirige la investigación y defiende tus derechos"],
+      ["Equipo psicosocial", "Puede hacerte la entrevista en la Sala Gesell"],
+      ["Persona de confianza", "Puede acompañarte si declaras como víctima"]
+    ],
+    "fuente": "LO 5/2000, art. 6; LECrim, arts. 433 y 449 ter",
+    "validado": true
+  },
+  {
+    "id": "E-302",
+    "tipo": "eleccion",
+    "concepto": "C-abogados",
+    "dificultad": 1,
+    "pregunta": "En la entrevista de Lucía también está el abogado de la persona investigada. ¿Por qué?",
+    "opciones": [
+      "Porque la ley lo pide, para que todo sea justo y la grabación valga en el juicio",
+      "Porque Lucía ha hecho algo malo",
+      "Porque es él quien decide cómo acaba el caso"
+    ],
+    "correcta": 0,
+    "explicacion": "Cuando se graba la declaración como prueba preconstituida, el abogado o la abogada de la persona investigada tiene que estar. Así es justa para todos y puede servir en el juicio.",
+    "fuente": "LECrim, art. 449 bis",
+    "validado": true
+  },
+  {
+    "id": "E-303",
+    "tipo": "vf",
+    "concepto": "C-personas",
+    "dificultad": 1,
+    "afirmacion": "En la comisaría, la policía tiene que evitar que te encuentres con la persona investigada.",
+    "correcta": true,
+    "explicacion": "La policía tiene que impedir cualquier contacto, directo o indirecto, entre la persona investigada y el chico o la chica.",
+    "fuente": "LOPIVI, art. 50.2.d)",
+    "validado": true
+  },
+  {
+    "id": "E-304",
+    "tipo": "eleccion",
+    "concepto": "C-abogados",
+    "dificultad": 2,
+    "pregunta": "Sergio es víctima de acoso y su familia necesita abogado. ¿Es gratis?",
+    "opciones": [
+      "Depende de los ingresos de su familia",
+      "Sí, en todos los casos y para todo el mundo",
+      "No, los menores nunca tienen abogado de oficio"
+    ],
+    "correcta": 0,
+    "explicacion": "Sin mirar el dinero de la familia, solo es gratis en algunos casos que marca la ley, como los delitos sexuales. En los demás, como el de Sergio, depende de los ingresos. Eso sí: el abogado de oficio se asigna con urgencia.",
+    "fuente": "LOPIVI, art. 14; Ley 1/1996, art. 2.h",
+    "validado": true
+  },
+  {
+    "id": "E-305",
+    "tipo": "vf",
+    "concepto": "C-personas",
+    "dificultad": 2,
+    "afirmacion": "En el caso de Sergio, la Fiscalía puede pedir medidas para protegerle, pero quien decide si se ponen es el juez de menores.",
+    "correcta": true,
+    "explicacion": "Los chicos denunciados tienen 14 y 15 años, así que se aplica la ley de menores. El fiscal puede pedir al juez de menores, en cualquier momento, medidas para proteger a la víctima. Después, el juez decide.",
+    "fuente": "LO 5/2000, arts. 1.1 y 28.1",
+    "validado": true
+  },
+  {
+    "id": "E-306",
+    "tipo": "dilo",
+    "concepto": "C-personas",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué hacen el fiscal, el equipo psicosocial y tu persona de confianza.",
+    "proposiciones": [
+      "El fiscal defiende tus derechos y puede pedir medidas para protegerte",
+      "El equipo psicosocial puede hacerte la entrevista",
+      "Tu persona de confianza puede acompañarte cuando declaras"
+    ],
+    "fuente": "LO 5/2000, arts. 6 y 28.1; LECrim, arts. 433 y 449 ter",
+    "validado": true
+  },
+  {
+    "id": "E-307",
+    "tipo": "ordenar",
+    "concepto": "C-proceso",
+    "dificultad": 2,
+    "enunciado": "Los chicos que se meten con Sergio tienen 14 y 15 años. Ordena los pasos.",
+    "pasos": [
+      "Los padres de Sergio presentan la denuncia",
+      "La Fiscalía de Menores decide si sigue adelante",
+      "La Fiscalía dirige la investigación",
+      "Al final, el juez de menores decide"
+    ],
+    "fuente": "LO 5/2000, arts. 6, 7.1 y 16.2",
+    "validado": true
+  },
+  {
+    "id": "E-308",
+    "tipo": "eleccion",
+    "concepto": "C-proceso",
+    "dificultad": 1,
+    "pregunta": "Si eres víctima, ¿de qué os tienen que avisar a ti o a tu familia?",
+    "opciones": [
+      "De la fecha, la hora y el lugar del juicio",
+      "De nada hasta que acabe todo",
+      "Solo de si hay que pagar algo"
+    ],
+    "correcta": 0,
+    "explicacion": "Os tienen que informar de cuándo y dónde es el juicio. También os tienen que notificar decisiones importantes, como la sentencia.",
+    "fuente": "Ley 4/2015, art. 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-309",
+    "tipo": "vf",
+    "concepto": "C-proceso",
+    "dificultad": 2,
+    "afirmacion": "Si la Fiscalía de Menores decide no abrir el caso, no tiene que decírselo a la víctima.",
+    "correcta": false,
+    "explicacion": "Sí tiene que comunicarlo. Puede pasar, por ejemplo, con delitos menos graves, sin violencia ni amenazas. Entonces pasa el caso a los servicios de protección de menores.",
+    "fuente": "LO 5/2000, arts. 16.2 y 18",
+    "validado": true
+  },
+  {
+    "id": "E-310",
+    "tipo": "emparejar",
+    "concepto": "C-proceso",
+    "dificultad": 2,
+    "pares": [
+      ["Denuncia", "Contar algo que puede ser delito para que lo investiguen"],
+      ["Juicio", "Sesión del juzgado en la que se ven las pruebas"],
+      ["Sentencia", "Decisión que pone fin al proceso"]
+    ],
+    "fuente": "LOPIVI, art. 17.1; LECrim, art. 703 bis; Ley 4/2015, art. 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-311",
+    "tipo": "eleccion",
+    "concepto": "C-proceso",
+    "dificultad": 3,
+    "pregunta": "¿Hay que esperar al juicio para pedir que protejan a Sergio?",
+    "opciones": [
+      "No: el fiscal puede pedir medidas en cualquier momento",
+      "Sí: no se puede hacer nada hasta la sentencia",
+      "Sí: hay que esperar a que pase un año"
+    ],
+    "correcta": 0,
+    "explicacion": "Desde el primer momento, a Sergio le tienen que explicar cómo pedir protección. Y el fiscal puede pedir medidas al juez de menores en cualquier momento del proceso.",
+    "fuente": "Ley 4/2015, art. 5.1; LO 5/2000, art. 28.1",
+    "validado": true
+  },
+  {
+    "id": "E-312",
+    "tipo": "dilo",
+    "concepto": "C-proceso",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras los pasos de un caso en la Fiscalía de Menores, desde la denuncia hasta el final.",
+    "proposiciones": [
+      "Alguien presenta una denuncia",
+      "La Fiscalía decide si sigue adelante y dirige la investigación",
+      "Al final, el juez de menores decide"
+    ],
+    "fuente": "LO 5/2000, arts. 6, 7.1 y 16.2",
+    "validado": true
+  }
+]

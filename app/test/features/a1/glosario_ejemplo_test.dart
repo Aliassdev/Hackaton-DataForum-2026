@@ -100,7 +100,7 @@ void main() {
   Iterable<String> normalizados(Iterable<String> textos) => textos.map((t) => normalizar(t.trim()));
 
   test('ContentRepo lo carga como en la app, sin content/, y se ven todos los términos', () {
-    expect(json, hasLength(_terminosDeLosCasos.length));
+    expect(json.length, inInclusiveRange(_terminosDeLosCasos.length, 45), reason: 'unos 40 términos (sección 4.5)');
     expect(glosario, hasLength(json.length), reason: 'Ninguno se queda fuera por no estar validado o no tener fuente');
   });
 
@@ -110,7 +110,7 @@ void main() {
     expect(terminos, ordenados);
     expect([for (final e in json) (e! as Map)['termino']], terminos, reason: 'Así es más fácil revisarlo');
     expect(terminos.first, 'Abogado de oficio');
-    expect(terminos.last, 'Víctima');
+    expect(terminos.last, 'Videoconferencia');
   });
 
   test('sigue el esquema de la sección 9.6 al pie de la letra, con "validado": true', () {

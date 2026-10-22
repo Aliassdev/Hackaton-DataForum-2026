@@ -101,7 +101,7 @@ void main() {
               child: Builder(
                 builder: (context) {
                   facil = estiloTextoPixel(context, TipoTextoPixel.cuerpo);
-                  expect(familiaPixel(context), Fuentes.texto);
+                  expect(familiaPixel(context), Fuentes.lecturaFacil);
                   return const SizedBox();
                 },
               ),
@@ -114,8 +114,24 @@ void main() {
     expect(facil.fontFamily, 'AtkinsonHyperlegible');
     expect(pixel.letterSpacing, greaterThan(0));
     expect(facil.letterSpacing, 0);
-    // Si la letra pixel no está, se ve Atkinson (no la del sistema).
+    // Si la letra pixel no está (o le falta un signo), se ve la letra de la app (no la del sistema).
     expect(pixel.fontFamilyFallback, [Fuentes.texto]);
+  });
+
+  test('las cifras de un texto en letra pixel van en Atkinson; con lectura fácil no cambia nada', () {
+    const pixel = TextStyle(fontFamily: FuentesPixel.pixel, fontSize: 20);
+    final span = textoConCifras('Sara tiene 15 años. Ley 4/2015, art. 20', pixel);
+    expect(span.toPlainText(), 'Sara tiene 15 años. Ley 4/2015, art. 20');
+    final cifras = [
+      for (final hijo in span.children!.cast<TextSpan>())
+        if (hijo.style?.fontFamily == FuentesPixel.cifras) hijo.text,
+    ];
+    expect(cifras, ['15', '4', '2015', '20']);
+    expect(FuentesPixel.cifras, 'AtkinsonHyperlegible');
+    // Sin cifras, o con otra letra, un solo trozo.
+    expect(textoConCifras('Sin números', pixel).children, isNull);
+    const facil = TextStyle(fontFamily: FuentesPixel.lecturaFacil, fontSize: 20);
+    expect(textoConCifras('15 años', facil).children, isNull);
   });
 
   test('tamaños cómodos: nada por debajo de 18 y el cuerpo con mucho interlineado', () {

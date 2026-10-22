@@ -92,3 +92,23 @@ final _fichaAmigaSara = PersonajePixel(
   descripcion: 'La amiga de Sara, con hiyab azul y jersey coral',
   sprite: _personaje('amiga-sara', filas: _amigaSaraFilas, ojos: 8, pecho: 21, piel: '4', ms: 880),
 );
+
+/// La madre de Sara: la misma figura que la madre de Sergio, con la piel de Sara (6), la cinta y los pendientes lilas y
+/// un jersey verde. Así cada caso tiene su familia.
+final _madreSaraFilas = <String>[
+  for (final (y, fila) in _madreSergioFilas.indexed)
+    _cambiarClaves(fila, {
+      '5': '6',
+      '6': '7',
+      'Y': 'L',
+      // Del jersey para abajo, el coral pasa a verde (arriba, la «R» es la boca y no cambia).
+      if (y >= 15) ...const {'r': 'v', 'R': 'V'},
+    }),
+];
+
+final _fichaMadreSara = PersonajePixel(
+  id: 'madre-sara',
+  nombre: 'La madre de Sara',
+  descripcion: 'La madre de Sara, con el pelo rizado, una cinta lila y jersey verde',
+  sprite: _personaje('madre-sara', filas: _madreSaraFilas, ojos: 9, pecho: 18, piel: '6', ms: 860),
+);

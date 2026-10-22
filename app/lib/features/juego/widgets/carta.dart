@@ -1,14 +1,23 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../pixel/ui/ui.dart';
 import '../../../tema.dart';
+import '../../../widgets/iconos/iconos.dart';
 import '../../../widgets/movimiento/hapticos.dart';
 import '../modelos.dart';
+import '../textos.dart';
 import 'estilo.dart';
+import 'piezas_pixel.dart';
 
-// Cartas de derecho: la cara (desbloqueada), la bloqueada de la colección, el dorso y la animación de cuando se
-// gana una (sube, se da la vuelta y suelta unas chispas, una sola vez).
+// Cartas de derecho.
+//
+// - Dentro del caso, en pixel: [CartaPixelDerecho] (la carta del kit pixel con el dibujo de su derecho), su detalle
+//   ([mostrarCartaPixel]) y la carta recién ganada ([mostrarCartaNueva] y [RevelarCarta]): primero sale bloqueada y, al
+//   momento, se desbloquea con el brillo del kit, sobre un fondo azul noche casi opaco.
+// - Fuera del caso (la colección plana de la lista): [CartaDerecho], [CartaBloqueada], [DorsoCarta], [RejillaCartas] y
+//   [mostrarDetalleCarta].
 
 /// Cara de una carta. [indice] elige su degradado; [grande] enseña también el texto.
 class CartaDerecho extends StatelessWidget {
@@ -42,7 +51,16 @@ class CartaDerecho extends StatelessWidget {
               Positioned(
                 right: -Espacio.l,
                 bottom: -Espacio.l,
-                child: Icon(icono, size: grande ? 168 : 96, color: tinta.withValues(alpha: 0.12)),
+                child: Opacity(
+                  opacity: 0.12,
+                  child: IconoTuTurno(
+                    icono,
+                    estilo: EstiloIcono.mono,
+                    size: grande ? 168 : 96,
+                    color: tinta,
+                    decorativo: true,
+                  ),
+                ),
               ),
               // Brillo en diagonal, como el de una carta de colección.
               Positioned.fill(
@@ -104,7 +122,13 @@ class CartaDerecho extends StatelessWidget {
                     SizedBox(height: grande ? Espacio.l : Espacio.m),
                     Row(
                       children: [
-                        Icon(Icons.gavel_rounded, size: Espacio.m, color: tinta.withValues(alpha: 0.9)),
+                        IconoTuTurno(
+                          TuIcono.ley,
+                          estilo: EstiloIcono.mono,
+                          size: Espacio.m,
+                          color: tinta.withValues(alpha: 0.9),
+                          decorativo: true,
+                        ),
                         const SizedBox(width: Espacio.xs + 2),
                         Flexible(
                           child: Text(
@@ -142,7 +166,7 @@ class CartaBloqueada extends StatelessWidget {
     final pista = this.pista;
     return Semantics(
       container: true,
-      label: 'Carta bloqueada.${pista == null ? '' : ' $pista.'}',
+      label: 'Carta por descubrir.${pista == null ? '' : ' $pista.'}',
       excludeSemantics: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -159,8 +183,14 @@ class CartaBloqueada extends StatelessWidget {
               Container(
                 width: Espacio.xxl,
                 height: Espacio.xxl,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: esquema.surfaceContainerLow),
-                child: Icon(Icons.lock_rounded, color: esquema.onSurfaceVariant),
+                child: IconoTuTurno(
+                  TuIcono.candado,
+                  estilo: EstiloIcono.mono,
+                  color: esquema.onSurfaceVariant,
+                  decorativo: true,
+                ),
               ),
               const SizedBox(height: Espacio.s + Espacio.xs),
               Text(
@@ -230,7 +260,7 @@ class DorsoCarta extends StatelessWidget {
 class _IconoRedondo extends StatelessWidget {
   const _IconoRedondo({required this.icono, required this.tinta, required this.tamano});
 
-  final IconData icono;
+  final TuIcono icono;
   final Color tinta;
   final double tamano;
 
@@ -239,12 +269,13 @@ class _IconoRedondo extends StatelessWidget {
     return Container(
       width: tamano,
       height: tamano,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: tinta.withValues(alpha: 0.18),
         border: Border.all(color: tinta.withValues(alpha: 0.4), width: 1.5),
       ),
-      child: Icon(icono, color: tinta, size: tamano * 0.52),
+      child: IconoTuTurno(icono, estilo: EstiloIcono.mono, size: tamano * 0.52, color: tinta, decorativo: true),
     );
   }
 }
@@ -310,183 +341,263 @@ Future<void> mostrarDetalleCarta(BuildContext context, {required Carta carta, re
   );
 }
 
-/// Enseña una carta recién ganada: entra, se da la vuelta y suelta unas chispas. Con «reducir animaciones»
-/// aparece ya de cara. [xp] son los puntos que ha sumado (0 para no enseñarlos).
-Future<void> mostrarCartaNueva(BuildContext context, {required Carta carta, required int indice, int xp = 0}) {
-  final esquema = Theme.of(context).colorScheme;
-  return showGeneralDialog<void>(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: 'Cerrar',
-    barrierColor: esquema.scrim.withValues(alpha: 0.78),
-    transitionDuration: duracion(context, Duracion.media),
-    pageBuilder: (context, _, _) => RevelarCarta(carta: carta, indice: indice, xp: xp),
-    transitionBuilder: (context, animacion, _, child) => FadeTransition(opacity: animacion, child: child),
-  );
+/// Una carta de derecho en pixel, con el dibujo de su derecho, su número en la colección ([indice] + 1) y los colores
+/// de su sitio. Para el lector de pantalla es «Carta: {título}» (o «Carta por descubrir», si está [bloqueada]); con
+/// [onPressed], un botón que la abre en grande.
+class CartaPixelDerecho extends StatelessWidget {
+  const CartaPixelDerecho({
+    super.key,
+    required this.carta,
+    required this.indice,
+    this.bloqueada = false,
+    this.pista = 'Sigue el caso para conseguirla.',
+    this.formato = FormatoCartaPixel.horizontal,
+    this.brillo = true,
+    this.icono,
+    this.indicacion,
+    this.onPressed,
+  });
+
+  final Carta carta;
+  final int indice;
+  final bool bloqueada;
+  final String pista;
+  final FormatoCartaPixel formato;
+  final bool brillo;
+
+  /// El dibujo, si no es el de su derecho ([glifoCarta]): por ejemplo, el edificio del juzgado.
+  final GlifoPixel? icono;
+
+  /// Qué pasa al tocarla, para el lector de pantalla. Null: «Toca para verla en grande».
+  final String? indicacion;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colores = coloresCartaPixel(indice);
+    final onPressed = this.onPressed;
+    return Semantics(
+      container: true,
+      button: onPressed != null ? true : null,
+      label: bloqueada ? 'Carta por descubrir' : 'Carta: ${carta.titulo}',
+      value: bloqueada ? pista : carta.texto,
+      hint: onPressed == null ? null : indicacion ?? 'Toca para verla en grande',
+      onTap: onPressed,
+      excludeSemantics: true,
+      child: CartaPixel(
+        numero: indice + 1,
+        titulo: carta.titulo,
+        texto: carta.texto,
+        icono: icono ?? glifoCarta(carta),
+        bloqueada: bloqueada,
+        pista: pista,
+        formato: formato,
+        brillo: brillo,
+        color: colores.color,
+        luz: colores.luz,
+        sombraColor: colores.sombra,
+        onPressed: onPressed,
+      ),
+    );
+  }
 }
 
+/// Una carta de la colección en grande, en pixel: la carta de pie, de dónde sale y «Cerrar». [icono]: el dibujo, si no
+/// es el de su derecho.
+Future<void> mostrarCartaPixel(BuildContext context, {required Carta carta, required int indice, GlifoPixel? icono}) =>
+    mostrarVentanaPixel<void>(
+      context,
+      (context) => VentanaCartaPixel(
+        carta: CartaPixelDerecho(
+          carta: carta,
+          indice: indice,
+          formato: FormatoCartaPixel.vertical,
+          brillo: false,
+          icono: icono,
+        ),
+        fuente: carta.fuente,
+        botones: [
+          BotonPixel(
+            etiqueta: 'Cerrar',
+            variante: VarianteBotonPixel.secundario,
+            expandido: true,
+            autofocus: true,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+
+/// Enseña una carta recién ganada, en pixel: sale bloqueada, se desbloquea con el brillo del kit y vibra. Con «reducir
+/// animaciones» aparece ya desbloqueada. [xp] son los puntos que ha sumado (0 para no enseñarlos). La usan los casos y
+/// «El juzgado por dentro» ([icono]: el dibujo, si no es el de su derecho).
+Future<void> mostrarCartaNueva(
+  BuildContext context, {
+  required Carta carta,
+  required int indice,
+  int xp = 0,
+  GlifoPixel? icono,
+  bool? lecturaFacil,
+}) => mostrarVentanaPixel<void>(
+  context,
+  (context) => RevelarCarta(carta: carta, indice: indice, xp: xp, icono: icono),
+  lecturaFacil: lecturaFacil,
+);
+
+/// La ventana de una carta recién ganada: «¡Carta nueva!», la carta, los puntos y «¡A mi colección!».
 class RevelarCarta extends StatefulWidget {
-  const RevelarCarta({super.key, required this.carta, required this.indice, this.xp = 0});
+  const RevelarCarta({super.key, required this.carta, required this.indice, this.xp = 0, this.icono});
 
   final Carta carta;
   final int indice;
   final int xp;
+  final GlifoPixel? icono;
+
+  /// Lo que tarda en desbloquearse.
+  static const espera = Duration(milliseconds: 450);
 
   @override
   State<RevelarCarta> createState() => _RevelarCartaState();
 }
 
 class _RevelarCartaState extends State<RevelarCarta> with SingleTickerProviderStateMixin {
-  static const _total = Duration(milliseconds: 1500);
-
-  late final AnimationController _animacion = AnimationController(vsync: this)..addListener(_alAvanzar);
+  /// La espera hasta desbloquearla (un controlador y no un Timer: se para con la pantalla tapada y las pruebas lo
+  /// esperan con pumpAndSettle).
+  late final AnimationController _espera = AnimationController(vsync: this, duration: RevelarCarta.espera)
+    ..addStatusListener((estado) {
+      if (estado == AnimationStatus.completed) _desbloquear();
+    });
+  var _bloqueada = true;
   var _preparada = false;
-  var _vibro = false;
-
-  late final Animation<double> _entrada = _animacion.drive(
-    CurveTween(curve: const Interval(0, 0.34, curve: Curves.easeOutBack)),
-  );
-  late final Animation<double> _giro = _animacion.drive(
-    CurveTween(curve: const Interval(0.3, 0.68, curve: Curves.easeInOutCubic)),
-  );
-  late final Animation<double> _destello = _animacion.drive(
-    CurveTween(curve: const Interval(0.5, 1, curve: Curves.easeOutCubic)),
-  );
-  late final Animation<double> _textos = _animacion.drive(
-    CurveTween(curve: const Interval(0.62, 1, curve: Curves.easeOut)),
-  );
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_preparada) return;
     _preparada = true;
-    final total = duracion(context, _total);
-    if (total == Duration.zero) {
-      _vibro = true;
-      Hapticos.acierto();
-      _animacion.value = 1;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      // Ya desbloqueada desde el principio; vibra igual, una vez.
+      _bloqueada = false;
+      unawaited(Hapticos.acierto());
     } else {
-      _animacion
-        ..duration = total
-        ..forward();
+      _espera.forward();
     }
   }
 
-  /// La vibración llega justo cuando la carta enseña su cara.
-  void _alAvanzar() {
-    if (!_vibro && _animacion.value >= 0.5) {
-      _vibro = true;
-      Hapticos.acierto();
-    }
+  void _desbloquear() {
+    if (!mounted || !_bloqueada) return;
+    unawaited(Hapticos.acierto());
+    setState(() => _bloqueada = false);
   }
 
   @override
   void dispose() {
-    _animacion.dispose();
+    _espera.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final colores = degradadoCarta(context, widget.indice);
-    final carta = CartaDerecho(carta: widget.carta, indice: widget.indice, grande: true);
-    return SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Espacio.l),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Material(
-              type: MaterialType.transparency,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FadeTransition(
-                    opacity: _textos,
-                    child: Semantics(
-                      header: true,
-                      liveRegion: true,
-                      child: Text(
-                        '¡Carta nueva!',
-                        textAlign: TextAlign.center,
-                        style: tema.textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+    final u = unidadPixel(context);
+    return VentanaCartaPixel(
+      titulo: tituloCartaNueva,
+      carta: CartaPixelDerecho(
+        carta: widget.carta,
+        indice: widget.indice,
+        bloqueada: _bloqueada,
+        pista: 'Ya casi es tuya…',
+        formato: FormatoCartaPixel.vertical,
+        icono: widget.icono,
+      ),
+      fuente: widget.carta.fuente,
+      extra: widget.xp <= 0
+          ? null
+          : MergeSemantics(
+              child: Semantics(
+                label: '+${widget.xp} puntos',
+                excludeSemantics: true,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const IconoPixel(GlifoPixel.estrella, color: ColoresUiPixel.amarillo),
+                    SizedBox(width: 2 * u),
+                    RotuloPixel('+${widget.xp}', color: ColoresUiPixel.amarillo),
+                    SizedBox(width: 2 * u),
+                    TextoPixel('puntos', tipo: TipoTextoPixel.etiqueta, color: ColoresUiPixel.papel),
+                  ],
+                ),
+              ),
+            ),
+      botones: [
+        BotonPixel(
+          etiqueta: botonAMiColeccion,
+          icono: const IconoPixel(GlifoPixel.carta),
+          expandido: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+}
+
+/// La disposición de las ventanas de cartas (para abrirla, [mostrarVentanaPixel]): título, carta, fuente (si la hay),
+/// lo de [extra] y los botones, uno debajo de otro, centrados y con scroll si no caben (letra grande).
+class VentanaCartaPixel extends StatelessWidget {
+  const VentanaCartaPixel({
+    super.key,
+    this.titulo,
+    required this.carta,
+    this.fuente = '',
+    this.extra,
+    required this.botones,
+  });
+
+  final String? titulo;
+  final Widget carta;
+
+  /// De qué ley sale ([FuentePixel]). Vacía: no se enseña (una carta por descubrir, la del juzgado).
+  final String fuente;
+  final Widget? extra;
+  final List<Widget> botones;
+
+  @override
+  Widget build(BuildContext context) {
+    final u = unidadPixel(context);
+    final titulo = this.titulo;
+    return Material(
+      type: MaterialType.transparency,
+      child: FondoPixel(
+        color: ColoresUiPixel.noche,
+        pintar: false,
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(Espacio.l),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 340),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (titulo != null) ...[
+                      Semantics(
+                        header: true,
+                        liveRegion: true,
+                        child: TextoPixel(
+                          titulo,
+                          tipo: TipoTextoPixel.grande,
+                          color: ColoresUiPixel.amarillo,
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: Espacio.l),
-                  AnimatedBuilder(
-                    animation: _animacion,
-                    builder: (context, _) {
-                      final angulo = _giro.value * math.pi;
-                      final deCara = angulo >= math.pi / 2;
-                      final escala = 0.55 + 0.45 * _entrada.value;
-                      return Stack(
-                        alignment: Alignment.center,
-                        clipBehavior: Clip.none,
-                        children: [
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: OverflowBox(
-                                maxWidth: 420,
-                                maxHeight: 520,
-                                child: CustomPaint(
-                                  size: const Size(420, 520),
-                                  painter: _Destello(progreso: _destello.value, colores: [Colors.white, ...colores]),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.0012)
-                              ..rotateY(angulo)
-                              ..scaleByDouble(escala, escala, 1, 1),
-                            child: Stack(
-                              children: [
-                                // La cara marca el tamaño; el dorso ocupa lo mismo para que el giro no salte.
-                                Visibility(
-                                  visible: deCara,
-                                  maintainSize: true,
-                                  maintainAnimation: true,
-                                  maintainState: true,
-                                  child: Transform(
-                                    alignment: Alignment.center,
-                                    transform: Matrix4.rotationY(math.pi),
-                                    child: carta,
-                                  ),
-                                ),
-                                if (!deCara) const Positioned.fill(child: DorsoCarta()),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: Espacio.l),
-                  FadeTransition(
-                    opacity: _textos,
-                    child: Column(
-                      children: [
-                        if (widget.xp > 0) ...[_PuntosGanados(xp: widget.xp), const SizedBox(height: Espacio.m)],
-                        FilledButton.icon(
-                          onPressed: () {
-                            Hapticos.toque();
-                            Navigator.of(context).pop();
-                          },
-                          icon: const Icon(Icons.style_rounded),
-                          label: const Text('¡A mi colección!'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                      SizedBox(height: 5 * u),
+                    ],
+                    carta,
+                    if (fuente.isNotEmpty) ...[SizedBox(height: 3 * u), Center(child: FuentePixel(fuente: fuente))],
+                    if (extra case final extra?) ...[SizedBox(height: 3 * u), extra],
+                    for (final (i, boton) in botones.indexed) ...[SizedBox(height: (i == 0 ? 5 : 2) * u), boton],
+                  ],
+                ),
               ),
             ),
           ),
@@ -494,67 +605,4 @@ class _RevelarCartaState extends State<RevelarCarta> with SingleTickerProviderSt
       ),
     );
   }
-}
-
-class _PuntosGanados extends StatelessWidget {
-  const _PuntosGanados({required this.xp});
-
-  final int xp;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final esquema = tema.colorScheme;
-    return DecoratedBox(
-      decoration: ShapeDecoration(color: esquema.surface, shape: const StadiumBorder()),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Espacio.m, vertical: Espacio.s),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.bolt_rounded, color: esquema.primary),
-            const SizedBox(width: Espacio.xs),
-            Text(
-              '+$xp puntos',
-              style: tema.textTheme.titleMedium?.copyWith(color: esquema.onSurface, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Resplandor y chispas que salen de detrás de la carta, una sola vez.
-class _Destello extends CustomPainter {
-  _Destello({required this.progreso, required this.colores});
-
-  final double progreso;
-  final List<Color> colores;
-
-  static const _chispas = 18;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (progreso <= 0) return;
-    final centro = size.center(Offset.zero);
-    final resplandor = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          colores.last.withValues(alpha: 0.55 * (1 - progreso * 0.5)),
-          colores.last.withValues(alpha: 0),
-        ],
-      ).createShader(Rect.fromCircle(center: centro, radius: 120 + 110 * progreso));
-    canvas.drawCircle(centro, 120 + 110 * progreso, resplandor);
-    for (var i = 0; i < _chispas; i++) {
-      final angulo = 2 * math.pi * i / _chispas + (i.isEven ? 0.12 : -0.08);
-      final distancia = (110 + (i % 3) * 22) + 120 * progreso;
-      final punto = centro + Offset(math.cos(angulo), math.sin(angulo)) * distancia;
-      final pintura = Paint()..color = colores[i % colores.length].withValues(alpha: (1 - progreso).clamp(0, 1));
-      canvas.drawCircle(punto, 2 + 4 * (1 - progreso), pintura);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_Destello antiguo) => antiguo.progreso != progreso || antiguo.colores != colores;
 }

@@ -106,6 +106,17 @@ void main() {
 
       expect(container.read(apiProvider), same(antes));
     });
+
+    test('tampoco si cambian la lectura fácil o «reducir animaciones»', () async {
+      final (container, _) = await _contenedor();
+      final antes = container.read(apiProvider);
+
+      await container
+          .read(ajustesProvider.notifier)
+          .actualizar((a) => a.copyWith(lecturaFacil: true, reducirMovimiento: true));
+
+      expect(container.read(apiProvider), same(antes));
+    });
   });
 
   group('ajustes y bienvenida', () {
@@ -120,6 +131,18 @@ void main() {
       final guardado = Storage(prefs).leerAjustes();
       expect([guardado.vozActivada, guardado.velocidadVoz, guardado.tamanoTexto], [true, 0.7, 1.15]);
       expect(container.read(ajustesProvider).velocidadVoz, 0.7);
+    });
+
+    test('ajustesProvider lee y guarda la lectura fácil y «reducir animaciones»', () async {
+      final (container, prefs) = await _contenedor(guardado: {'ajustes.lectura_facil': true});
+      expect(container.read(ajustesProvider).lecturaFacil, isTrue);
+      expect(container.read(ajustesProvider).reducirMovimiento, isFalse);
+
+      await container.read(ajustesProvider.notifier).actualizar((a) => a.copyWith(reducirMovimiento: true));
+
+      final guardado = Storage(prefs).leerAjustes();
+      expect([guardado.lecturaFacil, guardado.reducirMovimiento], [true, true]);
+      expect(prefs.getBool('ajustes.reducir_movimiento'), isTrue);
     });
 
     test('bienvenidaVistaProvider.marcar() la marca y la guarda', () async {

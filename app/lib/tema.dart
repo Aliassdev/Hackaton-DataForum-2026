@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 // Sistema de diseño de TuTurno: la marca amarilla y azul.
 //
-// Pensado para chicos y chicas desde los 11 años: letra muy legible (Atkinson Hyperlegible) para todo el texto y
-// MaryKate, la letra del logotipo, solo para títulos grandes y números. Contraste AA en los dos temas, zonas táctiles
-// grandes y movimiento que respeta la opción del sistema de reducir animaciones.
+// Pensado para chicos y chicas desde los 11 años: Nunito, redonda y clara, para todo el texto, y MaryKate, la letra
+// del logotipo, solo para los titulares grandes. Con «lectura fácil», todo en Atkinson Hyperlegible (también los
+// titulares). Contraste AA en los dos temas, zonas táctiles grandes y movimiento que respeta «reducir animaciones»
+// (la opción del sistema o la de Ajustes).
 //
 // Reglas de color de la marca:
 // - El amarillo TuTurno nunca lleva texto blanco ni va sobre blanco (1,3:1): va sobre azul o azul noche, y encima
@@ -43,7 +44,8 @@ abstract final class Duracion {
   static const larga = Duration(milliseconds: 560);
 }
 
-/// [normal], o cero si el sistema pide reducir animaciones.
+/// [normal], o cero si se piden menos animaciones (en el sistema o en Ajustes: lib/app.dart suma las dos en
+/// `MediaQuery.disableAnimations`).
 Duration duracion(BuildContext context, Duration normal) =>
     MediaQuery.disableAnimationsOf(context) ? Duration.zero : normal;
 
@@ -85,13 +87,18 @@ abstract final class ColoresMarca {
 
 /// Familias de letra (declaradas en pubspec.yaml).
 abstract final class Fuentes {
-  /// Atkinson Hyperlegible: todo el texto (botones, cuerpo, etiquetas y títulos de las barras).
-  static const texto = 'AtkinsonHyperlegible';
+  /// Nunito: todo el texto (botones, cuerpo, etiquetas y títulos de las barras). Pesos 400, 600, 700 y 800.
+  static const texto = 'Nunito';
 
-  /// MaryKate, la letra del logotipo (la eligió Jorge): títulos grandes y números (estilos display y headline). Nunca
-  /// para párrafos. Tiene un solo peso y el fichero declara 900, así que pedirle negrita no la engorda (ver
-  /// assets/fonts/MaryKate-CREDITOS.txt). Le faltan º, °, …, – y —: salen de [texto] (fontFamilyFallback).
+  /// MaryKate, la letra del logotipo (la eligió Jorge): solo los titulares grandes (estilos display y headline, de
+  /// 22 px o más). Nunca para párrafos ni para los títulos de las barras (es ancha y los cortaría). Tiene un solo peso
+  /// y el fichero declara 900, así que pedirle negrita no la engorda (ver assets/fonts/MaryKate-CREDITOS.txt). Le
+  /// faltan º, °, …, –, — y las comillas tipográficas: salen de [texto] (fontFamilyFallback).
   static const titulos = 'MaryKate';
+
+  /// Atkinson Hyperlegible: con «lectura fácil» (`temaTuTurno(brillo, lecturaFacil: true)`), todo el texto, también
+  /// los titulares. Está pensada para leerse bien con baja visión o dificultades lectoras. Pesos 400 y 700.
+  static const lecturaFacil = 'AtkinsonHyperlegible';
 }
 
 /// Colores propios que no están en [ColorScheme].
@@ -375,11 +382,12 @@ const _barraDesplazada = Color(0xFFF0F2FF);
 /// Esquema de color de TuTurno para [brillo] (público para poder probar sus contrastes).
 ColorScheme esquemaTuTurno(Brightness brillo) => brillo == Brightness.light ? _esquemaClaro : _esquemaOscuro;
 
-/// Display y headline con MaryKate, la letra del logotipo; el resto se queda en Atkinson Hyperlegible.
+/// Display y headline (todos de 26 px o más) con MaryKate, la letra del logotipo; el resto se queda en Nunito, también
+/// titleLarge y titleMedium, que son los de las barras.
 ///
-/// MaryKate tiene un solo peso y se pide normal (400): así los signos que le faltan salen de Atkinson normal, que pesa
-/// lo mismo que sus trazos. Sus espacios entre palabras son muy anchos (0,42 em): se estrechan un 12 % del tamaño de
-/// letra para que cada título se lea como una sola frase.
+/// MaryKate tiene un solo peso y se pide normal (400): así los signos que le faltan salen de Nunito normal. Sus
+/// espacios entre palabras son muy anchos (0,42 em): se estrechan un 12 % del tamaño de letra para que cada título se
+/// lea como una sola frase.
 TextTheme _tipografia(TextTheme base) {
   TextStyle? titulo(TextStyle? estilo, double tamano, double alto) => estilo?.copyWith(
     fontFamily: Fuentes.titulos,
@@ -400,11 +408,76 @@ TextTheme _tipografia(TextTheme base) {
   );
 }
 
-ThemeData temaTuTurno(Brightness brillo) {
+/// «Lectura fácil»: todos los estilos en Atkinson Hyperlegible, también display y headline, con algo más de
+/// interlineado (un 10 % más que el de Material 3: el cuerpo pasa de 1,5 a 1,65).
+///
+/// El interlineado de Material 3 sale de [geometria] (la de la tipografía del tema): los estilos de [base] aún no
+/// lo tienen, porque Flutter les añade tamaños e interlineados al leer el tema (`Theme.of` → `ThemeData.localize`).
+///
+/// Display y headline conservan los tamaños de [_tipografia], para que las pantallas se maqueten igual en los dos
+/// modos, y van en negrita (700, que el fichero tiene): sin MaryKate, la negrita es lo que los distingue del texto.
+TextTheme _tipografiaFacil(TextTheme base, TextTheme geometria) {
+  TextStyle? texto(TextStyle? estilo, TextStyle? medida) =>
+      estilo?.copyWith(fontFamily: Fuentes.lecturaFacil, height: (medida?.height ?? 1.4) * 1.1);
+  TextStyle? titulo(TextStyle? estilo, double tamano, double alto) => estilo?.copyWith(
+    fontFamily: Fuentes.lecturaFacil,
+    fontSize: tamano,
+    height: alto,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0,
+  );
+  return base.copyWith(
+    displayLarge: titulo(base.displayLarge, 57, 1.2),
+    displayMedium: titulo(base.displayMedium, 45, 1.2),
+    displaySmall: titulo(base.displaySmall, 36, 1.25),
+    headlineLarge: titulo(base.headlineLarge, 34, 1.25),
+    headlineMedium: titulo(base.headlineMedium, 30, 1.3),
+    headlineSmall: titulo(base.headlineSmall, 26, 1.3),
+    titleLarge: texto(base.titleLarge, geometria.titleLarge),
+    titleMedium: texto(base.titleMedium, geometria.titleMedium),
+    titleSmall: texto(base.titleSmall, geometria.titleSmall),
+    bodyLarge: texto(base.bodyLarge, geometria.bodyLarge),
+    bodyMedium: texto(base.bodyMedium, geometria.bodyMedium),
+    bodySmall: texto(base.bodySmall, geometria.bodySmall),
+    labelLarge: texto(base.labelLarge, geometria.labelLarge),
+    labelMedium: texto(base.labelMedium, geometria.labelMedium),
+    labelSmall: texto(base.labelSmall, geometria.labelSmall),
+  );
+}
+
+/// Las cifras de los contadores (XP, racha, el turno «001», «Nº 03/20»…) con el tamaño, el color y el interlineado de
+/// [base], que suele ser un titular del tema: en Nunito ExtraBold, porque las de MaryKate son de trazo fino, su punto
+/// de los miles casi no se ve y su 0 se confunde con la O. Con «lectura fácil», [base] ya está en Atkinson
+/// Hyperlegible y se queda en ella, en negrita. Las cifras son tabulares, para que un contador no baile al cambiar.
+///
+/// ```dart
+/// Text('$xp XP', style: estiloCifras(Theme.of(context).textTheme.headlineMedium))
+/// ```
+TextStyle? estiloCifras(TextStyle? base) {
+  if (base == null) return null;
+  final facil = base.fontFamily == Fuentes.lecturaFacil;
+  return base.copyWith(
+    fontFamily: facil ? Fuentes.lecturaFacil : Fuentes.texto,
+    fontWeight: facil ? FontWeight.w700 : FontWeight.w800,
+    letterSpacing: 0,
+    wordSpacing: 0,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+}
+
+/// El tema de TuTurno para [brillo]. Con [lecturaFacil] (el ajuste «Lectura fácil»), todo el texto pasa a Atkinson
+/// Hyperlegible con algo más de interlineado; los colores y las formas no cambian.
+ThemeData temaTuTurno(Brightness brillo, {bool lecturaFacil = false}) {
   final claro = brillo == Brightness.light;
   final esquema = esquemaTuTurno(brillo);
-  final base = ThemeData(colorScheme: esquema, fontFamily: Fuentes.texto, useMaterial3: true);
-  final texto = _tipografia(base.textTheme);
+  final base = ThemeData(
+    colorScheme: esquema,
+    fontFamily: lecturaFacil ? Fuentes.lecturaFacil : Fuentes.texto,
+    useMaterial3: true,
+  );
+  // El español usa la geometría «englishLike» (la que añade Theme.of).
+  TextTheme tipografia(TextTheme t) => lecturaFacil ? _tipografiaFacil(t, base.typography.englishLike) : _tipografia(t);
+  final texto = tipografia(base.textTheme);
   final forma = RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radios.m));
   final textoBoton = texto.titleMedium?.copyWith(fontWeight: FontWeight.w700);
   final bordeCampo = OutlineInputBorder(borderRadius: BorderRadius.circular(Radios.m), borderSide: BorderSide.none);
@@ -412,7 +485,7 @@ ThemeData temaTuTurno(Brightness brillo) {
   return base.copyWith(
     extensions: [claro ? ColoresTuTurno.claro : ColoresTuTurno.oscuro],
     textTheme: texto,
-    primaryTextTheme: _tipografia(base.primaryTextTheme),
+    primaryTextTheme: tipografia(base.primaryTextTheme),
     materialTapTargetSize: MaterialTapTargetSize.padded,
     scaffoldBackgroundColor: esquema.surface,
     appBarTheme: AppBarTheme(
@@ -428,7 +501,12 @@ ThemeData temaTuTurno(Brightness brillo) {
       scrolledUnderElevation: 3,
       surfaceTintColor: claro ? Colors.transparent : ColoresMarca.azulCielo,
       shadowColor: Colors.transparent,
-      titleTextStyle: texto.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: esquema.onSurface),
+      // Con tamaño: los estilos de ThemeData.textTheme aún no lo llevan (lo añade Theme.of), y sin él el título salía a
+      // 14, más pequeño que el texto. 20 en vez de los 22 de titleLarge: así caben los títulos con Glosario y Ayuda al
+      // lado en un móvil estrecho.
+      titleTextStyle: base.typography.englishLike.titleLarge
+          ?.merge(texto.titleLarge)
+          .copyWith(fontSize: 20, fontWeight: FontWeight.w700, color: esquema.onSurface),
     ),
     // Tarjetas de papel: blancas sobre el papel cálido en claro; un azul algo más claro que el fondo en oscuro.
     cardTheme: CardThemeData(

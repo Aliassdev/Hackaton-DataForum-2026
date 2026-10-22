@@ -102,7 +102,239 @@ class GlifoPixel {
     '...#..#..',
   ]);
 
-  static const values = [flecha, abajo, atras, check, cruz, candado, carta, estrella, balanza, pregunta, altavoz];
+  /// Parar la lectura en voz alta.
+  static const parar = GlifoPixel('parar', [
+    '#######',
+    '#######',
+    '#######',
+    '#######',
+    '#######',
+    '#######',
+    '#######',
+  ]);
+
+  /// Ir a lo siguiente (la flecha de «Siguiente caso»): el de volver, al revés.
+  static const siguiente = GlifoPixel('siguiente', [
+    '...#...',
+    '...##..',
+    '######.',
+    '#######',
+    '######.',
+    '...##..',
+    '...#...',
+  ]);
+
+  /// Más opciones: tres puntos en vertical.
+  static const opciones = GlifoPixel('opciones', ['##', '##', '..', '##', '##', '..', '##', '##']);
+
+  /// La ley: un libro abierto (las fuentes de cada respuesta y la Fiscalía). Nunca un mazo: en España no se usa.
+  static const ley = GlifoPixel('ley', [
+    '.###.....###.',
+    '#...##.##...#',
+    '#.....#.....#',
+    '#.##..#..##.#',
+    '#.....#.....#',
+    '#.##..#..##.#',
+    '#.....#.....#',
+    '##....#....##',
+    '..####.####..',
+  ]);
+
+  /// La toga, para la jueza o el juez (solo se lleva en estrados).
+  static const toga = GlifoPixel('toga', [
+    '...#####...',
+    '..##.#.##..',
+    '.##..#..##.',
+    '.#...#...#.',
+    '##...#...##',
+    '#.#..#..#.#',
+    '#.#..#..#.#',
+    '..#..#..#..',
+    '..#..#..#..',
+    '..#######..',
+  ]);
+
+  /// Protección: un escudo genérico con una marca de visto (nunca un escudo oficial).
+  static const escudo = GlifoPixel('escudo', [
+    '#########',
+    '#.......#',
+    '#.....#.#',
+    '#....#..#',
+    '#.#.#...#',
+    '.#.#...#.',
+    '.#.....#.',
+    '..#...#..',
+    '...#.#...',
+    '....#....',
+  ]);
+
+  /// No ver a alguien: un ojo tachado.
+  static const ojoTachado = GlifoPixel('ojo tachado', [
+    '..........#',
+    '...#####.#.',
+    '.##.....#..',
+    '#....#.#..#',
+    '#...#.#...#',
+    '#....#....#',
+    '.##.#...##.',
+    '...#####...',
+    '..#........',
+  ]);
+
+  /// Grabar o hablar por pantalla: una cámara de vídeo.
+  static const camara = GlifoPixel('camara', [
+    '.######....',
+    '#......#..#',
+    '#.##...#.##',
+    '#.##...####',
+    '#......#.##',
+    '#......#..#',
+    '.######....',
+  ]);
+
+  /// Ir con alguien: dos personas.
+  static const personas = GlifoPixel('personas', [
+    '..##....##..',
+    '.####..####.',
+    '.####..####.',
+    '..##....##..',
+    '............',
+    '.####..####.',
+    '######.#####',
+    '######.#####',
+  ]);
+
+  static const casa = GlifoPixel('casa', [
+    '....#....',
+    '...###...',
+    '..#####..',
+    '.#######.',
+    '#########',
+    '.#.....#.',
+    '.#.##..#.',
+    '.#.##..#.',
+    '.#######.',
+  ]);
+
+  /// El colegio o el instituto: un edificio con su bandera.
+  static const escuela = GlifoPixel('escuela', [
+    '.....#.....',
+    '.....###...',
+    '.....#.....',
+    '....###....',
+    '..#######..',
+    '.#########.',
+    '.#.#.#.#.#.',
+    '.#########.',
+    '.#.#...#.#.',
+    '.####.####.',
+  ]);
+
+  /// Entender: una bombilla.
+  static const bombilla = GlifoPixel('bombilla', [
+    '..###..',
+    '.#...#.',
+    '#.....#',
+    '#..#..#',
+    '#..#..#',
+    '.#...#.',
+    '..#.#..',
+    '..###..',
+    '..###..',
+    '...#...',
+  ]);
+
+  static const corazon = GlifoPixel('corazon', [
+    '.##...##.',
+    '####.####',
+    '#########',
+    '#########',
+    '.#######.',
+    '..#####..',
+    '...###...',
+    '....#....',
+  ]);
+
+  /// Internet.
+  static const nube = GlifoPixel('nube', [
+    '....###....',
+    '..##...#...',
+    '.#......##.',
+    '#.........#',
+    '#.........#',
+    '.#########.',
+  ]);
+
+  /// Borrar.
+  static const papelera = GlifoPixel('papelera', [
+    '...###...',
+    '#########',
+    '.........',
+    '.#######.',
+    '.#.#.#.#.',
+    '.#.#.#.#.',
+    '.#.#.#.#.',
+    '.#.#.#.#.',
+    '.#######.',
+  ]);
+
+  /// Pedir la palabra: una mano alzada.
+  static const mano = GlifoPixel('mano', [
+    '...#.....',
+    '.#.#.#...',
+    '.#.#.#.#.',
+    '.#.#.#.#.',
+    '.#.#.#.#.',
+    '.#######.',
+    '##.....#.',
+    '.#.....#.',
+    '..#...#..',
+    '..#####..',
+  ]);
+
+  /// Hablar y que te escuchen: un bocadillo.
+  static const bocadillo = GlifoPixel('bocadillo', [
+    '.#########.',
+    '#.........#',
+    '#.###.###.#',
+    '#.........#',
+    '#.#####...#',
+    '#.........#',
+    '.###.#####.',
+    '...#.#.....',
+    '...##......',
+  ]);
+
+  static const values = [
+    flecha,
+    abajo,
+    atras,
+    check,
+    cruz,
+    candado,
+    carta,
+    estrella,
+    balanza,
+    pregunta,
+    altavoz,
+    parar,
+    siguiente,
+    opciones,
+    ley,
+    toga,
+    escudo,
+    ojoTachado,
+    camara,
+    personas,
+    casa,
+    escuela,
+    bombilla,
+    corazon,
+    nube,
+    papelera,
+    mano,
+    bocadillo,
+  ];
 }
 
 /// Pinta [glifo] con la esquina de arriba a la izquierda en [origen] y celdas de [u]. Con [contorno], cada celda

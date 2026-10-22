@@ -294,9 +294,11 @@ class _MenuOpcionesPixelState extends State<MenuOpcionesPixel> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              widget.opciones[i],
-              style: estiloTextoPixel(context, TipoTextoPixel.cuerpo, color: colores.tinta),
+            child: Text.rich(
+              textoConCifras(
+                widget.opciones[i],
+                estiloTextoPixel(context, TipoTextoPixel.cuerpo, color: colores.tinta),
+              ),
             ),
           ),
           if (icono != null) ...[SizedBox(width: 2 * u), IconoPixel(icono, color: colores.icono)],

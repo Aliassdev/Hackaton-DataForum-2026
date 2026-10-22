@@ -112,7 +112,8 @@ class ColoresBotonPixel {
 /// Mide al menos 48 × 48, se puede usar con teclado (Intro o Espacio, con anillo de foco) y lo anuncia el lector de
 /// pantalla como botón. Con [onPressed] null queda desactivado (gris y sin sombra).
 ///
-/// Lleva [etiqueta], [icono] o los dos; si solo lleva icono, [semantica] dice qué hace.
+/// Lleva [etiqueta], [icono] o los dos; si solo lleva icono, [semantica] dice qué hace. [iconoFinal] va detrás del
+/// texto (la flecha de «Siguiente caso»).
 class BotonPixel extends StatefulWidget {
   const BotonPixel({
     super.key,
@@ -120,6 +121,7 @@ class BotonPixel extends StatefulWidget {
     required this.onPressed,
     this.variante = VarianteBotonPixel.primario,
     this.icono,
+    this.iconoFinal,
     this.semantica,
     this.expandido = false,
     this.focusNode,
@@ -132,6 +134,9 @@ class BotonPixel extends StatefulWidget {
 
   /// Normalmente un `IconoPixel`; toma el color de la tinta del botón.
   final Widget? icono;
+
+  /// Un icono detrás del texto (solo con [etiqueta]), como el de [icono].
+  final Widget? iconoFinal;
 
   /// Lo que lee el lector de pantalla. Por defecto, [etiqueta].
   final String? semantica;
@@ -194,6 +199,7 @@ class _BotonPixelState extends State<BotonPixel> {
     final colores = ColoresBotonPixel.de(widget.variante, activo: _activo);
     final etiqueta = widget.etiqueta;
     final icono = widget.icono;
+    final iconoFinal = etiqueta == null ? null : widget.iconoFinal;
     final soloIcono = etiqueta == null;
     final estilo = estiloTextoPixel(context, TipoTextoPixel.boton, color: colores.tinta);
     final contenido = IconTheme(
@@ -219,7 +225,19 @@ class _BotonPixelState extends State<BotonPixel> {
                       ),
                     ),
             if (icono != null && etiqueta != null) SizedBox(width: 2 * u),
-            if (etiqueta != null) Flexible(child: Text(etiqueta)),
+            if (etiqueta != null) Flexible(child: Text.rich(textoConCifras(etiqueta, estilo))),
+            if (iconoFinal != null) ...[
+              SizedBox(width: 2 * u),
+              SizedBox(
+                height: 0,
+                child: OverflowBox(
+                  fit: OverflowBoxFit.deferToChild,
+                  minHeight: 0,
+                  maxHeight: double.infinity,
+                  child: iconoFinal,
+                ),
+              ),
+            ],
           ],
         ),
       ),

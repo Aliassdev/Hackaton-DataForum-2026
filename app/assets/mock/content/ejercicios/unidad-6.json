@@ -1,0 +1,165 @@
+[
+  {
+    "id": "E-601",
+    "tipo": "eleccion",
+    "concepto": "C-edad-penal",
+    "dificultad": 1,
+    "pregunta": "¿A quién se aplica la ley penal de menores?",
+    "opciones": [
+      "A chicos y chicas de 14 a 17 años",
+      "A cualquier menor, aunque tenga 10 años",
+      "Solo a personas de 18 años o más"
+    ],
+    "correcta": 0,
+    "explicacion": "La ley penal de menores se aplica a chicos y chicas de 14 a 17 años que cometen un delito.",
+    "fuente": "LO 5/2000, art. 1.1",
+    "validado": true
+  },
+  {
+    "id": "E-602",
+    "tipo": "vf",
+    "concepto": "C-edad-penal",
+    "dificultad": 1,
+    "afirmacion": "Si un chico de 13 años hace algo que es delito, se le juzga con la ley penal de menores.",
+    "correcta": false,
+    "explicacion": "Con menos de 14 años no se le exige responsabilidad con la ley de menores. En su lugar, actúan las normas y los servicios de protección de menores.",
+    "fuente": "LO 5/2000, art. 3",
+    "validado": true
+  },
+  {
+    "id": "E-603",
+    "tipo": "eleccion",
+    "concepto": "C-medidas",
+    "dificultad": 2,
+    "pregunta": "Si el juez de menores decide que una chica de 16 años cometió un delito, ¿qué le pone?",
+    "opciones": [
+      "Medidas, no penas como a las personas adultas",
+      "Lo mismo que a una persona adulta",
+      "Nada, porque es menor"
+    ],
+    "correcta": 0,
+    "explicacion": "De 14 a 17 años, la ley de menores pone medidas. Una medida puede ser, por ejemplo, prohibir acercarse a la víctima o comunicarse con ella. Las que más limitan son las de internamiento: vivir durante un tiempo en un centro de menores.",
+    "fuente": "LO 5/2000, arts. 1.1 y 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-604",
+    "tipo": "vf",
+    "concepto": "C-medidas",
+    "dificultad": 2,
+    "afirmacion": "Si a alguien le prohíben comunicarse con la víctima, tampoco puede escribirle por redes sociales.",
+    "correcta": true,
+    "explicacion": "Esa medida impide acercarse a la víctima, a su casa o a su centro. Tampoco se puede contactar con ella por ningún medio, ni por el móvil ni por las redes.",
+    "fuente": "LO 5/2000, art. 7.1 i)",
+    "validado": true
+  },
+  {
+    "id": "E-605",
+    "tipo": "emparejar",
+    "concepto": "C-edad-penal",
+    "dificultad": 2,
+    "pares": [
+      ["Menos de 14 años", "Actúa la protección de menores"],
+      ["De 14 a 17 años", "Se aplica la ley penal de menores"],
+      ["Fiscalía de Menores", "Dirige la investigación"]
+    ],
+    "fuente": "LO 5/2000, arts. 1.1, 3 y 6",
+    "validado": true
+  },
+  {
+    "id": "E-606",
+    "tipo": "dilo",
+    "concepto": "C-medidas",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué pasa si un chico o una chica de 14 a 17 años comete un delito.",
+    "proposiciones": [
+      "Se aplica la ley penal de menores",
+      "La Fiscalía de Menores dirige la investigación",
+      "El juez de menores puede poner medidas, no penas como a los adultos"
+    ],
+    "fuente": "LO 5/2000, arts. 1.1, 6 y 7.1",
+    "validado": true
+  },
+  {
+    "id": "E-607",
+    "tipo": "eleccion",
+    "concepto": "C-derechos-detenido",
+    "dificultad": 1,
+    "pregunta": "Si la policía detiene a un chico de 15 años, ¿qué tiene que hacer enseguida?",
+    "opciones": [
+      "Explicarle con palabras claras de qué se le acusa, por qué le detiene y qué derechos tiene",
+      "Nada hasta que llegue el juicio",
+      "Hablarle solo con palabras técnicas"
+    ],
+    "correcta": 0,
+    "explicacion": "La policía tiene que informarle enseguida, con un lenguaje claro y comprensible, y avisar a sus padres o tutores. Y la detención tiene que hacerse de la forma que menos le perjudique.",
+    "fuente": "LO 5/2000, art. 17.1",
+    "validado": true
+  },
+  {
+    "id": "E-608",
+    "tipo": "vf",
+    "concepto": "C-derechos-detenido",
+    "dificultad": 1,
+    "afirmacion": "La persona investigada también tiene derechos.",
+    "correcta": true,
+    "explicacion": "Sí. Por ejemplo, si la detienen, le tienen que explicar sus derechos con palabras que pueda entender, según su edad y su madurez. También tiene derecho a un abogado o una abogada. Y que te investiguen no quiere decir que ya se haya decidido nada.",
+    "fuente": "LECrim, art. 520.2 bis; LO 5/2000, art. 22.1; CE, art. 24.2",
+    "validado": true
+  },
+  {
+    "id": "E-609",
+    "tipo": "vf",
+    "concepto": "C-conciliacion",
+    "dificultad": 2,
+    "afirmacion": "En una mediación, quien hizo el daño también puede echarse atrás en cualquier momento.",
+    "correcta": true,
+    "explicacion": "La víctima y quien hizo el daño pueden retirar su permiso para participar en la mediación cuando quieran.",
+    "fuente": "Ley 4/2015, art. 15.3",
+    "validado": true
+  },
+  {
+    "id": "E-610",
+    "tipo": "eleccion",
+    "concepto": "C-conciliacion",
+    "dificultad": 2,
+    "pregunta": "Un chico de 15 años reconoce el daño que hizo y quiere pedir perdón. ¿Cuándo hay conciliación?",
+    "opciones": [
+      "Cuando reconoce el daño, se disculpa y la víctima acepta sus disculpas",
+      "Siempre que pida perdón, aunque la víctima no quiera",
+      "Cuando paga una multa"
+    ],
+    "correcta": 0,
+    "explicacion": "Solo hay conciliación si quien hizo el daño lo reconoce, se disculpa y la víctima acepta las disculpas. Nadie puede obligar a la víctima.",
+    "fuente": "LO 5/2000, art. 19",
+    "validado": true
+  },
+  {
+    "id": "E-611",
+    "tipo": "ordenar",
+    "concepto": "C-conciliacion",
+    "dificultad": 2,
+    "enunciado": "Ordena cómo puede llegar a haber una conciliación.",
+    "pasos": [
+      "Quien hizo el daño lo reconoce",
+      "Pide disculpas a la víctima",
+      "La víctima acepta sus disculpas"
+    ],
+    "fuente": "LO 5/2000, art. 19.2",
+    "validado": true
+  },
+  {
+    "id": "E-612",
+    "tipo": "dilo",
+    "concepto": "C-derechos-detenido",
+    "dificultad": 3,
+    "pregunta": "Explica con tus palabras qué tiene que hacer la policía si detiene a un chico o una chica de 14 a 17 años.",
+    "proposiciones": [
+      "Explicarle enseguida de qué se le acusa y por qué le detiene",
+      "Decirle qué derechos tiene",
+      "Hablarle con palabras claras que pueda entender"
+    ],
+    "fuente": "LO 5/2000, art. 17.1; LECrim, art. 520.2 bis",
+    "validado": true
+  }
+]

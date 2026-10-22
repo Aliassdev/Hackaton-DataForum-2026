@@ -3,7 +3,8 @@
 //
 //   CAPTURAS=build/capturas flutter test test/marca/capturas_marca_test.dart
 //
-// Deja marca-claro.png, marca-oscuro.png e intro-*.png en la carpeta indicada (build/ no se sube a git).
+// Deja marca-claro.png, marca-oscuro.png, marca-lectura-facil.png e intro-*.png en la carpeta indicada (build/ no se
+// sube a git).
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -27,10 +28,16 @@ Future<void> _cargarFuentes() async {
   }
 
   await cargar(Fuentes.texto, [
+    'assets/fonts/Nunito-Regular.ttf',
+    'assets/fonts/Nunito-SemiBold.ttf',
+    'assets/fonts/Nunito-Bold.ttf',
+    'assets/fonts/Nunito-ExtraBold.ttf',
+  ]);
+  await cargar(Fuentes.titulos, ['assets/fonts/MaryKate-Medium-ES.ttf']);
+  await cargar(Fuentes.lecturaFacil, [
     'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
     'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
   ]);
-  await cargar(Fuentes.titulos, ['assets/fonts/MaryKate-Medium-ES.ttf']);
   final flutter =
       Platform.environment['FLUTTER_ROOT'] ??
       File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;
@@ -105,13 +112,23 @@ class _Hoja extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Espacio.m),
-          Text('1.250 XP', style: t.displayLarge),
+          Text('1.250 XP', style: estiloCifras(t.displayLarge)),
           Text('¡Es tu turno del día!', style: t.headlineLarge?.copyWith(fontWeight: FontWeight.w700)),
           Text('Vive el caso', style: t.headlineMedium),
           Text('Antes de declarar', style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-          Text('Título de barra en Atkinson', style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          // Contadores: las cifras de la letra de los titulares y, debajo, las de estiloCifras (Nunito ExtraBold).
+          Text('001 · Nº 03/20 · 1.250 XP', style: t.headlineMedium),
+          Text('001 · Nº 03/20 · 1.250 XP', style: estiloCifras(t.headlineMedium)),
+          // Los signos que le faltan a MaryKate salen de Nunito.
+          Text('1.º — 3–5 … «¿Sí?» “Ya”', style: t.headlineSmall),
+          Text('Caso de Sergio · Pregunta', style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           Text(
-            'Texto de lectura en Atkinson Hyperlegible: se lee bien con baja visión o dificultades lectoras.',
+            'Título de barra en ${t.titleLarge?.fontFamily}',
+            style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          Text(
+            'Texto de lectura en ${t.bodyLarge?.fontFamily}: lo que pasa antes, durante y después del juicio, '
+            'con palabras claras y frases cortas.',
             style: t.bodyLarge,
           ),
           Text(
@@ -186,13 +203,21 @@ void main() {
 
   for (final brillo in Brightness.values) {
     testWidgets('hoja de marca ${brillo.name}', (tester) async {
-      tester.view.physicalSize = const Size(390, 1100) * tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(390, 1300) * tester.view.devicePixelRatio;
       addTearDown(tester.view.resetPhysicalSize);
       await tester.pumpWidget(MaterialApp(theme: temaTuTurno(brillo), home: const _Hoja()));
       await tester.pumpAndSettle();
       await _capturar(tester, 'marca-${brillo == Brightness.light ? 'claro' : 'oscuro'}');
     }, skip: _destino == null);
   }
+
+  testWidgets('hoja de marca con lectura fácil', (tester) async {
+    tester.view.physicalSize = const Size(390, 1300) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(MaterialApp(theme: temaTuTurno(Brightness.light, lecturaFacil: true), home: const _Hoja()));
+    await tester.pumpAndSettle();
+    await _capturar(tester, 'marca-lectura-facil');
+  }, skip: _destino == null);
 
   testWidgets('fotogramas de la presentación', (tester) async {
     tester.view.physicalSize = const Size(390, 260) * tester.view.devicePixelRatio;

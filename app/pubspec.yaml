@@ -85,16 +85,29 @@ flutter:
     # dibujan con LogoTuTurno y MonogramaTut (lib/widgets/marca/); los SVG sirven para flutter_svg y para fuera.
     - assets/marca/logotipo/
     - assets/marca/monograma/
+    # Ilustraciones de la justicia (SVG), como el palacio de justicia del inicio.
+    - assets/justicia/
 
+  # Nunito (OFL, licencia en assets/fonts/Nunito-OFL.txt): la letra de todo el texto (cuerpo, etiquetas, botones y
+  # títulos de las barras). Cuatro pesos: 400, 600, 700 y 800.
   # Atkinson Hyperlegible (OFL): diseñada para que se lea bien con baja visión o dificultades lectoras. Es la letra
-  # de todo el texto.
-  # MaryKate (de Sakura Hatsuki, FontSpace; la eligió Jorge): las letras del logotipo. Solo para títulos grandes y
-  # números (estilos display y headline del tema). Versión completada con los caracteres del español; créditos y
-  # cambios en assets/fonts/MaryKate-CREDITOS.txt. Tiene un solo peso: el fichero declara 900 para que Flutter no
-  # le simule nunca la negrita (el weight que se pone aquí Flutter no lo usa: lee el del fichero).
+  # del ajuste «lectura fácil»: con él, todo el texto pasa a Atkinson (también los títulos y Vive el caso).
+  # MaryKate (de Sakura Hatsuki, FontSpace; la eligió Jorge): las letras del logotipo. Solo para títulos grandes
+  # (estilos display y headline del tema, de 22 px o más). Versión completada con los caracteres del español;
+  # créditos y cambios en assets/fonts/MaryKate-CREDITOS.txt. Tiene un solo peso: el fichero declara 900 para que
+  # Flutter no le simule nunca la negrita (el weight que se pone aquí Flutter no lo usa: lee el del fichero).
   # Pixelify Sans (OFL, licencia en assets/fonts/PixelifySans-OFL.txt): solo para el kit pixel de Vive el caso
   # (lib/pixel/ui/estilo_pixel.dart).
   fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-ExtraBold.ttf
+          weight: 800
     - family: AtkinsonHyperlegible
       fonts:
         - asset: assets/fonts/AtkinsonHyperlegible-Regular.ttf

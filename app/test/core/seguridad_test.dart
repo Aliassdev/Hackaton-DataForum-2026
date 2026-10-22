@@ -9,6 +9,9 @@ void main() {
       expect(pareceCrisis('quiero hacerme daño'), isTrue);
       expect(pareceCrisis('Tengo miedo de volver a casa'), isTrue);
       expect(pareceCrisis('Estoy en peligro'), isTrue);
+      expect(pareceCrisis('Mi padre me va a matar'), isTrue);
+      expect(pareceCrisis('Tengo MIEDO de mi padre'), isTrue);
+      expect(pareceCrisis('Le tengo miedo de mi madre cuando bebe'), isTrue);
     });
 
     test('las preguntas de los casos oficiales (Lucía, Sergio y Sara) no son crisis', () {

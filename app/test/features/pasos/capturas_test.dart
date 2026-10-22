@@ -9,37 +9,17 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuturno/features/pasos/fuentes_paso.dart';
 import 'package:tuturno/features/pasos/pasos.dart';
 
 import 'datos.dart';
+import '../../fuentes_reales.dart';
 
 final _destino = Platform.environment['CAPTURAS'];
 
-Future<void> _cargarFuentes() async {
-  Future<void> cargar(String familia, List<String> rutas) async {
-    final cargador = FontLoader(familia);
-    for (final ruta in rutas) {
-      cargador.addFont(Future.value(ByteData.sublistView(File(ruta).readAsBytesSync())));
-    }
-    await cargador.load();
-  }
-
-  await cargar('AtkinsonHyperlegible', [
-    'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
-    'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
-    'assets/fonts/AtkinsonHyperlegible-Italic.ttf',
-    'assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf',
-  ]);
-  await cargar('LondrinaSolid', ['assets/fonts/LondrinaSolid-Regular.ttf', 'assets/fonts/LondrinaSolid-Black.ttf']);
-  final flutter =
-      Platform.environment['FLUTTER_ROOT'] ??
-      File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;
-  final iconos = '$flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf';
-  if (File(iconos).existsSync()) await cargar('MaterialIcons', [iconos]);
-}
+/// Las fuentes de la app (Nunito, MaryKate, Atkinson Hyperlegible, Pixelify Sans y los iconos de Material).
+Future<void> _cargarFuentes() => cargarFuentesReales();
 
 Future<void> _capturar(WidgetTester tester, String nombre) async {
   await tester.pumpAndSettle();

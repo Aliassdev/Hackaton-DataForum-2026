@@ -7,6 +7,7 @@ import 'package:tuturno/features/pasos/linea_pasos.dart' show iconoPersona;
 import 'package:tuturno/features/pasos/pasos.dart';
 import 'package:tuturno/tema.dart';
 import 'package:tuturno/widgets/estados.dart';
+import 'package:tuturno/widgets/iconos/iconos.dart' show IconoTuTurno, TuIcono;
 
 import 'datos.dart';
 
@@ -102,7 +103,7 @@ void main() {
       expect(find.textContaining('Te hace las preguntas una persona preparada'), findsOneWidget);
       expect(find.text('Quién estará'), findsOneWidget);
       expect(find.text('Una psicóloga o un psicólogo del juzgado'), findsOneWidget);
-      expect(find.byIcon(Icons.psychology_rounded), findsOneWidget);
+      expect(find.byWidgetPredicate((w) => w is IconoTuTurno && w.icono == TuIcono.idea), findsOneWidget);
       expect(find.text('Puedes pedir'), findsOneWidget);
       expect(find.text('Un descanso'), findsOneWidget);
       expect(find.text('Que te repitan una pregunta'), findsOneWidget);
@@ -442,32 +443,29 @@ void main() {
   });
 
   test('el icono de cada persona sale de quién es: manda la palabra que aparece antes', () {
-    expect(iconoPersona('Una psicóloga o un psicólogo del juzgado'), Icons.psychology_rounded);
-    expect(iconoPersona('El juez o la jueza, que cuida de que todo sea justo'), Icons.gavel_rounded);
-    expect(iconoPersona('El fiscal o la fiscal, que defiende tus derechos'), Icons.balance_rounded);
-    expect(iconoPersona('El abogado o la abogada de la persona investigada'), Icons.work_rounded);
-    expect(iconoPersona('Policías, fiscales o personas del juzgado'), Icons.local_police_rounded);
-    expect(iconoPersona('Tu familia o un adulto de confianza, que puede acompañarte'), Icons.favorite_rounded);
+    expect(iconoPersona('Una psicóloga o un psicólogo del juzgado'), TuIcono.idea);
+    expect(iconoPersona('El juez o la jueza, que cuida de que todo sea justo'), TuIcono.toga);
+    expect(iconoPersona('El fiscal o la fiscal, que defiende tus derechos'), TuIcono.ley);
+    expect(iconoPersona('El abogado o la abogada de la persona investigada'), TuIcono.expediente);
+    expect(iconoPersona('Policías, fiscales o personas del juzgado'), TuIcono.escudo);
+    expect(iconoPersona('Tu familia o un adulto de confianza, que puede acompañarte'), TuIcono.personaConfianza);
     expect(
       iconoPersona(
         'Quien te represente y una persona de confianza que elijas tú, salvo que el juez explique por qué no',
       ),
-      Icons.favorite_rounded,
+      TuIcono.personaConfianza,
     );
-    expect(iconoPersona('Tu tutor legal'), Icons.favorite_rounded);
-    expect(
-      iconoPersona('En tu colegio o instituto, el coordinador o la coordinadora de bienestar'),
-      Icons.school_rounded,
-    );
-    expect(iconoPersona('Una trabajadora social'), Icons.diversity_3_rounded);
+    expect(iconoPersona('Tu tutor legal'), TuIcono.personaConfianza);
+    expect(iconoPersona('En tu colegio o instituto, el coordinador o la coordinadora de bienestar'), TuIcono.aprende);
+    expect(iconoPersona('Una trabajadora social'), TuIcono.ayuda);
     // Los de los itinerarios: servicios sociales que ayudan a la familia, no la familia.
-    expect(iconoPersona('Servicios sociales, que pueden ayudar a tu familia'), Icons.diversity_3_rounded);
+    expect(iconoPersona('Servicios sociales, que pueden ayudar a tu familia'), TuIcono.ayuda);
     expect(
       iconoPersona(
         'En un proceso de protección, servicios sociales o de protección de menores, que ayudan a tu familia',
       ),
-      Icons.diversity_3_rounded,
+      TuIcono.ayuda,
     );
-    expect(iconoPersona('Otras personas'), Icons.person_rounded);
+    expect(iconoPersona('Otras personas'), TuIcono.miSituacion);
   });
 }

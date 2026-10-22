@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../tema.dart' show duracionTamano;
+import '../../widgets/iconos/iconos.dart';
 import '../motor/motor.dart' show PaletaPixel;
 import 'roles_juzgado.dart';
 
@@ -15,8 +16,8 @@ const _s = 8.0;
 const _m = 16.0;
 
 /// Carta de una persona de la sala, de papel plano: el icono en una pegatina amarilla, el título con la letra de los
-/// títulos del tema, «Quién es», «Qué hace», un «¿Sabías que…?» y las normas de las que sale todo (al tocar «Qué dice
-/// la ley» se ven las citas literales del BOE).
+/// títulos del tema, «Quién es», «Qué hace», un «¿Sabías que…?» y las normas de MARCO_LEGAL de las que sale lo jurídico
+/// (al tocar «Qué dice la ley» se ven las citas literales). Si la carta solo presenta a la persona, no lleva fuentes.
 ///
 /// Mide lo que le deje el padre de ancho; de alto, lo que necesite (con letra grande, crece).
 class CartaRol extends StatelessWidget {
@@ -87,7 +88,12 @@ class CartaRol extends StatelessWidget {
                     IconButton(
                       onPressed: alCerrar,
                       tooltip: 'Cerrar',
-                      icon: Icon(Icons.close_rounded, color: esquema.onSurfaceVariant),
+                      icon: IconoTuTurno(
+                        TuIcono.cerrar,
+                        estilo: EstiloIcono.mono,
+                        color: esquema.onSurfaceVariant,
+                        decorativo: true,
+                      ),
                     ),
                 ],
               ),
@@ -101,8 +107,10 @@ class CartaRol extends StatelessWidget {
                     const SizedBox(height: _m),
                     _Apartado(etiqueta: 'Qué hace', texto: rol.queHace),
                     if (sabiasQue != null) ...[const SizedBox(height: _m), _SabiasQue(texto: sabiasQue)],
-                    const SizedBox(height: _m),
-                    _Fuentes(key: ValueKey(rol.id), fuentes: rol.fuentes),
+                    if (rol.fuentes.isNotEmpty) ...[
+                      const SizedBox(height: _m),
+                      _Fuentes(key: ValueKey(rol.id), fuentes: rol.fuentes),
+                    ],
                   ],
                 ),
               ),
@@ -114,23 +122,25 @@ class CartaRol extends StatelessWidget {
   }
 }
 
-/// El icono del rol en un círculo amarillo con borde azul noche, como una pegatina.
+/// El icono del rol (de la iconografía de TuTurno, a una tinta) en un círculo amarillo con borde azul noche, como una
+/// pegatina.
 class _Pegatina extends StatelessWidget {
   const _Pegatina({required this.icono});
 
-  final IconData icono;
+  final TuIcono icono;
 
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
     child: Container(
       width: 56,
       height: 56,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: _amarillo,
         shape: BoxShape.circle,
         border: Border.all(color: _noche, width: 2),
       ),
-      child: Icon(icono, size: 30, color: _noche),
+      child: IconoTuTurno(icono, size: 32, estilo: EstiloIcono.mono, color: _noche, decorativo: true),
     ),
   );
 }
@@ -205,7 +215,7 @@ class _SabiasQue extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.lightbulb_rounded, color: oscuro ? _amarillo : PaletaPixel.ocre.color, size: 26),
+            IconoTuTurno(TuIcono.idea, size: 26, decorativo: true),
             const SizedBox(width: _s + 2),
             Expanded(
               child: Text.rich(
@@ -255,7 +265,13 @@ class _FuentesState extends State<_Fuentes> {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Icon(Icons.menu_book_rounded, size: 20, color: esquema.onSurfaceVariant),
+              child: IconoTuTurno(
+                TuIcono.ley,
+                size: 20,
+                estilo: EstiloIcono.mono,
+                color: esquema.onSurfaceVariant,
+                decorativo: true,
+              ),
             ),
             const SizedBox(width: _s),
             Expanded(
@@ -384,7 +400,13 @@ class NotaSala extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(nota.icono, color: oscuro ? _amarillo : _azul, size: 28),
+            IconoTuTurno(
+              nota.icono,
+              size: 28,
+              estilo: EstiloIcono.mono,
+              color: oscuro ? _amarillo : _azul,
+              decorativo: true,
+            ),
             const SizedBox(width: _m - _xs),
             Expanded(
               child: Column(
@@ -393,11 +415,13 @@ class NotaSala extends StatelessWidget {
                   Text(nota.titulo, style: texto.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 2),
                   Text(nota.texto, style: texto.bodyLarge?.copyWith(color: esquema.onSurface, height: 1.4)),
-                  const SizedBox(height: _xs),
-                  Text(
-                    'Fuente: ${nota.fuentes.map((fuente) => fuente.etiqueta).join(' · ')}',
-                    style: texto.bodyMedium?.copyWith(color: esquema.onSurfaceVariant),
-                  ),
+                  if (nota.fuentes.isNotEmpty) ...[
+                    const SizedBox(height: _xs),
+                    Text(
+                      'Fuente: ${nota.fuentes.map((fuente) => fuente.etiqueta).join(' · ')}',
+                      style: texto.bodyMedium?.copyWith(color: esquema.onSurfaceVariant),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -430,7 +454,7 @@ class EnhorabuenaJuzgado extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.celebration_rounded, color: _noche, size: 40),
+            IconoTuTurno(TuIcono.estrella, size: 40, estilo: EstiloIcono.mono, color: _noche, decorativo: true),
             const SizedBox(width: _m),
             Expanded(
               child: Column(
@@ -579,11 +603,16 @@ class _Ficha extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: descubierta ? null : Border.all(color: borde, width: 2),
                     ),
-                    child: Icon(
-                      descubierta ? rol.icono : Icons.question_mark_rounded,
-                      size: 18,
-                      color: descubierta ? _amarillo : tinta,
-                    ),
+                    alignment: Alignment.center,
+                    child: descubierta
+                        ? IconoTuTurno(
+                            rol.icono,
+                            size: 22,
+                            estilo: EstiloIcono.mono,
+                            color: _amarillo,
+                            decorativo: true,
+                          )
+                        : Icon(Icons.question_mark_rounded, size: 18, color: tinta),
                   ),
                   const SizedBox(width: _s),
                   Flexible(

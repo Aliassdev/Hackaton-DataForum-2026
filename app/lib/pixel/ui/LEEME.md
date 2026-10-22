@@ -80,13 +80,25 @@ import 'package:tuturno/pixel/ui/ui.dart';
    CartaPixel(numero: 2, titulo: carta.titulo, texto: carta.texto, bloqueada: true)
    ```
 
-7. **Botones y barras** donde haga falta: `BotonPixel` (primario, secundario y de peligro; con `onPressed` null, desactivado) y `BarraPixel`.
+7. **Botones y barras** donde haga falta: `BotonPixel` (primario, secundario y de peligro; con `onPressed` null, desactivado; `icono` delante del texto e `iconoFinal` detrás, como la flecha de «Siguiente caso») y `BarraPixel`.
+
+8. **Final del caso**: `SelloPixel()`, el sello «COMPLETADO» que cae una vez sobre el papel, golpea (vibración fuerte y `alEstampar`) y se queda. Con «reducir animaciones», aparece ya puesto. Es un tampón de juego, de TuTurno: no imita ningún sello oficial.
+
+   ```dart
+   CajaPixel(estilo: papel, child: Column(children: [Text(…), const SelloPixel(retraso: Duration(milliseconds: 700)), Text(…)]))
+   ```
+
+9. **Textos propios**: `TextoPixel('Sara tiene 15 años', tipo: TipoTextoPixel.cuerpo, color: …)` o, en un `Text.rich`, `textoConCifras(texto, estilo)` (ver «Las cifras»).
 
 `GaleriaPixelUi` enseña todo junto, con sus estados, sobre papel, sobre el fondo del juego y en una pantalla de juego de ejemplo.
 
 ## La letra (y dónde se cambia para lectura fácil)
 
-Pixelify Sans (OFL) en todos los textos del kit, a tamaños cómodos (el cuerpo, 20; nada por debajo de 18) y con mucho interlineado. Se decide en **un solo sitio**: `familiaPixel(context)` en `estilo_pixel.dart`, que lee `TemaPixel`. Con `TemaPixel(lecturaFacil: true, …)` encima, todo el juego pasa a Atkinson Hyperlegible; no hay que tocar nada más. Los nombres de las familias están en `FuentesPixel`. Si Pixelify no está declarada, se ve Atkinson.
+Pixelify Sans (OFL) en todos los textos del kit, a tamaños cómodos (el cuerpo, 20; nada por debajo de 18) y con mucho interlineado. Se decide en **un solo sitio**: `familiaPixel(context)` en `estilo_pixel.dart`, que lee `TemaPixel`. Con `TemaPixel(lecturaFacil: true, …)` encima, todo el juego pasa a Atkinson Hyperlegible (`Fuentes.lecturaFacil`, la misma de la app con lectura fácil); no hay que tocar nada más. Los nombres de las familias están en `FuentesPixel`. Si Pixelify no está declarada, se ve la letra de la app.
+
+### Las cifras
+
+En Pixelify, el «5» es igual que la «S», el «8» que la «B» y el «0» que la «O»: «Sara tiene 15 años» se leería «1S años» y «Ley 4/2015», «Ley 4/201S». Por eso **las cifras de los textos del kit van en Atkinson Hyperlegible** (`FuentesPixel.cifras`, con el cero con barra), del mismo tamaño, color y peso: lo hacen el diálogo, las opciones, las cartas, los botones, el HUD y el título del marco. En un texto propio, `TextoPixel` o `textoConCifras` (si no, las cifras salen en Pixelify). Con lectura fácil todo ya está en Atkinson y no cambia nada.
 
 Las cifras que llevan información (el contador de cartas, el número de una carta, el turno) van con `RotuloPixel`, una letra propia de 5 × 7 en la rejilla del kit: en Pixelify, a estos tamaños, el «5» es igual que la «S», el «8» que la «B» y el «0» que la «O». Crece con la letra del sistema y no cambia con la lectura fácil (ya se lee bien).
 
@@ -100,6 +112,7 @@ Las cifras que llevan información (el contador de cartas, el número de una car
 - **Lector de pantalla**: el diálogo es una región en vivo (dice cada frase nueva una vez) y la opción elegida dice el resultado al momento («Tu respuesta: no es correcta. La correcta era: …»); después, las opciones son texto con su resultado, no botones desactivados. Si la app ya lee la frase en voz alta (TTS) con el lector activo (`MediaQuery.accessibleNavigationOf`), pasa `anunciar: false` a `DialogoPixel` y `MenuOpcionesPixel`, o no reproduzcas la voz, para que no se lea dos veces.
 - **Movimiento**: nada en bucle. El brillo cruza el dibujo de una carta una vez al aparecer (en ola), al desbloquearse y con el foco o el ratón; el ▼ de «Continuar» parpadea unos 8 s y se queda a la vista; el cursor ► se balancea unos 8 s cada vez que cambia de opción. Con «reducir animaciones», nada se mueve: el texto sale entero, la barra salta y la transición es un fundido.
 - **Contenido**: no pongas siempre la respuesta correcta la primera (ni el cursor en ella: `cursorInicial` solo pone el ►, sin resaltar). Espacio duro entre una cifra y su unidad (`11 años`). «N.º» con punto y voladita.
+- **Dibujos** (`GlifoPixel`): además de los de los botones y menús (flecha, abajo, atrás, visto, cruz, candado, carta, estrella, pregunta, altavoz, parar, siguiente y opciones), los de los derechos para las cartas: ley (un libro abierto; nunca un mazo), toga, balanza, escudo (genérico, nunca uno oficial), ojo tachado, cámara, personas, casa, escuela, bombilla, corazón, nube, papelera, mano y bocadillo.
 
 ## Nitidez
 

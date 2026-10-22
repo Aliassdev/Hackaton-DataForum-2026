@@ -165,18 +165,29 @@ const casoExtra = '''
 /// El caso oficial de ejemplo de la app (el que se ve en la demo), leído del disco.
 String casoOficialDeEjemplo() => File('assets/mock/content/juego/caso-sala-gesell.json').readAsStringSync();
 
+/// Los tres casos oficiales (Lucía, Sergio y Sara), leídos del disco, con el nombre de su fichero.
+Map<String, String> casosOficiales() => {
+  for (final nombre in ['caso-sala-gesell.json', 'caso-acoso-escolar.json', 'caso-difusion-imagenes.json'])
+    nombre: File('assets/mock/content/juego/$nombre').readAsStringSync(),
+};
+
 const glosarioPrueba = '''
 [{"id": "G-gesell", "termino": "Sala Gesell", "definicion": "Sala preparada para escuchar a niños y niñas.",
   "ejemplo": "", "fuente": "LECrim, art. 449 ter", "validado": true}]
 ''';
 
-/// Contenido en memoria: los ficheros de `assets/content/juego/` que se pasen (nombre → JSON) y el glosario.
-ContentRepo repoDePrueba(Map<String, String> casos, {String glosario = glosarioPrueba}) {
+/// Contenido en memoria: los ficheros de `assets/content/juego/` que se pasen (nombre → JSON) y el glosario. Con
+/// [borradores], como el interruptor «Ver borradores» del modo DEMO (también abre «El juzgado por dentro»).
+ContentRepo repoDePrueba(Map<String, String> casos, {String glosario = glosarioPrueba, bool borradores = false}) {
   final ficheros = {
     for (final e in casos.entries) '${ContentRepo.raiz}/juego/${e.key}': e.value,
     '${ContentRepo.raiz}/glosario.json': glosario,
   };
-  return ContentRepo(bundle: BundleEnMemoria(ficheros), listarAssets: () async => ficheros.keys.toList());
+  return ContentRepo(
+    bundle: BundleEnMemoria(ficheros),
+    listarAssets: () async => ficheros.keys.toList(),
+    mostrarBorradores: borradores,
+  );
 }
 
 /// Overrides comunes: configuración sin backend, preferencias en memoria, contenido y voz falsa.
@@ -185,18 +196,21 @@ Future<List<Override>> overridesJuego({
   ContentRepo? repo,
   FakeTts? tts,
   bool vozActivada = true,
+  bool lecturaFacil = false,
+  bool borradores = false,
   Map<String, Object> preferencias = const {},
 }) async {
   SharedPreferences.setMockInitialValues({
     'bienvenida_vista': true,
     'ajustes.voz_activada': vozActivada,
+    if (lecturaFacil) 'ajustes.lectura_facil': true,
     ...preferencias,
   });
   final prefs = await SharedPreferences.getInstance();
   return [
     configProvider.overrideWithValue(const AppConfig(apiUrl: '', useMock: true, demo: false)),
     sharedPreferencesProvider.overrideWithValue(prefs),
-    contentProvider.overrideWithValue(repo ?? repoDePrueba(casos)),
+    contentProvider.overrideWithValue(repo ?? repoDePrueba(casos, borradores: borradores)),
     ttsProvider.overrideWithValue(tts ?? FakeTts()),
   ];
 }
@@ -206,8 +220,9 @@ Map<String, Object> progresoGuardado({List<String> cartas = const [], List<Strin
   'progreso': jsonEncode({'xp': xp, 'cartas': cartas, 'casos': casos}),
 };
 
-/// Abre la app mínima del juego en [ruta], con un router como el de app.dart (Aprende, Pregunta, Glosario y Ayuda
-/// son pantallas de prueba). Devuelve el router.
+/// Abre la app mínima del juego en [ruta], con las rutas del juego como en app.dart (la lista, los casos, «El juzgado
+/// por dentro» y la redirección /juzgado; Aprende, Pregunta, Glosario y Ayuda son pantallas de prueba). Con [asentar]
+/// en false, no espera a que acaben las animaciones (para ver la narración a medio escribir). Devuelve el router.
 Future<GoRouter> abrirJuego(
   WidgetTester tester, {
   String ruta = '/juego',
@@ -217,7 +232,18 @@ Future<GoRouter> abrirJuego(
   bool lectorDePantalla = false,
   bool reducirAnimaciones = false,
   Size tamano = const Size(412, 915),
+  double? densidad,
+  bool asentar = true,
 }) async {
+  // Un toque que no llegaría a lo que se quiere tocar (por ejemplo, porque lo tapa una transición) hace fallar la
+  // prueba, en vez de dejar solo un aviso en el registro.
+  final avisoAntes = WidgetController.hitTestWarningShouldBeFatal;
+  WidgetController.hitTestWarningShouldBeFatal = true;
+  addTearDown(() => WidgetController.hitTestWarningShouldBeFatal = avisoAntes);
+  if (densidad != null) {
+    tester.view.devicePixelRatio = densidad;
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
   tester.view.physicalSize = tamano * tester.view.devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
   final router = GoRouter(
@@ -227,12 +253,14 @@ Future<GoRouter> abrirJuego(
         path: '/juego',
         builder: (context, state) => const JuegoScreen(),
         routes: [
+          rutaHijaJuzgado(),
           GoRoute(
             path: ':casoId',
             builder: (context, state) => CasoScreen(casoId: state.pathParameters['casoId']!),
           ),
         ],
       ),
+      rutaRedireccionJuzgado(),
       GoRoute(
         path: '/aprende',
         builder: (context, state) => const Scaffold(body: Text('pantalla de aprende')),
@@ -276,7 +304,11 @@ Future<GoRouter> abrirJuego(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (asentar) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
   return router;
 }
 

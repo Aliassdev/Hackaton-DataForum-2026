@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +13,11 @@ import '../../widgets/movimiento/hapticos.dart';
 import '../../widgets/tuturno_scaffold.dart';
 
 const avisoLlamar = 'Llamar abre el teclado del teléfono con el número; tú decides si llamas.';
+
+/// Solo en la web: el historial del navegador guarda la visita aunque se use «Salir rápido».
+const avisoHistorialWeb =
+    'En el navegador, el historial guarda que has entrado en TuTurno. Si no quieres que se vea, ábrelo en una ventana '
+    'privada (o de incógnito).';
 
 const textoAbierto = 'Abierto ahora';
 const textoCerrado = 'Cerrado ahora';
@@ -80,6 +86,14 @@ class AyudaScreen extends StatelessWidget {
                 ],
                 const SizedBox(height: Espacio.s),
                 Entrada(orden: orden++, child: const _TarjetaAdulto()),
+                // En la web, «Salir rápido» quita TuTurno de la pestaña, pero el historial del navegador guarda la visita.
+                if (kIsWeb) ...[
+                  const SizedBox(height: Espacio.m),
+                  Entrada(
+                    orden: orden++,
+                    child: const _Linea(icono: Icons.history_rounded, texto: avisoHistorialWeb),
+                  ),
+                ],
               ],
             ),
           ),

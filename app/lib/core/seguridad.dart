@@ -16,6 +16,11 @@ const _expresionesCrisis = [
   'autolesion',
   'tengo miedo de volver a casa',
   'estoy en peligro',
+  'me va a matar',
+  'me quiere matar',
+  'me quieren matar',
+  'miedo de mi padre',
+  'miedo de mi madre',
 ];
 
 /// true si [texto] contiene alguna expresión de peligro (sin que importen tildes ni mayúsculas).

@@ -42,6 +42,34 @@ void main() {
       expect(casos.map((c) => c.id), ['caso-sala-gesell', 'caso-extra', 'caso-prueba']);
     });
 
+    test('los tres oficiales, en su orden: Lucía, Sergio y Sara', () async {
+      final c = await _contenedor(casos: {...casosOficiales(), 'caso-extra.json': casoExtra});
+      final casos = await c.read(casosProvider.future);
+      expect(casos.map((c) => c.id), [
+        'caso-sala-gesell',
+        'caso-acoso-escolar',
+        'caso-difusion-imagenes',
+        'caso-extra',
+      ]);
+      expect(ordenCasos, ['caso-sala-gesell', 'caso-acoso-escolar', 'caso-difusion-imagenes']);
+    });
+
+    test('siguienteCaso: el de después en la lista y, tras el último, el primero sin terminar', () async {
+      final c = await _contenedor(casos: casosOficiales());
+      final casos = await c.read(casosProvider.future);
+      expect(siguienteCaso(casos, 'caso-sala-gesell')?.id, 'caso-acoso-escolar');
+      expect(siguienteCaso(casos, 'caso-acoso-escolar')?.id, 'caso-difusion-imagenes');
+      expect(siguienteCaso(casos, 'caso-difusion-imagenes')?.id, 'caso-sala-gesell');
+      expect(
+        siguienteCaso(casos, 'caso-difusion-imagenes', terminados: {'caso-sala-gesell'})?.id,
+        'caso-acoso-escolar',
+      );
+      expect(
+        siguienteCaso(casos, 'caso-difusion-imagenes', terminados: {'caso-sala-gesell', 'caso-acoso-escolar'}),
+        isNull,
+      );
+    });
+
     test('un fichero roto no deja sin casos al resto', () async {
       silenciarAvisos();
       final c = await _contenedor(casos: {'roto.json': '{"id": 3', 'caso-prueba.json': casoPrueba});
@@ -149,6 +177,17 @@ void main() {
       expect(c.read(partida).value!.escena.id, 'E1');
       expect(c.read(partida).value!.empezada, isFalse);
       expect(c.read(progresoProvider).cartas, {'R-entender'}, reason: 'las cartas ganadas se quedan');
+    });
+
+    test('empezarEn pone la partida en esa escena, aunque estuviera a medias, y espera a que cargue', () async {
+      final c = await _contenedor(casos: casosOficiales());
+      final notifier = c.read(partidaProvider('caso-sala-gesell').notifier);
+      await notifier.empezarEn('S5');
+      expect(c.read(partidaProvider('caso-sala-gesell')).value!.escena.id, 'S5');
+      await notifier.empezarEn('S9');
+      expect(c.read(partidaProvider('caso-sala-gesell')).value!.escena.id, 'S9');
+      // En un caso que no existe no hace nada (ni lanza).
+      await c.read(partidaProvider('no-existe').notifier).empezarEn('S1');
     });
 
     test('un caso que no existe da CasoNoEncontrado', () async {

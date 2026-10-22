@@ -144,7 +144,6 @@ void main() {
     await _escribirYEnviar(tester, _preguntaDemo);
 
     expect(p.api.peticiones.single.pregunta, _preguntaDemo);
-    expect(find.text(_preguntaDemo), findsOneWidget);
     expect(_textoDelCampo(tester), isEmpty);
     expect(find.textContaining('Antes de los 14 años', findRichText: true), findsOneWidget);
     expect(find.text('LO 5/2000 · art. 3'), findsOneWidget);
@@ -152,6 +151,9 @@ void main() {
     // Se ha escrito, no dictado: aunque la voz esté activada, no se lee sola (queda «Escuchar»).
     expect(p.tts.leidos, isEmpty);
     expect(find.text('Escuchar'), findsOneWidget);
+    // La pregunta queda encima de la respuesta (si la respuesta es larga, hay que subir para verla).
+    await _desplazarHasta(tester, find.text(_preguntaDemo));
+    expect(find.text(_preguntaDemo), findsOneWidget);
   });
 
   testWidgets('lo que se pregunta con la voz se contesta en voz alta', (tester) async {
@@ -233,8 +235,9 @@ void main() {
 
     p.router.pop();
     await tester.pumpAndSettle();
-    expect(find.text(_preguntaDemo), findsOneWidget);
     expect(find.text('LO 5/2000 · art. 3'), findsOneWidget);
+    await _desplazarHasta(tester, find.text(_preguntaDemo));
+    expect(find.text(_preguntaDemo), findsOneWidget);
   });
 
   testWidgets('una respuesta de crisis enseña la tarjeta de Ayuda encima', (tester) async {

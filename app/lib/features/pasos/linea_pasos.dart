@@ -7,6 +7,7 @@ import '../../core/entrada.dart' show Fase, entradaProvider;
 import '../../core/texto.dart';
 import '../../tema.dart';
 import '../../widgets/estados.dart';
+import '../../widgets/iconos/iconos.dart';
 import 'fuentes_paso.dart';
 import 'modelos.dart';
 import 'pasos_providers.dart';
@@ -821,7 +822,7 @@ class _DetallesPaso extends StatelessWidget {
         ),
       if (citas.isNotEmpty)
         _Seccion(
-          icono: Icons.gavel_rounded,
+          tuIcono: TuIcono.ley,
           titulo: 'De dónde sale',
           child: Wrap(
             spacing: Espacio.s,
@@ -849,9 +850,13 @@ class _DetallesPaso extends StatelessWidget {
 }
 
 class _Seccion extends StatelessWidget {
-  const _Seccion({required this.icono, required this.titulo, required this.child});
+  const _Seccion({this.icono, this.tuIcono, required this.titulo, required this.child})
+    : assert(icono != null || tuIcono != null);
 
-  final IconData icono;
+  final IconData? icono;
+
+  /// Un icono de TuTurno en lugar de [icono] (la ley de «De dónde sale»: nunca un mazo).
+  final TuIcono? tuIcono;
   final String titulo;
   final Widget child;
 
@@ -867,7 +872,15 @@ class _Seccion extends StatelessWidget {
           child: Row(
             children: [
               ExcludeSemantics(
-                child: Icon(icono, size: Espacio.m + Espacio.xs / 2, color: esquema.primary),
+                child: tuIcono != null
+                    ? IconoTuTurno(
+                        tuIcono!,
+                        estilo: EstiloIcono.mono,
+                        size: Espacio.m + Espacio.xs / 2,
+                        color: esquema.primary,
+                        decorativo: true,
+                      )
+                    : Icon(icono, size: Espacio.m + Espacio.xs / 2, color: esquema.primary),
               ),
               const SizedBox(width: Espacio.s),
               Flexible(
@@ -909,7 +922,13 @@ class _Persona extends StatelessWidget {
               width: Espacio.xl,
               height: Espacio.xl,
               decoration: BoxDecoration(shape: BoxShape.circle, color: tinte(context, color)),
-              child: Icon(iconoPersona(nombre), size: Espacio.m + Espacio.xs / 2, color: color),
+              child: IconoTuTurno(
+                iconoPersona(nombre),
+                estilo: EstiloIcono.mono,
+                size: Espacio.m + Espacio.xs / 2,
+                color: color,
+                decorativo: true,
+              ),
             ),
           ),
           const SizedBox(width: Espacio.s + Espacio.xs),
@@ -920,24 +939,25 @@ class _Persona extends StatelessWidget {
   }
 }
 
-/// Palabras (sin tildes) que dicen quién es cada persona, con su icono.
-const _iconosPersona = <(IconData, List<String>)>[
-  (Icons.psychology_rounded, ['psicolog', 'psicosocial']),
-  (Icons.gavel_rounded, ['juez', 'jueza', 'tribunal']),
-  (Icons.balance_rounded, ['fiscal']),
-  (Icons.work_rounded, ['abogad', 'letrad', 'defensor']),
-  (Icons.local_police_rounded, ['polic', 'guardia civil', 'agente']),
-  (Icons.favorite_rounded, ['familia', 'madre', 'padre', 'confianza', 'represent', 'tutor legal', 'abuel', 'herman']),
-  (Icons.diversity_3_rounded, ['trabajador', 'social', 'educador']),
-  (Icons.school_rounded, ['tutor', 'profe', 'colegio', 'instituto', 'coordinador']),
+/// Palabras (sin tildes) que dicen quién es cada persona, con su icono de TuTurno. Justicia de verdad: la jueza o el
+/// juez llevan la toga, la Fiscalía la ley y la policía el escudo; nunca un mazo ni la balanza como icono de persona.
+const _iconosPersona = <(TuIcono, List<String>)>[
+  (TuIcono.idea, ['psicolog', 'psicosocial']),
+  (TuIcono.toga, ['juez', 'jueza', 'tribunal']),
+  (TuIcono.ley, ['fiscal']),
+  (TuIcono.expediente, ['abogad', 'letrad', 'defensor']),
+  (TuIcono.escudo, ['polic', 'guardia civil', 'agente']),
+  (TuIcono.personaConfianza, ['familia', 'madre', 'padre', 'confianza', 'represent', 'tutor legal', 'abuel', 'herman']),
+  (TuIcono.ayuda, ['trabajador', 'social', 'educador']),
+  (TuIcono.aprende, ['tutor', 'profe', 'colegio', 'instituto', 'coordinador']),
 ];
 
 /// Icono de quien está en un paso, según quién es. Manda la palabra que sale antes, que suele ser de quién se habla:
 /// en «Quien te represente y una persona de confianza, salvo que el juez…», es «represente» y no «juez». Si dos
 /// empiezan en el mismo sitio («tutor legal» y «tutor»), gana la que va antes en [_iconosPersona].
-IconData iconoPersona(String persona) {
+TuIcono iconoPersona(String persona) {
   final clave = normalizar(persona);
-  var icono = Icons.person_rounded;
+  var icono = TuIcono.miSituacion;
   int? primera;
   for (final (candidato, palabras) in _iconosPersona) {
     for (final palabra in palabras) {

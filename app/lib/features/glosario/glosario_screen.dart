@@ -381,7 +381,7 @@ class _CartaTermino extends StatelessWidget {
     final tema = Theme.of(context);
     final esquema = tema.colorScheme;
     final colores = context.colores;
-    final estiloNumero = tema.textTheme.headlineSmall?.copyWith(color: ColoresMarca.azulNoche, height: 1);
+    final estiloNumero = estiloCifras(tema.textTheme.headlineSmall)?.copyWith(color: ColoresMarca.azulNoche, height: 1);
     final numero = '${this.numero}'.padLeft(cifras, '0');
     final anchoTalon = _anchoTalon(MediaQuery.textScalerOf(context), estiloNumero, numero);
     final forma = TicketBorder(

@@ -99,11 +99,13 @@ class HudPixel extends StatelessWidget {
                       ),
                 titulo: Semantics(
                   header: true,
-                  child: Text(
-                    titulo,
+                  child: Text.rich(
+                    textoConCifras(
+                      titulo,
+                      estiloTextoPixel(context, TipoTextoPixel.titulo, color: ColoresUiPixel.amarillo),
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: estiloTextoPixel(context, TipoTextoPixel.titulo, color: ColoresUiPixel.amarillo),
                   ),
                 ),
                 acciones: acciones.isEmpty

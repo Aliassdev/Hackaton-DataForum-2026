@@ -64,8 +64,13 @@ abstract final class FuentesPixel {
   /// Pixelify Sans (OFL): la letra de todo el juego.
   static const pixel = 'PixelifySans';
 
-  /// «Lectura fácil»: la letra del resto de la app (Atkinson Hyperlegible).
-  static const lecturaFacil = Fuentes.texto;
+  /// «Lectura fácil»: Atkinson Hyperlegible, la misma que usa la app con lectura fácil.
+  static const lecturaFacil = Fuentes.lecturaFacil;
+
+  /// Las cifras dentro de los textos en letra pixel: en Pixelify, el 5 es igual que la S, el 8 que la B y el 0 que la
+  /// O («15 años» se leería «1S años» y «Ley 4/2015», «Ley 4/201S»). Atkinson Hyperlegible las distingue (el cero lleva
+  /// barra). Lo hace [textoConCifras].
+  static const cifras = Fuentes.lecturaFacil;
 }
 
 /// Ajustes del mundo pixel para todo lo que cuelga de él: la letra (pixel o de lectura fácil), el tamaño de la unidad
@@ -235,6 +240,54 @@ TextStyle estiloTextoPixel(BuildContext context, TipoTextoPixel tipo, {Color? co
     leadingDistribution: TextLeadingDistribution.even,
     decoration: TextDecoration.none,
     color: color,
+  );
+}
+
+final _cifras = RegExp(r'[0-9]+');
+
+/// [texto] con [estilo] y, si [estilo] es de la letra pixel, las cifras en [FuentesPixel.cifras] (del mismo tamaño,
+/// color y peso): así se leen bien los años, los artículos de las leyes y los teléfonos. Con lectura fácil todo el
+/// texto ya está en Atkinson y no cambia nada. Para un texto suelto, [TextoPixel].
+TextSpan textoConCifras(String texto, TextStyle estilo) {
+  if (estilo.fontFamily != FuentesPixel.pixel || !_cifras.hasMatch(texto)) return TextSpan(text: texto, style: estilo);
+  const cifras = TextStyle(fontFamily: FuentesPixel.cifras);
+  final trozos = <TextSpan>[];
+  var desde = 0;
+  for (final cifra in _cifras.allMatches(texto)) {
+    if (cifra.start > desde) trozos.add(TextSpan(text: texto.substring(desde, cifra.start)));
+    trozos.add(TextSpan(text: cifra[0], style: cifras));
+    desde = cifra.end;
+  }
+  if (desde < texto.length) trozos.add(TextSpan(text: texto.substring(desde)));
+  return TextSpan(style: estilo, children: trozos);
+}
+
+/// Un texto del kit: la letra pixel (o la de lectura fácil) de [tipo], con las cifras que se leen bien
+/// ([textoConCifras]).
+class TextoPixel extends StatelessWidget {
+  const TextoPixel(
+    this.texto, {
+    super.key,
+    this.tipo = TipoTextoPixel.cuerpo,
+    this.color,
+    this.textAlign,
+    this.maxLines,
+    this.overflow,
+  });
+
+  final String texto;
+  final TipoTextoPixel tipo;
+  final Color? color;
+  final TextAlign? textAlign;
+  final int? maxLines;
+  final TextOverflow? overflow;
+
+  @override
+  Widget build(BuildContext context) => Text.rich(
+    textoConCifras(texto, estiloTextoPixel(context, tipo, color: color)),
+    textAlign: textAlign,
+    maxLines: maxLines,
+    overflow: overflow,
   );
 }
 

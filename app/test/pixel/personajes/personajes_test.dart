@@ -28,6 +28,8 @@ const _tamanos = <String, (int, int)>{
   'sergio': (24, 32),
   'sara': (24, 34),
   'amiga-sara': (24, 34),
+  'madre-sara': (24, 36),
+  'abogada-despacho': (24, 36),
   'elena': (24, 36),
   'ana': (24, 36),
   'padre-sergio': (24, 36),
@@ -56,8 +58,8 @@ int _primeraFila(List<String> filas) => filas.indexWhere((fila) => fila.contains
 void main() {
   group('Registro', () {
     test('hay un id por personaje, sin repetir y en el orden de todos', () {
-      expect(PersonajesPixel.ids, hasLength(21));
-      expect(PersonajesPixel.ids.toSet(), hasLength(21));
+      expect(PersonajesPixel.ids, hasLength(23));
+      expect(PersonajesPixel.ids.toSet(), hasLength(23));
       expect([for (final ficha in PersonajesPixel.todos) ficha.id], PersonajesPixel.ids);
       for (final id in PersonajesPixel.ids) {
         expect(id, matches(RegExp(r'^[a-z]+(-[a-z]+)*$')), reason: 'los ids van en minúsculas, sin tildes');
@@ -89,10 +91,12 @@ void main() {
         'laura': PersonajesPixel.laura,
         'sara': PersonajesPixel.sara,
         'amiga-sara': PersonajesPixel.amigaSara,
+        'madre-sara': PersonajesPixel.madreSara,
         'jueza': PersonajesPixel.jueza,
         'fiscal': PersonajesPixel.fiscal,
         'fiscal-despacho': PersonajesPixel.fiscalDespacho,
         'abogada-victima': PersonajesPixel.abogadaVictima,
+        'abogada-despacho': PersonajesPixel.abogadaDespacho,
         'abogado-defensa': PersonajesPixel.abogadoDefensa,
         'letrada': PersonajesPixel.letrada,
         'policia': PersonajesPixel.policia,
@@ -218,6 +222,32 @@ void main() {
         expect(traje[y], isNot(contains('z')), reason: 'fila $y');
       }
       expect(traje[23], isNot(contains('W')));
+    });
+
+    test('la jueza, sin placa ni medalla en la toga (son distintivos oficiales)', () {
+      final quieto = PersonajesPixel.jueza.fotogramas.first;
+      for (var y = 15; y < 26; y++) {
+        expect(quieto[y], isNot(contains(RegExp('[Yyo]'))), reason: 'fila $y');
+      }
+      expect(PersonajesPixel.ficha('jueza')!.descripcion, isNot(contains('medalla')));
+    });
+
+    test('la abogada fuera de la sala es la misma, sin toga (Reglamento 2/2005 del CGPJ, art. 33)', () {
+      final toga = PersonajesPixel.abogadaVictima.fotogramas.first;
+      final traje = PersonajesPixel.abogadaDespacho.fotogramas.first;
+      expect(traje.sublist(0, 15), toga.sublist(0, 15), reason: 'la misma cabeza');
+      for (var y = 15; y < 33; y++) {
+        expect(traje[y], isNot(contains('z')), reason: 'fila $y: nada negro de toga');
+      }
+    });
+
+    test('la madre de Sara no es la de Sergio: otra piel y otra ropa, con la misma cara tranquila', () {
+      final sergio = PersonajesPixel.madreSergio.fotogramas.first;
+      final sara = PersonajesPixel.madreSara.fotogramas.first;
+      expect(sara.join(), isNot(contains('5')), reason: 'la piel de Sara (6)');
+      expect(sara.sublist(15).join(), isNot(contains('r')), reason: 'jersey verde, no coral');
+      expect(sara.join(), contains('RR'), reason: 'la boca no cambia de color');
+      expect(sara, isNot(sergio));
     });
 
     test('pieles oscuras con colorete teja; las claras, con rosa', () {
@@ -373,6 +403,7 @@ void main() {
         'La fiscal': 'fiscal',
         'La abogada de la víctima': 'abogada-victima',
         'Su abogada': 'abogada-victima',
+        'La madre de Sara': 'madre-sara',
         'El abogado de la persona investigada': 'abogado-defensa',
         'El abogado defensor': 'abogado-defensa',
         'La letrada de la Administración de Justicia': 'letrada',
@@ -407,6 +438,13 @@ void main() {
       for (final lugar in ['sala_vistas', 'juzgado', null]) {
         expect(PersonajesPixel.buscar('El fiscal', lugar: lugar), 'fiscal', reason: '$lugar');
       }
+    });
+
+    test('en la Fiscalía, la abogada también va sin toga', () {
+      expect(PersonajesPixel.buscar('Su abogada', lugar: 'fiscalia'), 'abogada-despacho');
+      expect(PersonajesPixel.buscar('La abogada de la víctima', lugar: 'Fiscalía de Menores'), 'abogada-despacho');
+      expect(PersonajesPixel.buscar('Su abogada', lugar: 'sala_vistas'), 'abogada-victima');
+      expect(PersonajesPixel.buscar('La letrada', lugar: 'fiscalia'), 'letrada');
     });
 
     test('buscarTodos: dos personas para un plural', () {

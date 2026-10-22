@@ -18,10 +18,14 @@ import 'roles.dart';
 // Pregunta: tranquila y clara, sin puntos ni celebraciones. Nunca se pregunta qué pasó.
 
 class SituacionScreen extends StatelessWidget {
-  const SituacionScreen({super.key, required this.rol});
+  const SituacionScreen({super.key, required this.rol, this.rolId});
 
   /// Nulo si la dirección no es un papel válido: entonces se ofrece elegirlo.
   final RolProceso? rol;
+
+  /// El papel tal y como viene en la dirección (/situacion/:rol), también si no es un [RolProceso]; por ejemplo,
+  /// 'escuchado_familia'.
+  final String? rolId;
 
   @override
   Widget build(BuildContext context) {

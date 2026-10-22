@@ -9,6 +9,7 @@ import 'package:tuturno/features/inicio/inicio_screen.dart';
 import 'package:tuturno/features/juego/juego_screen.dart';
 import 'package:tuturno/features/pregunta/pregunta_screen.dart';
 import 'package:tuturno/features/situacion/situacion_screen.dart';
+import 'package:tuturno/pixel/ui/transicion_pixel.dart' show PaginaPixel;
 import 'package:tuturno/tema.dart';
 import 'package:tuturno/widgets/movimiento/movimiento.dart';
 
@@ -176,7 +177,6 @@ void main() {
   group('Rutas de la app', () {
     const rutas = <String, (Type, TransicionTuTurno)>{
       '/juego': (JuegoScreen, TransicionTuTurno.rasgar),
-      '/juego/caso-testigo': (CasoScreen, TransicionTuTurno.rasgar),
       '/aprende': (AprendeScreen, TransicionTuTurno.rasgar),
       '/aprende/leccion/U1-L1': (LeccionScreen, TransicionTuTurno.deslizar),
       '/pregunta': (PreguntaScreen, TransicionTuTurno.deslizar),
@@ -194,6 +194,21 @@ void main() {
         await esperarTransicion(tester);
         expect(find.byType(pantalla), findsOneWidget, reason: ruta);
         expect(_transicionDe(tester, find.byType(pantalla)), transicion, reason: ruta);
+        router.pop();
+        await esperarTransicion(tester);
+        expect(find.byType(InicioScreen), findsOneWidget, reason: 'vuelta de $ruta');
+      }
+    });
+
+    testWidgets('dentro de Vive el caso, un caso y el juzgado entran a bloques (la transición del kit pixel)', (
+      tester,
+    ) async {
+      final router = await arrancarApp(tester);
+      for (final (ruta, pantalla) in [('/juego/caso-testigo', CasoScreen), ('/juego/juzgado', JuzgadoScreen)]) {
+        router.push(ruta);
+        await esperarTransicion(tester);
+        expect(find.byType(pantalla), findsOneWidget, reason: ruta);
+        expect(ModalRoute.of(tester.element(find.byType(pantalla)))!.settings, isA<PaginaPixel<void>>(), reason: ruta);
         router.pop();
         await esperarTransicion(tester);
         expect(find.byType(InicioScreen), findsOneWidget, reason: 'vuelta de $ruta');

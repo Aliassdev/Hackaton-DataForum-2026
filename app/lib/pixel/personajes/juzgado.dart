@@ -2,8 +2,9 @@ part of 'personajes.dart';
 
 // El juzgado: la jueza, el fiscal, las abogadas, la letrada, la policía, la persona investigada y el testigo.
 
-/// La jueza: media melena canosa con raya a un lado, toga negra con puñetas blancas y la medalla dorada colgada de un
-/// cordón.
+/// La jueza: media melena canosa con raya a un lado, toga negra con puñetas blancas (los vuelillos de los magistrados,
+/// Reglamento 2/2005 del CGPJ, art. 34.2) y la camisa blanca en el cuello. Sin placa ni medalla: son distintivos
+/// oficiales y no se dibujan (tema-justicia, §2).
 const _juezaFilas = <String>[
   '........................',
   '........NNNNNNNN........',
@@ -21,12 +22,12 @@ const _juezaFilas = <String>[
   '....NbGN33333344NbGN....',
   '.....NN.NN4444NN.NN.....',
   '......NNzWW44WWzNN......',
-  '.....NKzzYWWWWYzzzN.....',
-  '....NKzzzzYzzYzzzzzN....',
-  '....NKNzzzzYYzzzzNzN....',
-  '....NKNzzzyYYozzzNzN....',
-  '....NKNzzzYYoozzzNzN....',
-  '...NKzNzzzzoozzzzNzzN...',
+  '.....NKzzzWWWWzzzzN.....',
+  '....NKzzzzzWWzzzzzzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '....NKNzzzzzzzzzzNzN....',
+  '...NKzNzzzzzzzzzzNzzN...',
   '...NKzNzzzzzzzzzzNzzN...',
   '...NWWNzzzzzzzzzzNWWN...',
   '....N3NzzzzzzzzzzN4N....',
@@ -46,7 +47,7 @@ const _juezaFilas = <String>[
 final _fichaJueza = PersonajePixel(
   id: 'jueza',
   nombre: 'La jueza',
-  descripcion: 'La jueza, con toga negra, puñetas blancas y medalla',
+  descripcion: 'La jueza, con toga negra y puñetas blancas',
   sprite: _personaje('jueza', filas: _juezaFilas, ojos: 9, pecho: 22, piel: '3', ms: 980),
 );
 
@@ -192,6 +193,29 @@ final _fichaAbogadaVictima = PersonajePixel(
   nombre: 'La abogada de la víctima',
   descripcion: 'La abogada de la víctima, con toga y una carpeta amarilla',
   sprite: _personaje('abogada-victima', filas: _abogadaVictimaFilas, ojos: 9, pecho: 18, piel: '5', ms: 900),
+);
+
+/// La misma abogada fuera de la sala (en la Fiscalía, por ejemplo), sin toga: la toga solo se lleva en estrados
+/// (Reglamento 2/2005 del CGPJ, art. 33). Chaqueta azul sobre una blusa blanca, pantalón marino y la carpeta amarilla en
+/// la mano. El cuerpo es el del traje del fiscal en su despacho.
+final _abogadaDespachoFilas = <String>[
+  ..._abogadaVictimaFilas.sublist(0, 15),
+  for (final (i, fila) in _fiscalDespachoFilas.sublist(15).indexed)
+    _cambiarClaves(
+      fila,
+      i < 11
+          // Chaqueta azul con sus brillos; la corbata del fiscal pasa a ser la blusa, y las manos, de su piel.
+          ? const {'K': 'A', 'G': 'a', 'A': 'W', 'D': 'W', '2': '5', '3': '6'}
+          // Pantalón marino y la carpeta amarilla.
+          : const {'K': 'D', 'G': 'A', 'h': 'y', 'c': 'Y', 'a': 'o', 'W': 'y'},
+    ),
+];
+
+final _fichaAbogadaDespacho = PersonajePixel(
+  id: 'abogada-despacho',
+  nombre: 'La abogada',
+  descripcion: 'La abogada de la víctima fuera de la sala, sin toga: chaqueta azul y una carpeta amarilla',
+  sprite: _personaje('abogada-despacho', filas: _abogadaDespachoFilas, ojos: 9, pecho: 22, piel: '5', ms: 900),
 );
 
 /// El abogado defensor: pelo y barba corta canosos, toga sin puñetas, corbata coral y un maletín de piel en la mano.

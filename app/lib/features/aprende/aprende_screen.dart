@@ -75,7 +75,10 @@ class _MapaState extends ConsumerState<_Mapa> {
       final siguiente = widget.curso.siguiente(completadas);
       final posicion = siguiente == null ? -1 : widget.curso.lecciones.indexWhere((l) => l.id == siguiente.id);
       final contexto = _claveActual.currentContext;
-      if (posicion >= 2 && contexto != null) {
+      // Solo si el mapa está maquetado: con una lección abierta encima (al entrar por un enlace a la lección, o con
+      // go), Aprende está debajo, sin maquetar, y no hay adónde desplazarse.
+      final caja = contexto?.findRenderObject();
+      if (posicion >= 2 && contexto != null && caja is RenderBox && caja.hasSize) {
         Scrollable.ensureVisible(
           contexto,
           alignment: 0.45,

@@ -212,6 +212,19 @@ void main() {
       expect(puntos, hasLength(PuestoVista.values.length));
     });
 
+    test('en la sala de vistas no hay tarima: la mesa de la jueza, a la misma altura que las demás', () {
+      // LOPJ, art. 187.2, como guía de dibujo: en estrados, todos se sientan a la misma altura.
+      final sala = EscenariosPixel.salaVistas;
+      final estrado = sala.delante.firstWhere((p) => p.sprite.nombre.contains('estrado')).sprite.fotogramas.first;
+      int tablero(int x) => estrado.indexWhere((fila) => fila[x] == 'm');
+      expect(tablero(44), tablero(10), reason: 'la mesa de la jueza y la de la izquierda');
+      expect(tablero(44), tablero(75), reason: 'la mesa de la jueza y la de la letrada');
+      // Ni el escalón de la tarima a los lados del estrado.
+      final fondo = sala.fondo.fotogramas.first;
+      expect(fondo[57].substring(26, 36), isNot('N' * 10));
+      expect(fondo[57].substring(124, 134), isNot('N' * 10));
+    });
+
     test('quien se sienta detrás de un mueble tiene los pies tapados y la cara a la vista', () {
       final detras = <(EscenarioPixel, List<String>)>[
         (

@@ -8,6 +8,7 @@
 /// - [TicketPixel] y [CartaPixel]: el ticket de turno y las cartas de derecho.
 /// - [MarcoPixel] y [HudPixel]: el marco de la pantalla de juego y su barra de arriba.
 /// - [RotuloPixel]: números y códigos («2/5», «N.º 3», «A-07») con letra pixel propia, sin cifras que se confundan.
+/// - [SelloPixel]: el sello «COMPLETADO» que cae al terminar un caso.
 /// - [transicionPixel], [PaginaPixel] y [paginaPixel]: la transición a bloques para entrar en el juego.
 /// - [GaleriaPixelUi]: todo junto, para revisarlo.
 ///
@@ -30,5 +31,6 @@ export 'marco_pixel.dart';
 export 'menu_opciones_pixel.dart';
 export 'pintura_pixel.dart' show AjustePixel, CajaPixel, EstiloCajaPixel, PintorCajaPixel, RenderAjustePixel;
 export 'rotulo_pixel.dart';
+export 'sello_pixel.dart';
 export 'ticket_pixel.dart';
 export 'transicion_pixel.dart';

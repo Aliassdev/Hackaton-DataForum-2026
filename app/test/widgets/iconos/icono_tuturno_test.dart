@@ -65,6 +65,33 @@ void main() {
       expect(TuIcono.values.map((icono) => icono.name), containsAll(nombres));
     });
 
+    testWidgets('incluye los 12 iconos de la capa justicia, con su etiqueta, y la galería los enseña', (tester) async {
+      const justicia = {
+        TuIcono.balanza: 'Balanza de la justicia',
+        TuIcono.toga: 'Toga',
+        TuIcono.estrado: 'Estrado',
+        TuIcono.campanilla: 'Campanilla',
+        TuIcono.selloConseguido: 'Sello conseguido',
+        TuIcono.expediente: 'Expediente',
+        TuIcono.citacion: 'Citación',
+        TuIcono.puertaSala: 'Puerta de la sala',
+        TuIcono.turnoPalabra: 'Tu turno de palabra',
+        TuIcono.ley: 'Ley',
+        TuIcono.manoAlzada: 'Pedir la palabra',
+        TuIcono.panelTurnos: 'Panel de turnos',
+      };
+      expect({for (final icono in justicia.keys) icono: icono.etiqueta}, justicia);
+      await montar(tester, const GaleriaIconos(), desplazable: true);
+      for (final icono in justicia.keys) {
+        expect(
+          find.byWidgetPredicate((widget) => widget is IconoTuTurno && widget.icono == icono),
+          findsWidgets,
+          reason: icono.name,
+        );
+        expect(find.text(icono.etiqueta), findsOneWidget, reason: icono.name);
+      }
+    });
+
     testWidgets('se lee con su etiqueta, con otra si se pasa y nada si es decorativo', (tester) async {
       final semantica = tester.ensureSemantics();
       await montar(

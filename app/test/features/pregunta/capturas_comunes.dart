@@ -4,34 +4,16 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tuturno/tema.dart';
+
+import '../../fuentes_reales.dart' as fuentes;
 
 /// Carpeta de las capturas (`CAPTURAS=build/capturas`), o null si no se piden.
 final destinoCapturas = Platform.environment['CAPTURAS'];
 
-/// Las fuentes de la app (y los iconos de Material), para que las capturas se vean como en el móvil.
-Future<void> cargarFuentesReales() async {
-  Future<void> cargar(String familia, List<String> rutas) async {
-    final cargador = FontLoader(familia);
-    for (final ruta in rutas) {
-      cargador.addFont(Future.value(ByteData.sublistView(File(ruta).readAsBytesSync())));
-    }
-    await cargador.load();
-  }
-
-  await cargar(Fuentes.texto, [
-    'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
-    'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
-  ]);
-  await cargar(Fuentes.titulos, ['assets/fonts/MaryKate-Medium-ES.ttf']);
-  final flutter =
-      Platform.environment['FLUTTER_ROOT'] ??
-      File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;
-  final iconos = '$flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf';
-  if (File(iconos).existsSync()) await cargar('MaterialIcons', [iconos]);
-}
+/// Las fuentes de la app (Nunito, MaryKate, Atkinson Hyperlegible, Pixelify Sans y los iconos de Material), para que
+/// las capturas se vean como en el móvil.
+Future<void> cargarFuentesReales() => fuentes.cargarFuentesReales();
 
 /// Guarda lo que hay en pantalla (hojas modales incluidas) en `$CAPTURAS/<nombre>.png`.
 Future<void> capturar(WidgetTester tester, String nombre) async {

@@ -33,6 +33,28 @@ void main() {
     expect(vibraciones, ['HapticFeedbackType.lightImpact']);
   });
 
+  testWidgets('con iconoFinal, el icono va detrás del texto (la flecha de «Siguiente caso»)', (tester) async {
+    await montar(
+      tester,
+      BotonPixel(etiqueta: 'Siguiente caso', iconoFinal: const IconoPixel(GlifoPixel.siguiente), onPressed: () {}),
+    );
+    expect(
+      tester.getTopLeft(find.byType(IconoPixel)).dx,
+      greaterThan(tester.getTopRight(find.text('Siguiente caso')).dx),
+    );
+    expect(tester.getSize(find.byType(BotonPixel)).height, lessThan(70), reason: 'el icono no lo hace más alto');
+  });
+
+  testWidgets('las cifras del texto se leen bien: van en Atkinson, no en la letra pixel', (tester) async {
+    await montar(tester, BotonPixel(etiqueta: 'Llamar al 900 293 183', onPressed: () {}));
+    final cifras = <String>[];
+    tester.renderObject<RenderParagraph>(find.text('Llamar al 900 293 183')).text.visitChildren((trozo) {
+      if (trozo is TextSpan && trozo.style?.fontFamily == FuentesPixel.cifras) cifras.add(trozo.text!);
+      return true;
+    });
+    expect(cifras, ['900', '293', '183']);
+  });
+
   testWidgets('pulsado, baja una unidad pixel (hasta su sombra) y al soltar vuelve', (tester) async {
     await montar(tester, BotonPixel(etiqueta: 'Empezar', icono: const IconoPixel(GlifoPixel.flecha), onPressed: () {}));
     final reposo = tester.getTopLeft(find.text('Empezar'));

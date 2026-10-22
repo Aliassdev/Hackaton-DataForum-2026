@@ -354,11 +354,8 @@ class TicketTuTurno extends StatelessWidget {
     final apaisado = ladoTalon == LadoTalon.derecha;
     final escala = MediaQuery.textScalerOf(context);
 
-    final estiloNumero = textos.displaySmall?.copyWith(
-      color: tintaTalon,
-      height: 1,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
+    // El número del turno, en la letra de las cifras (estiloCifras): en la de los títulos, el 0 parece una O.
+    final estiloNumero = estiloCifras(textos.displaySmall)?.copyWith(color: tintaTalon, height: 1);
     final estiloEtiquetaNumero = textos.labelLarge?.copyWith(
       color: tintaTalon,
       fontWeight: FontWeight.w700,

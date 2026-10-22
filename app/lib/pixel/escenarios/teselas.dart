@@ -872,8 +872,8 @@ List<String> cojinSofa(String color) {
 const vaso = ['NNNN', 'NhcN', 'NccN', 'NccN', '.NN.'];
 
 /// La cámara que graba (12 × 9), en su soporte de pared y mirando hacia abajo a la izquierda: cuerpo gris oscuro con
-/// la luz arriba, el objetivo azul cielo con su brillo y la lucecita roja de que graba. La misma en la Sala Gesell y en
-/// la sala del Juzgado de Menores (lib/pixel/juzgado).
+/// la luz arriba, el objetivo azul cielo con su brillo y la lucecita roja de que graba. Es la de la Sala Gesell, que
+/// graba la entrevista; en la sala del Juzgado de Menores (lib/pixel/juzgado) no hay cámaras.
 const camaraPared = [
   '.........NNN',
   '.........NgN',

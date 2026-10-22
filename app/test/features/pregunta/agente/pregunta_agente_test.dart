@@ -11,7 +11,7 @@ import 'package:tuturno/core/agente/agente_provider.dart';
 import 'package:tuturno/core/agente/elevenlabs_agente_voz.dart' show ErrorAgente, TextosAgente;
 import 'package:tuturno/core/agente/respuesta_agente.dart';
 import 'package:tuturno/core/api/mock_api.dart';
-import 'package:tuturno/core/api/models.dart';
+import 'package:tuturno/core/api/tuturno_api.dart';
 import 'package:tuturno/core/voz/stt.dart' show ProblemaVoz;
 import 'package:tuturno/features/pregunta/agente/chat_agente.dart';
 import 'package:tuturno/features/pregunta/agente/textos_agente.dart';
@@ -36,6 +36,19 @@ const _perfilTestigo = <String, Object?>{'edad': 13, 'procedimiento': 'penal', '
 
 String _nb(String telefono) => telefono.replaceAll(' ', ' ');
 
+/// Respuestas de ejemplo que siempre son normales, digan lo que digan: para probar la red de seguridad de la app.
+class _EjemplosSiempreNormales implements TuTurnoApi {
+  @override
+  Future<AskResponse> ask(AskRequest request) async =>
+      const AskResponse(tipo: TipoRespuesta.normal, respuesta: 'Una respuesta de ejemplo cualquiera.');
+
+  @override
+  Future<GradeResponse> grade(GradeRequest request) => throw UnimplementedError();
+
+  @override
+  Future<HealthResponse> health() => throw UnimplementedError();
+}
+
 class _Pantalla {
   _Pantalla(this.agente, this.stt, this.router, this.prefs);
 
@@ -50,6 +63,7 @@ Future<_Pantalla> _abrir(
   Map<String, Object?>? perfil = _perfilTestigo,
   RolProceso? situacion,
   FakeAgenteVoz? agente,
+  TuTurnoApi? ejemplos,
   bool asentar = true,
 }) async {
   tester.view.physicalSize = const Size(412, 915) * tester.view.devicePixelRatio;
@@ -88,7 +102,7 @@ Future<_Pantalla> _abrir(
         ...overrides,
         modoAgenteProvider.overrideWithValue(true),
         agenteVozProvider.overrideWithValue(voz),
-        respuestasEjemploProvider.overrideWithValue(MockTuTurnoApi(latencia: Duration.zero)),
+        respuestasEjemploProvider.overrideWithValue(ejemplos ?? MockTuTurnoApi(latencia: Duration.zero)),
       ],
       child: MaterialApp.router(
         theme: temaTuTurno(Brightness.light),
@@ -400,6 +414,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(p.agente.sesiones, hasLength(2));
       expect(find.text(tituloEscucho), findsOneWidget);
+    });
+
+    testWidgets('con las respuestas de ejemplo, si la pregunta suena a peligro, la tarjeta de ayuda sale siempre', (
+      tester,
+    ) async {
+      await _abrir(tester, ejemplos: _EjemplosSiempreNormales());
+      await _escribirYEnviar(tester, '¿Qué es la Sala Gesell?');
+      await tester.pump(const Duration(seconds: 31));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('ver-ejemplo')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('tarjeta-crisis')), findsNothing);
+
+      await _escribirYEnviar(tester, 'Estoy en peligro, mi padre está borracho');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('tarjeta-crisis')), findsOneWidget);
+      expect(_estado(tester).mensajes.last.respuesta?.tipo, TipoRespuesta.crisis);
     });
 
     testWidgets('si la respuesta llega tarde, ocupa el sitio del aviso', (tester) async {

@@ -9,8 +9,8 @@ import 'motor.dart';
 /// Puntos por cada carta que entra por primera vez en la colección.
 const xpPorCarta = 10;
 
-/// Casos oficiales del reto, en este orden (el de Lucía, primero). Los demás van detrás, por título.
-const ordenCasos = ['caso-sala-gesell', 'caso-acoso-escolar'];
+/// Casos oficiales del reto, en este orden: Lucía, Sergio y Sara. Los demás van detrás, por título.
+const ordenCasos = ['caso-sala-gesell', 'caso-acoso-escolar', 'caso-difusion-imagenes'];
 
 /// Los casos de `juego/` (o los de ejemplo, mientras content/ esté vacío). Solo los validados, salvo los borradores
 /// en modo DEMO.
@@ -45,6 +45,17 @@ List<({Carta carta, Caso caso})> coleccionDe(List<Caso> casos) {
       for (final carta in caso.cartas)
         if (vistas.add(carta.id)) (carta: carta, caso: caso),
   ];
+}
+
+/// El caso que va después de [casoId] en [casos] (en el orden de la lista: Lucía, Sergio y Sara). Después del último,
+/// el primero que aún no está en [terminados]. null si no queda ninguno.
+Caso? siguienteCaso(List<Caso> casos, String casoId, {Set<String> terminados = const {}}) {
+  final i = casos.indexWhere((c) => c.id == casoId);
+  if (i >= 0 && i + 1 < casos.length) return casos[i + 1];
+  for (final caso in casos) {
+    if (caso.id != casoId && !terminados.contains(caso.id)) return caso;
+  }
+  return null;
 }
 
 /// Posición de una carta en la colección: así cada carta tiene siempre el mismo color, aquí y en el juego.
@@ -120,5 +131,17 @@ class PartidaNotifier extends AsyncNotifier<Partida> {
   void reiniciar() {
     final actual = _actual;
     if (actual != null) state = AsyncData(Partida.nueva(actual.caso));
+  }
+
+  /// Empieza el caso en la escena [escenaId] (el atajo de la demo, `escenaInicialProvider`), aunque ya hubiera una
+  /// partida a medias. Espera a que el caso esté cargado. Si el caso no existe, no hace nada.
+  Future<void> empezarEn(String escenaId) async {
+    final Partida actual;
+    try {
+      actual = _actual ?? await future;
+    } catch (_) {
+      return;
+    }
+    state = AsyncData(Partida.enEscena(actual.caso, escenaId));
   }
 }

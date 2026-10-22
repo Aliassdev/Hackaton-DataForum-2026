@@ -23,8 +23,10 @@
 /// en su silla de ruedas de 28 × 32 y Tut de 24 × 22. El ancla es la de siempre (los pies: el centro del borde de
 /// abajo), y la última fila es la sombra en el suelo.
 ///
-/// Dos ids son el mismo personaje en otra situación: 'fiscal-despacho' es el fiscal sin toga, en su despacho (la toga
-/// es para la audiencia, LOPJ, art. 187.1), y 'tut-feliz' es Tut sonriendo (la expresión «feliz» de MascotaTut).
+/// Tres ids son el mismo personaje en otra situación: 'fiscal-despacho' y 'abogada-despacho' son el fiscal y la abogada
+/// sin toga, fuera de la sala (la toga es para la audiencia, en estrados: LOPJ, art. 187.1, y Reglamento 2/2005 del
+/// CGPJ, art. 33), y 'tut-feliz' es Tut sonriendo (la expresión «feliz» de MascotaTut). 'madre-sara' es la madre de
+/// Sergio con otros colores: cada caso tiene su familia.
 library;
 
 import 'package:flutter/foundation.dart';
@@ -49,7 +51,7 @@ class PersonajePixel {
   /// Cómo se le llama en el juego («Lucía», «La jueza»), por ejemplo en la placa de un diálogo.
   final String nombre;
 
-  /// Quién es y cómo se le reconoce, para la etiqueta de Semantics («La jueza, con toga negra y medalla»).
+  /// Quién es y cómo se le reconoce, para la etiqueta de Semantics («La jueza, con toga negra y puñetas blancas»).
   final String descripcion;
 
   final Sprite sprite;
@@ -73,10 +75,12 @@ abstract final class PersonajesPixel {
     'laura',
     'sara',
     'amiga-sara',
+    'madre-sara',
     'jueza',
     'fiscal',
     'fiscal-despacho',
     'abogada-victima',
+    'abogada-despacho',
     'abogado-defensa',
     'letrada',
     'policia',
@@ -98,10 +102,12 @@ abstract final class PersonajesPixel {
     _fichaLaura,
     _fichaSara,
     _fichaAmigaSara,
+    _fichaMadreSara,
     _fichaJueza,
     _fichaFiscal,
     _fichaFiscalDespacho,
     _fichaAbogadaVictima,
+    _fichaAbogadaDespacho,
     _fichaAbogadoDefensa,
     _fichaLetrada,
     _fichaPolicia,
@@ -179,12 +185,14 @@ abstract final class PersonajesPixel {
     if (palabras.contains('tut')) return 'tut';
     if (hay('amig')) return 'amiga-sara';
     if (hay('tutor') || hay('maestr') || hay('profe')) return 'tutora';
-    if (hay('madre') || palabras.contains('mama')) return 'madre-sergio';
+    if (hay('madre') || palabras.contains('mama')) return palabras.contains('sara') ? 'madre-sara' : 'madre-sergio';
     if (hay('padre') || palabras.contains('papa')) return 'padre-sergio';
     if (hay('abogad') || hay('letrad')) {
       if (hay('defens') || hay('investigad') || hay('acusad')) return 'abogado-defensa';
-      // «La letrada» a secas es la de la Administración de Justicia; «el letrado de la víctima», un abogado.
-      return hay('abogad') || hay('victim') ? 'abogada-victima' : 'letrada';
+      // «La letrada» a secas es la de la Administración de Justicia; «el letrado de la víctima», un abogado. Fuera de la
+      // sala (en la Fiscalía), la abogada va sin toga.
+      if (!hay('abogad') && !hay('victim')) return 'letrada';
+      return lugar != null && _esDespacho(lugar) ? 'abogada-despacho' : 'abogada-victima';
     }
     if (hay('juez') || hay('juec')) return 'jueza';
     if (hay('fiscal')) return lugar != null && _esDespacho(lugar) ? 'fiscal-despacho' : 'fiscal';
@@ -261,6 +269,9 @@ abstract final class PersonajesPixel {
   /// La amiga de Sara.
   static Sprite get amigaSara => _fichaAmigaSara.sprite;
 
+  /// La madre de Sara.
+  static Sprite get madreSara => _fichaMadreSara.sprite;
+
   static Sprite get jueza => _fichaJueza.sprite;
 
   /// El fiscal con toga (en la sala de vistas, en la audiencia).
@@ -269,6 +280,9 @@ abstract final class PersonajesPixel {
   /// El mismo fiscal en su despacho de la Fiscalía, con traje y sin toga.
   static Sprite get fiscalDespacho => _fichaFiscalDespacho.sprite;
   static Sprite get abogadaVictima => _fichaAbogadaVictima.sprite;
+
+  /// La abogada de la víctima fuera de la sala, sin toga.
+  static Sprite get abogadaDespacho => _fichaAbogadaDespacho.sprite;
   static Sprite get abogadoDefensa => _fichaAbogadoDefensa.sprite;
 
   /// La letrada de la Administración de Justicia.
@@ -324,6 +338,11 @@ List<String> _respirar(List<String> filas, int pecho, {int desde = 0, int? hasta
           : filas[y].replaceRange(desde, fin, y == 0 ? '.' * (fin - desde) : filas[y - 1].substring(desde, fin)),
   ];
 }
+
+/// [fila] con cada clave de [cambios] cambiada por su valor, todas a la vez (para variantes de un dibujo hechas por
+/// filas, cuando un cambio de color en todo el dibujo tocaría también la cara).
+String _cambiarClaves(String fila, Map<String, String> cambios) =>
+    String.fromCharCodes([for (final c in fila.split('')) (cambios[c] ?? c).codeUnitAt(0)]);
 
 /// [filas] con los ojos de la fila [fila] cerrados: cada «WN» (el brillo y el ojo) pasa a ser [piel].
 List<String> _cerrarOjos(List<String> filas, int fila, String piel) {
