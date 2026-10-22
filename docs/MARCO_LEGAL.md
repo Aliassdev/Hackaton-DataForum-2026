@@ -577,7 +577,7 @@ Fuente: [BOE-A-2018-16673](https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673
 ### LOPDGDD (LO 3/2018), art. 94.3 · Derecho al olvido en servicios de redes sociales y servicios equivalentes
 > 3. En caso de que el derecho se ejercitase por un afectado respecto de datos que hubiesen sido facilitados al servicio, por él o por terceros, durante su minoría de edad, el prestador deberá proceder sin dilación a su supresión por su simple solicitud, sin necesidad de que concurran las circunstancias mencionadas en el apartado 2.
 
-**Para explicarlo:** Si una red social tiene fotos o datos tuyos que se subieron cuando eras menor, los subieras tú u otra persona, basta con que pidas que los borren. La red social tiene que borrarlos sin retrasos.
+**Para explicarlo:** Si una red social tiene fotos o datos tuyos subidos antes de que cumplas 18 años, los subieras tú u otra persona, basta con que pidas que los borren. La red social tiene que borrarlos sin retrasos.
 
 Fuente: [BOE-A-2018-16673](https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673)
 
