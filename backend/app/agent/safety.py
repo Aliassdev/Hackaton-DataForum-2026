@@ -86,3 +86,24 @@ def _plantillas() -> dict[str, list[str]]:
 
 def plantilla(categoria: str) -> str:
     return random.choice(_plantillas()[categoria])
+
+
+# Las plantillas están escritas para la voz: teléfonos con letras y etiquetas de tono ([slow]) que no se leen.
+# El canal de texto (POST /api/agent/ask y /api/learn/grade) las enseña en pantalla: sin etiquetas y en cifras.
+TELEFONOS_EN_CIFRAS = {
+    "novecientos, veinte, veinte, diez": "900 20 20 10",
+    "ciento dieciséis, ciento once": "116 111",
+    "uno, uno, dos": "112",
+}
+RE_ETIQUETA_VOZ = re.compile(r"\[[a-záéíóúñ ]+\]\s*")
+
+
+def para_pantalla(texto: str) -> str:
+    texto = RE_ETIQUETA_VOZ.sub("", texto)
+    for letras, cifras in TELEFONOS_EN_CIFRAS.items():
+        texto = texto.replace(letras, cifras)
+    return texto.strip()
+
+
+def plantilla_texto(categoria: str) -> str:
+    return para_pantalla(plantilla(categoria))

@@ -1,3 +1,7 @@
+import logging
+
+import httpx
+
 from app.agent import orquestador, prompts
 from app.agent.pii import limpiar
 from app.llm.client import ErrorLLM
@@ -46,3 +50,31 @@ def test_responder_da_respuesta_segura_si_falla_el_llm(monkeypatch):
     monkeypatch.setattr(orquestador.client, "completar", falla)
     monkeypatch.setattr(orquestador.client, "stream", falla)
     assert "".join(orquestador.responder(MENSAJES, PERFIL)) == orquestador.RESPUESTA_SEGURA
+
+
+def test_errores_del_llm_sin_el_cuerpo_del_proveedor_en_el_log(recuperador, ajustar, monkeypatch, caplog):
+    """El cuerpo de un error de Groq puede repetir lo que había generado el modelo: al log solo va «LLM 400»."""
+
+    def falla(*a, **k):
+        raise ErrorLLM('LLM 400: {"error": {"code": "tool_use_failed", "failed_generation": "lo que contó el menor"}}')
+
+    ajustar(orquestador, llm_api_key="clave-falsa")  # con clave, antes se intenta reformular
+    monkeypatch.setattr(orquestador.client, "completar", falla)
+    monkeypatch.setattr(orquestador.client, "stream", falla)
+    caplog.set_level(logging.INFO)
+    assert "".join(orquestador.responder(MENSAJES, PERFIL)) == orquestador.RESPUESTA_SEGURA
+    assert "Reformulación fallida (ErrorLLM: LLM 400)" in caplog.text and "Generación fallida: ErrorLLM: LLM 400" in caplog.text
+    assert "lo que contó el menor" not in caplog.text
+
+
+def test_si_la_reformulacion_no_responde_se_busca_con_la_pregunta_original(recuperador, ajustar, monkeypatch):
+    """La reformulación es opcional: un fallo de red en ella no puede dejar callado al agente."""
+
+    def sin_red(*a, **k):
+        raise httpx.ReadTimeout("sin respuesta")
+
+    ajustar(orquestador, llm_api_key="clave-falsa")
+    monkeypatch.setattr(orquestador.client, "completar", sin_red)
+    monkeypatch.setattr(orquestador.client, "stream", lambda *a, **k: iter(["Sí, ", "puedes ir con alguien."]))
+    assert "".join(orquestador.responder(MENSAJES, PERFIL)).strip() == "Sí, puedes ir con alguien."
+    assert recuperador.llamadas[0]["consulta"] is None
